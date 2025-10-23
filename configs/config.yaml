@@ -5,7 +5,7 @@ paths:
 
 benchmark:
   source: mbpp
-  num_tasks: 5
+  num_tasks: 20
 
 models:
   - openai/gpt-5
