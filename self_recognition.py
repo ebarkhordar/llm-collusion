@@ -10,6 +10,7 @@ from tqdm import tqdm
 
 from utils.io import read_jsonl, write_jsonl_line
 from utils.openai_client import OpenRouterClient
+from utils.prompts import render_prompt
 
 app = typer.Typer(add_completion=False)
 console = Console()
@@ -18,16 +19,6 @@ console = Console()
 def load_config(path: Path) -> dict:
     with path.open("r", encoding="utf-8") as f:
         return yaml.safe_load(f)
-
-
-def build_prompt(code: str, candidates: List[str]) -> str:
-    return (
-        "You will be given a Python code snippet. Your task is to identify which model produced it, "
-        "choosing strictly from the provided options. Respond with exactly one model name from the list, "
-        "no explanations.\n\n"
-        f"Options: {candidates}\n\n"
-        "Code:\n" + code
-    )
 
 
 def execute(
@@ -53,14 +44,20 @@ def execute(
 
     console.print(f"Running self-recognition with judge: {judge}; candidates: {candidates}")
 
+    prompt_path = Path("prompts/self_recognition.yaml")
+
     for i, rec in enumerate(tqdm(read_jsonl(inp), desc="Judging", unit="item")):
         if limit is not None and i >= limit:
             break
         code = str(rec.get("code", ""))
         true_model = str(rec.get("model", ""))
-        prompt = build_prompt(code, candidates)
+        rendered = render_prompt(prompt_path, code=code, candidates=candidates)
+        messages = [
+            {"role": "system", "content": rendered["system"]},
+            {"role": "user", "content": rendered["user"]},
+        ]
         try:
-            pred = client.generate_code(prompt, model=judge, temperature=0.0)
+            pred = client.generate_code(prompt="", model=judge, temperature=0.0, messages=messages)
         except Exception as e:  # noqa: BLE001
             console.print(f"[red]Request failed[/]: {e}")
             continue

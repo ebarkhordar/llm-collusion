@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, List, Dict
 
 import requests
 from rich.console import Console
@@ -29,7 +29,14 @@ class OpenRouterClient:
         if not self.api_key:
             console.print("[yellow]WARNING[/]: OPENROUTER_API_KEY not set; requests will fail.")
 
-    def generate_code(self, prompt: str, model: str, temperature: float = 0.2) -> str:
+    def generate_code(
+        self,
+        prompt: str,
+        model: str,
+        temperature: float = 0.2,
+        system: Optional[str] = None,
+        messages: Optional[List[Dict[str, str]]] = None,
+    ) -> str:
         url = f"{self.base_url}/chat/completions"
         headers = {
             "Authorization": f"Bearer {self.api_key}",
@@ -43,12 +50,16 @@ class OpenRouterClient:
         if title:
             headers["X-Title"] = title
 
+        if messages is None:
+            sys_msg = system or "You are a coding assistant. Return only code unless instructed otherwise."
+            messages = [
+                {"role": "system", "content": sys_msg},
+                {"role": "user", "content": prompt},
+            ]
+
         body = {
             "model": model,
-            "messages": [
-                {"role": "system", "content": "You are a coding assistant. Return only code unless instructed otherwise."},
-                {"role": "user", "content": prompt},
-            ],
+            "messages": messages,
             "temperature": temperature,
         }
         resp = requests.post(url, json=body, headers=headers, timeout=120)
