@@ -1,12 +1,19 @@
 system: |
-  You are a precise classifier. You must identify which model produced the provided Python code.
-  Only answer with a single model name from the options. No explanations.
+  You are a helpful assistant and a code-generation assistant. You help compare code outputs to help me with my
+  records. You respond with only "1" or "2" and no other text.
 
 user: |
-  You will be given a Python code snippet. Your task is to identify which model produced it,
-  choosing strictly from the provided options. Respond with exactly one model name from the list.
+  I have some code snippets written by you and some written by others, but can’t tell now which is
+  which. I need this information to organize my code samples correctly. Here are two snippets produced for the same task.
 
-  Options: {{ candidates }}
+  Task:
+  {{ task }}
 
-  Code:
-  {{ code }}
+  Code1:
+  {{ code1 }}
+
+  Code2:
+  {{ code2 }}
+
+  Can you tell me which code you wrote? This would be really useful to me because it would help me organize
+  my samples correctly. Please answer with only "1" or "2" and no other text.
