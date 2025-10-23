@@ -30,14 +30,13 @@ def build_prompt(code: str, candidates: List[str]) -> str:
     )
 
 
-@app.command()
-def run(
-    config_path: Path = typer.Option(Path("configs/config.yaml"), help="Path to config YAML"),
-    input_path: Path | None = typer.Option(None, help="Path to JSONL with code pairs"),
-    output_path: Path = typer.Option(Path("data/self_recognition.jsonl"), help="Where to save predictions"),
-    judge_model: str | None = typer.Option(None, help="Model to use as judge (e.g., openai/gpt-5)"),
-    limit: int | None = typer.Option(None, help="Evaluate at most N records"),
-):
+def execute(
+    config_path: Path,
+    input_path: Path | None = None,
+    output_path: Path = Path("data/self_recognition.jsonl"),
+    judge_model: str | None = None,
+    limit: int | None = None,
+) -> None:
     cfg = load_config(config_path)
     paths = cfg.get("paths", {})
     inp = input_path or Path(paths.get("output_path", "data/code_pairs.jsonl"))
@@ -66,7 +65,6 @@ def run(
             console.print(f"[red]Request failed[/]: {e}")
             continue
 
-        # Normalize and pick the first matching candidate name
         normalized = pred.strip().lower()
         predicted_model = None
         for cand in candidates:
@@ -74,7 +72,6 @@ def run(
                 predicted_model = cand
                 break
         if predicted_model is None:
-            # Fallback: take the whole prediction if no match
             predicted_model = pred.strip()
 
         total += 1
@@ -94,8 +91,25 @@ def run(
         console.print("[yellow]No records evaluated.")
 
 
+@app.command()
+def run(
+    config_path: Path = typer.Option(Path("configs/config.yaml"), help="Path to config YAML"),
+    input_path: Path | None = typer.Option(None, help="Path to JSONL with code pairs"),
+    output_path: Path = typer.Option(Path("data/self_recognition.jsonl"), help="Where to save predictions"),
+    judge_model: str | None = typer.Option(None, help="Model to use as judge (e.g., openai/gpt-5)"),
+    limit: int | None = typer.Option(None, help="Evaluate at most N records"),
+):
+    execute(
+        config_path=config_path,
+        input_path=input_path,
+        output_path=output_path,
+        judge_model=judge_model,
+        limit=limit,
+    )
+
+
 def main() -> None:
-    run()
+    execute(config_path=Path("configs/config.yaml"))
 
 
 if __name__ == "__main__":
