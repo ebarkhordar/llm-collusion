@@ -1,12 +1,13 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Iterable, List, Dict
+from typing import Iterable, List, Dict, Tuple
 
 import typer
 import yaml
 from rich.console import Console
 from tqdm import tqdm
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from utils.io import write_jsonl_line
 from utils.prompts import render_prompt
@@ -55,7 +56,7 @@ def get_tasks(source: str, n: int) -> List[Dict[str, str]]:
         return fallback[:n]
 
 
-def execute(config_path: Path, num_tasks: int | None = None, output_path: Path | None = None) -> None:
+def execute(config_path: Path, num_tasks: int | None = None, output_path: Path | None = None, concurrency: int | None = None) -> None:
     cfg = load_config(config_path)
 
     models: List[str] = list(cfg.get("models", []))
@@ -86,18 +87,36 @@ def execute(config_path: Path, num_tasks: int | None = None, output_path: Path |
     tasks = get_tasks(source, n)
     console.print(f"Generating code for {len(tasks)} tasks using models: {models[:2]}")
 
-    for task in tqdm(tasks, desc="Generating", unit="task"):
+    # Determine concurrency level
+    cfg_concurrency = int(cfg.get("api", {}).get("concurrency", 4))
+    max_workers = concurrency or cfg_concurrency
+
+    def submit_job(task: Dict[str, str], model: str) -> Tuple[str, str, str, str]:
+        rendered = render_prompt(gen_prompt_path, prompt=task["prompt"])
+        messages = [
+            {"role": "system", "content": rendered["system"]},
+            {"role": "user", "content": rendered["user"]},
+        ]
+        code = client.generate_code(prompt="", model=model, messages=messages)
+        return task["task_id"], task["prompt"], model, code
+
+    jobs: List[Tuple[Dict[str, str], str]] = []
+    for task in tasks:
         for model in models[:2]:
-            rendered = render_prompt(gen_prompt_path, prompt=task["prompt"])
-            messages = [
-                {"role": "system", "content": rendered["system"]},
-                {"role": "user", "content": rendered["user"]},
-            ]
-            code = client.generate_code(prompt="", model=model, messages=messages)
+            jobs.append((task, model))
+
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        futures = [executor.submit(submit_job, task, model) for task, model in jobs]
+        for future in tqdm(as_completed(futures), total=len(futures), desc="Generating", unit="req"):
+            try:
+                task_id, prompt_text, model_name, code = future.result()
+            except Exception as e:  # noqa: BLE001
+                console.print(f"[red]Generation failed[/]: {e}")
+                continue
             record = {
-                "task_id": task["task_id"],
-                "prompt": task["prompt"],
-                "model": model,
+                "task_id": task_id,
+                "prompt": prompt_text,
+                "model": model_name,
                 "code": code,
             }
             write_jsonl_line(out, record)
@@ -110,8 +129,9 @@ def run(
     config_path: Path = typer.Option(Path("configs/config.yaml"), help="Path to config YAML"),
     num_tasks: int | None = typer.Option(None, help="Override number of tasks"),
     output_path: Path | None = typer.Option(None, help="Override output JSONL path"),
+    concurrency: int | None = typer.Option(None, help="Max concurrent requests"),
 ):
-    execute(config_path=config_path, num_tasks=num_tasks, output_path=output_path)
+    execute(config_path=config_path, num_tasks=num_tasks, output_path=output_path, concurrency=concurrency)
 
 
 def main() -> None:

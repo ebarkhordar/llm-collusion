@@ -6,6 +6,8 @@ from typing import Optional, List, Dict
 
 import requests
 from rich.console import Console
+import time
+from random import random
 
 # optional: load .env if available
 try:
@@ -36,6 +38,8 @@ class OpenRouterClient:
         temperature: float = 0.2,
         system: Optional[str] = None,
         messages: Optional[List[Dict[str, str]]] = None,
+        max_retries: int = 5,
+        initial_backoff_s: float = 1.0,
     ) -> str:
         url = f"{self.base_url}/chat/completions"
         headers = {
@@ -63,11 +67,23 @@ class OpenRouterClient:
             "messages": messages,
             "temperature": temperature,
         }
-        resp = requests.post(url, json=body, headers=headers, timeout=120)
-        resp.raise_for_status()
-        data = resp.json()
-        try:
-            return data["choices"][0]["message"]["content"].strip()
-        except Exception as e:  # noqa: BLE001
-            console.print(f"[red]Unexpected response format[/]: {data}")
-            raise e
+        attempt = 0
+        backoff = initial_backoff_s
+        while True:
+            try:
+                resp = requests.post(url, json=body, headers=headers, timeout=120)
+                # Retry on 429/5xx
+                if resp.status_code in (429, 500, 502, 503, 504):
+                    raise requests.HTTPError(f"HTTP {resp.status_code}")
+                resp.raise_for_status()
+                data = resp.json()
+                return data["choices"][0]["message"]["content"].strip()
+            except Exception as e:  # noqa: BLE001
+                attempt += 1
+                if attempt > max_retries:
+                    console.print(f"[red]OpenRouter request failed after retries[/]: {e}")
+                    raise
+                # jittered exponential backoff
+                sleep_s = backoff * (1.0 + 0.25 * random())
+                time.sleep(sleep_s)
+                backoff *= 2
