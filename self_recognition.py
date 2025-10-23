@@ -9,6 +9,7 @@ from rich.console import Console
 from tqdm import tqdm
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import re
+from datetime import datetime
 
 from utils.io import read_jsonl, write_jsonl_line
 from utils.openai_client import OpenRouterClient
@@ -51,6 +52,11 @@ def execute(
         grouped[task_id].append(rec)
 
     prompt_path = Path("prompts/self_recognition.yaml")
+
+    # If using the default filename, append a timestamp for uniqueness
+    if output_path.name == "self_recognition.jsonl":
+        ts = datetime.now().strftime("%Y%m%d-%H%M%S")
+        output_path = output_path.with_name(f"self_recognition-{ts}.jsonl")
 
     total = 0
     correct = 0
