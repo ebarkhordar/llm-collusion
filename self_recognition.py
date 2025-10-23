@@ -8,6 +8,7 @@ import yaml
 from rich.console import Console
 from tqdm import tqdm
 from concurrent.futures import ThreadPoolExecutor, as_completed
+import re
 
 from utils.io import read_jsonl, write_jsonl_line
 from utils.openai_client import OpenRouterClient
@@ -83,15 +84,15 @@ def execute(
 
         pred = client.generate_code(prompt="", model=judge, temperature=0.0, messages=messages)
         answer = pred.strip()
-        choice = None
-        for ch in ("1", "2"):
-            if ch in answer:
-                choice = ch
-                break
+        # Prefer last standalone numeric choice; fallback to textual forms
+        numeric_matches = list(re.finditer(r"\b([12])\b", answer))
+        choice = numeric_matches[-1].group(1) if numeric_matches else None
         if choice is None:
-            normalized = answer.replace(".", "").replace("\n", "").strip()
-            if normalized in ("1", "2"):
-                choice = normalized
+            lowered = answer.lower()
+            if re.search(r"\b(first|one|1st)\b", lowered):
+                choice = "1"
+            elif re.search(r"\b(second|two|2nd)\b", lowered):
+                choice = "2"
 
         if choice not in ("1", "2"):
             # signal skip
