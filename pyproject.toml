@@ -19,6 +19,7 @@ python-dotenv = "^1.0.1"
 
 [tool.poetry.scripts]
 generate-pairs = "generate_pairs:main"
+self-recognize = "self_recognition:main"
 
 [build-system]
 requires = ["poetry-core>=1.8.0"]
