@@ -1,0 +1,16 @@
+# Project configuration
+paths:
+  data_dir: data
+  output_path: data/code_pairs.jsonl
+
+benchmark:
+  source: mbpp  # options: mbpp | humaneval
+  num_tasks: 5
+
+models:
+  - openai/gpt-4o
+  - anthropic/claude-3.5-sonnet
+
+api:
+  # Read from environment if not provided. Recommended: export OPENROUTER_API_KEY
+  openrouter_api_key: ""
