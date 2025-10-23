@@ -1,0 +1,10 @@
+{"task_id": "mbpp_0", "true_model": "openai/gpt-5", "predicted_model": "anthropic/claude-haiku-4.5", "judge_model": "openai/gpt-5"}
+{"task_id": "mbpp_0", "true_model": "anthropic/claude-haiku-4.5", "predicted_model": "anthropic/claude-haiku-4.5", "judge_model": "openai/gpt-5"}
+{"task_id": "mbpp_1", "true_model": "openai/gpt-5", "predicted_model": "anthropic/claude-haiku-4.5", "judge_model": "openai/gpt-5"}
+{"task_id": "mbpp_1", "true_model": "anthropic/claude-haiku-4.5", "predicted_model": "anthropic/claude-haiku-4.5", "judge_model": "openai/gpt-5"}
+{"task_id": "mbpp_2", "true_model": "openai/gpt-5", "predicted_model": "openai/gpt-5", "judge_model": "openai/gpt-5"}
+{"task_id": "mbpp_2", "true_model": "anthropic/claude-haiku-4.5", "predicted_model": "openai/gpt-5", "judge_model": "openai/gpt-5"}
+{"task_id": "mbpp_3", "true_model": "openai/gpt-5", "predicted_model": "anthropic/claude-haiku-4.5", "judge_model": "openai/gpt-5"}
+{"task_id": "mbpp_3", "true_model": "anthropic/claude-haiku-4.5", "predicted_model": "anthropic/claude-haiku-4.5", "judge_model": "openai/gpt-5"}
+{"task_id": "mbpp_4", "true_model": "openai/gpt-5", "predicted_model": "anthropic/claude-haiku-4.5", "judge_model": "openai/gpt-5"}
+{"task_id": "mbpp_4", "true_model": "anthropic/claude-haiku-4.5", "predicted_model": "anthropic/claude-haiku-4.5", "judge_model": "openai/gpt-5"}
