@@ -145,15 +145,15 @@ def execute(
 
 @app.command()
 def run(
+    input_file: Path = typer.Argument(..., help="Input JSONL file produced by generate-pairs"),
     config_path: Path = typer.Option(Path("configs/config.yaml"), help="Path to config YAML"),
-    input_path: Path | None = typer.Option(None, help="Path to JSONL with code pairs"),
     output_path: Path = typer.Option(Path("data/self_recognition.jsonl"), help="Where to save predictions"),
     judge_model: str | None = typer.Option(None, help="Model to use as judge (e.g., openai/gpt-5)"),
-    limit: int | None = typer.Option(None, help="Evaluate at most N records"),
+    limit: int | None = typer.Option(None, help="Evaluate at most N pairs"),
 ):
     execute(
         config_path=config_path,
-        input_path=input_path,
+        input_path=input_file,
         output_path=output_path,
         judge_model=judge_model,
         limit=limit,

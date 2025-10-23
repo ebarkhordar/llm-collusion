@@ -66,7 +66,17 @@ def execute(config_path: Path, num_tasks: int | None = None, output_path: Path |
     n = num_tasks or int(bench.get("num_tasks", 5))
 
     paths = cfg.get("paths", {})
-    out = output_path or Path(paths.get("output_path", "data/code_pairs.jsonl"))
+    default_base = Path(paths.get("output_path", "data/code_pairs.jsonl"))
+    if output_path is not None:
+        out = output_path
+    else:
+        # Attach timestamp to default filename: data/code_pairs-YYYYMMDD-HHMMSS.jsonl
+        from datetime import datetime
+
+        ts = datetime.now().strftime("%Y%m%d-%H%M%S")
+        stem = default_base.stem  # e.g., code_pairs
+        suffix = default_base.suffix or ".jsonl"
+        out = default_base.with_name(f"{stem}-{ts}{suffix}")
     out.parent.mkdir(parents=True, exist_ok=True)
 
     client = OpenRouterClient(api_key=cfg.get("api", {}).get("openrouter_api_key") or None)
