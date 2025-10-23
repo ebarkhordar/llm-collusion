@@ -51,11 +51,12 @@ class OpenRouterClient:
             headers["X-Title"] = title
 
         if messages is None:
-            sys_msg = system or "You are a coding assistant. Return only code unless instructed otherwise."
-            messages = [
-                {"role": "system", "content": sys_msg},
-                {"role": "user", "content": prompt},
-            ]
+            sys_msg = system or ""
+            messages = []
+            if sys_msg:
+                messages.append({"role": "system", "content": sys_msg})
+            if prompt:
+                messages.append({"role": "user", "content": prompt})
 
         body = {
             "model": model,

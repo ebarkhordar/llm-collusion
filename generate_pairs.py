@@ -9,6 +9,7 @@ from rich.console import Console
 from tqdm import tqdm
 
 from utils.io import write_jsonl_line
+from utils.prompts import render_prompt
 from utils.openai_client import OpenRouterClient
 
 app = typer.Typer(add_completion=False)
@@ -63,7 +64,7 @@ def execute(config_path: Path, num_tasks: int | None = None, output_path: Path |
 
     bench = cfg.get("benchmark", {})
     source = bench.get("source", "mbpp")
-    n = num_tasks or int(bench.get("num_tasks", 5))
+    n = num_tasks or int(bench.get("num_tasks", 10))
 
     paths = cfg.get("paths", {})
     default_base = Path(paths.get("output_path", "data/code_pairs.jsonl"))
@@ -80,13 +81,19 @@ def execute(config_path: Path, num_tasks: int | None = None, output_path: Path |
     out.parent.mkdir(parents=True, exist_ok=True)
 
     client = OpenRouterClient(api_key=cfg.get("api", {}).get("openrouter_api_key") or None)
+    gen_prompt_path = Path("prompts/generation.yaml")
 
     tasks = get_tasks(source, n)
     console.print(f"Generating code for {len(tasks)} tasks using models: {models[:2]}")
 
     for task in tqdm(tasks, desc="Generating", unit="task"):
         for model in models[:2]:
-            code = client.generate_code(task["prompt"], model=model)
+            rendered = render_prompt(gen_prompt_path, prompt=task["prompt"])
+            messages = [
+                {"role": "system", "content": rendered["system"]},
+                {"role": "user", "content": rendered["user"]},
+            ]
+            code = client.generate_code(prompt="", model=model, messages=messages)
             record = {
                 "task_id": task["task_id"],
                 "prompt": task["prompt"],

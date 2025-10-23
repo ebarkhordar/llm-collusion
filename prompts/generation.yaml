@@ -1,0 +1,6 @@
+system: |
+  You are a helpful Python coding assistant. Return only Python code unless asked otherwise.
+
+user: |
+  Task:
+  {{ prompt }}
