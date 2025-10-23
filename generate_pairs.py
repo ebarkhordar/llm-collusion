@@ -54,12 +54,7 @@ def get_tasks(source: str, n: int) -> List[Dict[str, str]]:
         return fallback[:n]
 
 
-@app.command()
-def run(
-    config_path: Path = typer.Option(Path("configs/config.yaml"), help="Path to config YAML"),
-    num_tasks: int | None = typer.Option(None, help="Override number of tasks"),
-    output_path: Path | None = typer.Option(None, help="Override output JSONL path"),
-):
+def execute(config_path: Path, num_tasks: int | None = None, output_path: Path | None = None) -> None:
     cfg = load_config(config_path)
 
     models: List[str] = list(cfg.get("models", []))
@@ -91,6 +86,19 @@ def run(
             write_jsonl_line(out, record)
 
     console.print(f"[green]Saved[/] -> {out}")
+
+
+@app.command()
+def run(
+    config_path: Path = typer.Option(Path("configs/config.yaml"), help="Path to config YAML"),
+    num_tasks: int | None = typer.Option(None, help="Override number of tasks"),
+    output_path: Path | None = typer.Option(None, help="Override output JSONL path"),
+):
+    execute(config_path=config_path, num_tasks=num_tasks, output_path=output_path)
+
+
+def main() -> None:
+    execute(config_path=Path("configs/config.yaml"))
 
 
 if __name__ == "__main__":
