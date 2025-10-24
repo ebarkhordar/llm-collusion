@@ -5,23 +5,24 @@ from datasets import load_dataset  # type: ignore
 
 from src.common.types import TaskExample
 
-
-def load_mbpp(start_index: int, end_index: int, sanitized: bool = False) -> List[TaskExample]:
+def load_mbpp(
+    start_index: int,
+    end_index: int,
+    sanitized: bool = False
+) -> List[TaskExample]:
     """
-    Load MBPP or MBPP-sanitized dataset into TaskExample objects.
-
-    Args:
-        start_index: index to start loading from
-        end_index: index to stop loading (exclusive)
-        sanitized: if True, use the sanitized MBPP dataset version
-
-    Returns:
-        List[TaskExample]: list of examples within range
+    Load MBPP (full) or MBPP-sanitized dataset into TaskExample objects.
     """
+    dataset_name = "mbpp"
+    config = "sanitized" if sanitized else None
+    split = "test"  # as per Hub card, only test split present for both config variants
 
-    dataset_name = "google-research-datasets/mbpp-sanitized" if sanitized else "mbpp"
-    split = "train" if sanitized else "train+validation+test"
-    ds = load_dataset(dataset_name, split=split)
+    if config:
+        ds = load_dataset(dataset_name, config_name=config, split=split)
+        dataset_label = f"{dataset_name}-sanitized"
+    else:
+        ds = load_dataset(dataset_name, split=split)
+        dataset_label = dataset_name
 
     examples: List[TaskExample] = []
     for i, ex in enumerate(ds):
@@ -31,15 +32,14 @@ def load_mbpp(start_index: int, end_index: int, sanitized: bool = False) -> List
             break
 
         if sanitized:
-            # Sanitized schema
+            # sanitized schema
             prompt = ex.get("prompt", "")
             test_list = ex.get("test_list")
             setup = ex.get("test_imports")
             reference = ex.get("code", "")
-
             examples.append(
                 TaskExample(
-                    dataset_name="mbpp-sanitized",
+                    dataset_name=dataset_label,
                     dataset_task_id=str(ex["task_id"]),
                     prompt=str(prompt),
                     test_list=list(test_list) if test_list else None,
@@ -49,16 +49,15 @@ def load_mbpp(start_index: int, end_index: int, sanitized: bool = False) -> List
                 )
             )
         else:
-            # Original MBPP schema
-            prompt = ex["text"]
-            test_list = ex["test_list"]
-            challenge_tests = ex["challenge_test_list"]
-            setup = ex["test_setup_code"]
-            reference = ex["code"]
-
+            # full (original) schema
+            prompt = ex.get("text", "")
+            test_list = ex.get("test_list")
+            challenge_tests = ex.get("challenge_test_list")
+            setup = ex.get("test_setup_code")
+            reference = ex.get("code", "")
             examples.append(
                 TaskExample(
-                    dataset_name="mbpp",
+                    dataset_name=dataset_label,
                     dataset_task_id=str(ex["task_id"]),
                     prompt=str(prompt),
                     test_list=list(test_list) if test_list else None,
@@ -67,5 +66,4 @@ def load_mbpp(start_index: int, end_index: int, sanitized: bool = False) -> List
                     reference_solution=str(reference) if reference else None,
                 )
             )
-
     return examples
