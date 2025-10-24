@@ -117,10 +117,5 @@ def run(
     execute(config_path=config_path, dataset=dataset, start_index=start_index, end_index=end_index)
 
 
-def main() -> None:
-    # Default run: mbpp first 10 tasks
-    execute(config_path=Path("configs/config.yaml"), dataset="mbpp", start_index=0, end_index=10)
-
-
 if __name__ == "__main__":
     app()
