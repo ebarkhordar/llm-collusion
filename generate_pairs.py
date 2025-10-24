@@ -27,7 +27,7 @@ def get_tasks(source: str, start_index: int, end_index: int) -> List[Dict[str, s
     # Only MBPP for now
     if source.lower() != "mbpp":
         source = "mbpp"
-    examples = load_mbpp(start_index=start_index, end_index=end_index)
+    examples = load_mbpp(start_index=start_index, end_index=end_index, sanitized=True)
     items: List[Dict[str, str]] = []
     for ex in examples:
         items.append(
