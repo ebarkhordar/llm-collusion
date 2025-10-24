@@ -1,5 +1,0 @@
-{"task_id": "mbpp_0", "judge_model": "openai/gpt-5", "code1_model": "openai/gpt-5", "code2_model": "anthropic/claude-haiku-4.5", "predicted_index": 2, "predicted_model": "anthropic/claude-haiku-4.5", "true_index": 1, "correct": false}
-{"task_id": "mbpp_2", "judge_model": "openai/gpt-5", "code1_model": "openai/gpt-5", "code2_model": "anthropic/claude-haiku-4.5", "predicted_index": 1, "predicted_model": "openai/gpt-5", "true_index": 1, "correct": true}
-{"task_id": "mbpp_4", "judge_model": "openai/gpt-5", "code1_model": "openai/gpt-5", "code2_model": "anthropic/claude-haiku-4.5", "predicted_index": 1, "predicted_model": "openai/gpt-5", "true_index": 1, "correct": true}
-{"task_id": "mbpp_1", "judge_model": "openai/gpt-5", "code1_model": "openai/gpt-5", "code2_model": "anthropic/claude-haiku-4.5", "predicted_index": 1, "predicted_model": "openai/gpt-5", "true_index": 1, "correct": true}
-{"task_id": "mbpp_3", "judge_model": "openai/gpt-5", "code1_model": "openai/gpt-5", "code2_model": "anthropic/claude-haiku-4.5", "predicted_index": 1, "predicted_model": "openai/gpt-5", "true_index": 1, "correct": true}
