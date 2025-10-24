@@ -9,9 +9,10 @@ from rich.console import Console
 from tqdm import tqdm
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-from utils.io import write_jsonl_line
-from utils.prompts import render_prompt
-from utils.openai_client import OpenRouterClient
+from src.utils.io import write_jsonl_line
+from src.utils.prompts import render_prompt
+from src.utils.openai_client import OpenRouterClient
+from src.datasets.mbpp import load_mbpp
 
 app = typer.Typer(add_completion=False)
 console = Console()
@@ -23,37 +24,24 @@ def load_config(path: Path) -> dict:
 
 
 def get_tasks(source: str, n: int) -> List[Dict[str, str]]:
-    # Try to load from datasets; fall back to simple stubs
-    try:
-        from datasets import load_dataset  # type: ignore
-
-        if source.lower() == "mbpp":
-            ds = load_dataset("mbpp", split="test")
-            items = []
-            for i, ex in enumerate(ds):
-                prompt = ex.get("prompt") or ex.get("text") or ex.get("task_description") or "Write a Python function."
-                items.append({"task_id": f"mbpp_{i}", "prompt": str(prompt)})
-                if len(items) >= n:
-                    break
-            return items
-        else:
-            # humaneval
-            ds = load_dataset("openai_humaneval", split="test")
-            items = []
-            for i, ex in enumerate(ds):
-                prompt = ex.get("prompt") or ex.get("task_id") or "Complete the function as specified."
-                items.append({"task_id": f"humaneval_{i}", "prompt": str(prompt)})
-                if len(items) >= n:
-                    break
-            return items
-    except Exception:
-        # Minimal fallback
-        fallback = [
-            {"task_id": "stub_1", "prompt": "Write a function add(a, b) that returns a + b."},
-            {"task_id": "stub_2", "prompt": "Write a function is_palindrome(s) that returns True if s is a palindrome."},
-            {"task_id": "stub_3", "prompt": "Write a function factorial(n) that returns n!."},
-        ]
-        return fallback[:n]
+    # Only MBPP for now
+    if source.lower() != "mbpp":
+        source = "mbpp"
+    examples = load_mbpp(limit=n)
+    items: List[Dict[str, str]] = []
+    for ex in examples:
+        items.append(
+            {
+                "dataset_name": ex.dataset_name,
+                "dataset_task_id": ex.dataset_task_id,
+                "prompt": ex.prompt,
+                "test_list": ex.test_list,
+                "challenge_test_list": ex.challenge_test_list,
+                "test_setup_code": ex.test_setup_code,
+                "reference_solution": ex.reference_solution,
+            }
+        )
+    return items
 
 
 def execute(config_path: Path, num_tasks: int | None = None, output_path: Path | None = None, concurrency: int | None = None) -> None:
@@ -91,14 +79,14 @@ def execute(config_path: Path, num_tasks: int | None = None, output_path: Path |
     cfg_concurrency = int(cfg.get("api", {}).get("concurrency", 4))
     max_workers = concurrency or cfg_concurrency
 
-    def submit_job(task: Dict[str, str], model: str) -> Tuple[str, str, str, str]:
+    def submit_job(task: Dict[str, str], model: str) -> Tuple[Dict[str, str], str, str]:
         rendered = render_prompt(gen_prompt_path, prompt=task["prompt"])
         messages = [
             {"role": "system", "content": rendered["system"]},
             {"role": "user", "content": rendered["user"]},
         ]
         code = client.generate_code(prompt="", model=model, messages=messages)
-        return task["task_id"], task["prompt"], model, code
+        return task, model, code
 
     jobs: List[Tuple[Dict[str, str], str]] = []
     for task in tasks:
@@ -109,15 +97,20 @@ def execute(config_path: Path, num_tasks: int | None = None, output_path: Path |
         futures = [executor.submit(submit_job, task, model) for task, model in jobs]
         for future in tqdm(as_completed(futures), total=len(futures), desc="Generating", unit="req"):
             try:
-                task_id, prompt_text, model_name, code = future.result()
+                task, model_name, code = future.result()
             except Exception as e:  # noqa: BLE001
                 console.print(f"[red]Generation failed[/]: {e}")
                 continue
             record = {
-                "task_id": task_id,
-                "prompt": prompt_text,
-                "model": model_name,
-                "code": code,
+                "dataset_name": task["dataset_name"],
+                "dataset_task_id": task["dataset_task_id"],
+                "prompt": task["prompt"],
+                "model_name": model_name,
+                "generated_code": code,
+                "test_list": task.get("test_list"),
+                "challenge_test_list": task.get("challenge_test_list"),
+                "test_setup_code": task.get("test_setup_code"),
+                "reference_solution": task.get("reference_solution"),
             }
             write_jsonl_line(out, record)
 

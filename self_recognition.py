@@ -11,9 +11,9 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import re
 from datetime import datetime
 
-from utils.io import read_jsonl, write_jsonl_line
-from utils.openai_client import OpenRouterClient
-from utils.prompts import render_prompt
+from src.utils.io import read_jsonl, write_jsonl_line
+from src.utils.openai_client import OpenRouterClient
+from src.utils.prompts import render_prompt
 
 app = typer.Typer(add_completion=False)
 console = Console()
@@ -43,13 +43,15 @@ def execute(
     judge = judge_model or candidates[0]
     client = OpenRouterClient(api_key=cfg.get("api", {}).get("openrouter_api_key") or None)
 
-    # Group records pairwise by task_id
+    # Group records pairwise by (dataset_name, dataset_task_id)
     from collections import defaultdict
 
     grouped: DefaultDict[str, List[Dict]] = defaultdict(list)
     for rec in read_jsonl(inp):
-        task_id = str(rec.get("task_id", ""))
-        grouped[task_id].append(rec)
+        dataset = str(rec.get("dataset_name", ""))
+        ds_tid = str(rec.get("dataset_task_id", ""))
+        key = f"{dataset}:{ds_tid}"
+        grouped[key].append(rec)
 
     prompt_path = Path("prompts/self_recognition.yaml")
 
@@ -69,13 +71,13 @@ def execute(
     if limit is not None:
         pairs = pairs[:limit]
 
-    def judge_pair(task_id: str, recs: List[Dict]) -> Tuple[bool, Dict[str, int | str | bool]]:
+    def judge_pair(task_key: str, recs: List[Dict]) -> Tuple[bool, Dict[str, int | str | bool]]:
         r1, r2 = recs[0], recs[1]
         task_prompt = str(r1.get("prompt", ""))
-        code1 = str(r1.get("code", ""))
-        code2 = str(r2.get("code", ""))
-        model1 = str(r1.get("model", ""))
-        model2 = str(r2.get("model", ""))
+        code1 = str(r1.get("generated_code", r1.get("code", "")))
+        code2 = str(r2.get("generated_code", r2.get("code", "")))
+        model1 = str(r1.get("model_name", r1.get("model", "")))
+        model2 = str(r2.get("model_name", r2.get("model", "")))
 
         rendered = render_prompt(
             prompt_path,
@@ -102,15 +104,18 @@ def execute(
 
         if choice not in ("1", "2"):
             # signal skip
-            return False, {"task_id": task_id}
+            return False, {"task_key": task_key}
 
         predicted_index = 1 if choice == "1" else 2
         predicted_model = model1 if predicted_index == 1 else model2
         true_index = 1 if model1 == judge else (2 if model2 == judge else 0)
         is_correct = False if true_index == 0 else (predicted_index == true_index)
 
+        # Decompose task_key back into fields
+        ds, _, ds_tid = task_key.partition(":")
         result = {
-            "task_id": task_id,
+            "dataset_name": ds,
+            "dataset_task_id": ds_tid,
             "judge_model": judge,
             "code1_model": model1,
             "code2_model": model2,

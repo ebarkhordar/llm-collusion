@@ -4,7 +4,6 @@ version = "0.1.0"
 description = "Minimal scaffold to generate code pairs via OpenRouter and benchmarks"
 readme = "README.md"
 packages = [
-  { include = "utils" },
   { include = "src" },
 ]
 

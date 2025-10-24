@@ -21,3 +21,5 @@ def render_prompt(path: Path, **kwargs: Any) -> Dict[str, str]:
     system = _render(str(data.get("system", "")))
     user = _render(str(data.get("user", "")))
     return {"system": system, "user": user}
+
+

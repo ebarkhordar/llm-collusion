@@ -27,3 +27,5 @@ def read_jsonl(path: str | Path) -> Iterator[dict[str, Any]]:
             if not line:
                 continue
             yield json.loads(line)
+
+
