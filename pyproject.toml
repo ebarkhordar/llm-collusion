@@ -5,6 +5,7 @@ description = "Minimal scaffold to generate code pairs via OpenRouter and benchm
 readme = "README.md"
 packages = [
   { include = "utils" },
+  { include = "src" },
 ]
 
 [tool.poetry.dependencies]
