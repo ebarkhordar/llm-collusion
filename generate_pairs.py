@@ -23,11 +23,11 @@ def load_config(path: Path) -> dict:
         return yaml.safe_load(f)
 
 
-def get_tasks(source: str, n: int) -> List[Dict[str, str]]:
+def get_tasks(source: str, start_index: int, end_index: int) -> List[Dict[str, str]]:
     # Only MBPP for now
     if source.lower() != "mbpp":
         source = "mbpp"
-    examples = load_mbpp(limit=n)
+    examples = load_mbpp(start_index=start_index, end_index=end_index)
     items: List[Dict[str, str]] = []
     for ex in examples:
         items.append(
@@ -44,40 +44,30 @@ def get_tasks(source: str, n: int) -> List[Dict[str, str]]:
     return items
 
 
-def execute(config_path: Path, num_tasks: int | None = None, output_path: Path | None = None, concurrency: int | None = None) -> None:
+def execute(config_path: Path, dataset: str, start_index: int, end_index: int) -> None:
     cfg = load_config(config_path)
 
     models: List[str] = list(cfg.get("models", []))
     if len(models) < 2:
         raise typer.BadParameter("Config must specify at least two models.")
 
-    bench = cfg.get("benchmark", {})
-    source = bench.get("source", "mbpp")
-    n = num_tasks or int(bench.get("num_tasks", 10))
+    source = dataset
 
     paths = cfg.get("paths", {})
-    default_base = Path(paths.get("output_path", "data/code_pairs.jsonl"))
-    if output_path is not None:
-        out = output_path
-    else:
-        # Attach timestamp to default filename: data/code_pairs-YYYYMMDD-HHMMSS.jsonl
-        from datetime import datetime
-
-        ts = datetime.now().strftime("%Y%m%d-%H%M%S")
-        stem = default_base.stem  # e.g., code_pairs
-        suffix = default_base.suffix or ".jsonl"
-        out = default_base.with_name(f"{stem}-{ts}{suffix}")
+    data_dir = Path(paths.get("data_dir", "data"))
+    from datetime import datetime
+    ts = datetime.now().strftime("%Y%m%d-%H%M%S")
+    out = data_dir / f"{source}-{ts}.jsonl"
     out.parent.mkdir(parents=True, exist_ok=True)
 
     client = OpenRouterClient(api_key=cfg.get("api", {}).get("openrouter_api_key") or None)
     gen_prompt_path = Path("prompts/generation.yaml")
 
-    tasks = get_tasks(source, n)
+    tasks = get_tasks(source, start_index, end_index)
     console.print(f"Generating code for {len(tasks)} tasks using models: {models[:2]}")
 
     # Determine concurrency level
-    cfg_concurrency = int(cfg.get("api", {}).get("concurrency", 4))
-    max_workers = concurrency or cfg_concurrency
+    max_workers = int(cfg.get("api", {}).get("concurrency", 4))
 
     def submit_job(task: Dict[str, str], model: str) -> Tuple[Dict[str, str], str, str]:
         rendered = render_prompt(gen_prompt_path, prompt=task["prompt"])
@@ -120,15 +110,16 @@ def execute(config_path: Path, num_tasks: int | None = None, output_path: Path |
 @app.command()
 def run(
     config_path: Path = typer.Option(Path("configs/config.yaml"), help="Path to config YAML"),
-    num_tasks: int | None = typer.Option(None, help="Override number of tasks"),
-    output_path: Path | None = typer.Option(None, help="Override output JSONL path"),
-    concurrency: int | None = typer.Option(None, help="Max concurrent requests"),
+    dataset: str = typer.Option("mbpp", help="Dataset name (e.g., mbpp)"),
+    start_index: int = typer.Option(0, help="Start index (inclusive)"),
+    end_index: int = typer.Option(10, help="End index (exclusive)"),
 ):
-    execute(config_path=config_path, num_tasks=num_tasks, output_path=output_path, concurrency=concurrency)
+    execute(config_path=config_path, dataset=dataset, start_index=start_index, end_index=end_index)
 
 
 def main() -> None:
-    execute(config_path=Path("configs/config.yaml"))
+    # Default run: mbpp first 10 tasks
+    execute(config_path=Path("configs/config.yaml"), dataset="mbpp", start_index=0, end_index=10)
 
 
 if __name__ == "__main__":
