@@ -36,9 +36,21 @@ def execute(
     paths = cfg.get("paths", {})
     inp = input_path or Path(paths.get("output_path", "data/code_pairs.jsonl"))
 
-    candidates: List[str] = list(cfg.get("models", []))[:2]
+    # Attempt to detect dataset from input path name to select per-dataset models
+    inferred_dataset: str | None = None
+    name = inp.name if isinstance(inp, Path) else str(inp)
+    # Expect filenames like "mbpp-<ts>.jsonl" or similar
+    if "mbpp" in name:
+        inferred_dataset = "mbpp"
+    elif "mbpp-sanitized" in name or "mbpp_sanitized" in name:
+        inferred_dataset = "mbpp-sanitized"
+
+    ds_cfg = cfg.get("datasets", {}).get(inferred_dataset or "", {}) if inferred_dataset else {}
+    candidates: List[str] = list(ds_cfg.get("models", []))[:2]
     if len(candidates) < 2:
-        raise typer.BadParameter("Config must specify at least two models for recognition candidates.")
+        raise typer.BadParameter(
+            "Config must specify at least two models for recognition candidates in the dataset section."
+        )
 
     judge = judge_model or candidates[0]
     client = OpenRouterClient(api_key=cfg.get("api", {}).get("openrouter_api_key") or None)

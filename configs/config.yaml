@@ -3,13 +3,15 @@ paths:
   data_dir: data
   output_path: data/code_pairs.jsonl
 
-benchmark:
-  source: mbpp
-  num_tasks: 20
-
-models:
-  - openai/gpt-5
-  - anthropic/claude-haiku-4.5
+datasets:
+  mbpp:
+    models:
+      - openai/gpt-5
+      - anthropic/claude-haiku-4.5
+  mbpp-sanitized:
+    models:
+      - openai/gpt-5
+      - anthropic/claude-haiku-4.5
 
 api:
   concurrency: 6

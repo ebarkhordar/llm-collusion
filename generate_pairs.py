@@ -47,11 +47,14 @@ def get_tasks(source: str, start_index: int, end_index: int) -> List[Dict[str, s
 def execute(config_path: Path, dataset: str, start_index: int, end_index: int) -> None:
     cfg = load_config(config_path)
 
-    models: List[str] = list(cfg.get("models", []))
-    if len(models) < 2:
-        raise typer.BadParameter("Config must specify at least two models.")
-
+    # Read models from per-dataset config
     source = dataset
+    ds_cfg = cfg.get("datasets", {}).get(source, {})
+    models: List[str] = list(ds_cfg.get("models", []))
+    if len(models) < 2:
+        raise typer.BadParameter(
+            f"Config for dataset '{source}' must specify at least two models."
+        )
 
     paths = cfg.get("paths", {})
     data_dir = Path(paths.get("data_dir", "data"))
