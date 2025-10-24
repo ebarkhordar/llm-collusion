@@ -1,0 +1,26 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Python: generate_pairs (mbpp 0..10)",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/generate_pairs.py",
+      "args": [
+        "run",
+        "--dataset",
+        "mbpp",
+        "--start-index",
+        "0",
+        "--end-index",
+        "10"
+      ],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "justMyCode": true,
+      "envFile": "${workspaceFolder}/.env"
+    }
+  ]
+}
+
+
