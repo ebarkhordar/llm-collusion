@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import Callable, Dict, List, Tuple
-from dataclasses import asdict
 
 import typer
 import yaml
@@ -63,17 +62,7 @@ def build_messages(prompt: str, gen_prompt_path: Path) -> List[Dict[str, str]]:
 
 
 def make_record(task: TaskExample, model_name: str, code: str) -> GenerationRecord:
-    return GenerationRecord(
-        dataset_name=task.dataset_name,
-        dataset_task_id=task.dataset_task_id,
-        prompt=task.prompt,
-        model_name=model_name,
-        generated_code=code,
-        test_list=task.test_list,
-        challenge_test_list=task.challenge_test_list,
-        test_setup_code=task.test_setup_code,
-        reference_solution=task.reference_solution,
-    )
+    return GenerationRecord(task=task, model_name=model_name, generated_code=code)
 
 
 def execute(config_path: Path, dataset: str, start_index: int, end_index: int) -> None:
@@ -121,7 +110,7 @@ def execute(config_path: Path, dataset: str, start_index: int, end_index: int) -
                 console.print(f"[red]Generation failed[/]: {e}")
                 continue
             record = make_record(task, model_name, code)
-            write_jsonl_line(out, asdict(record))
+            write_jsonl_line(out, record.to_dict())
 
     console.print(f"[green]Saved[/] -> {out}")
 
