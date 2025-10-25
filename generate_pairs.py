@@ -49,8 +49,7 @@ def compute_output_path(base_dir: Path, source: str) -> Path:
 def build_messages(prompt: str, gen_prompt_path: Path) -> List[Dict[str, str]]:
     rendered = render_prompt(gen_prompt_path, prompt=prompt)
     return [
-        {"role": "system", "content": rendered["system"]},
-        {"role": "user", "content": rendered["user"]},
+        {"role": "user", "content": str(rendered.get("user", "")).strip()},
     ]
 
 

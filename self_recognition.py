@@ -83,8 +83,7 @@ def build_pairs(records: Iterator[Dict[str, Any]], cfg: dict) -> List[Pair]:
 def build_messages(prompt: str, code1: str, code2: str, prompt_path: Path) -> List[Dict[str, str]]:
     rendered = render_prompt(prompt_path, prompt=prompt, code1=code1, code2=code2)
     return [
-        {"role": "system", "content": rendered["system"]},
-        {"role": "user", "content": rendered["user"]},
+        {"role": "user", "content": str(rendered.get("user", "")).strip()},
     ]
 
 
