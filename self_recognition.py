@@ -176,7 +176,7 @@ def execute(
     def submit_job(job: Tuple[int, Pair, str]) -> Tuple[int, str, Optional[int], Optional[int]]:
         _, p, judge_model = job
         messages = build_messages(p.task_prompt, p.code1, p.code2, prompt_path)
-        resp = client.generate_code(prompt="", model=judge_model, messages=messages, temperature=temperature)
+        resp = client.generate_code(model=judge_model, messages=messages, temperature=temperature)
         choice = parse_choice(resp)
         # ground truth index
         truth: Optional[int] = 1 if judge_model == p.model1 else (2 if judge_model == p.model2 else None)

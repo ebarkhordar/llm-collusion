@@ -85,7 +85,11 @@ def execute(config_path: Path, dataset: str, start_index: int, end_index: int) -
 
     def submit_job(task: TaskExample, model: str) -> Tuple[TaskExample, str, str]:
         messages = build_messages(task.prompt, gen_prompt_path)
-        code = client.generate_code(prompt="", model=model, messages=messages)
+        code = client.generate_code(
+            model=model,
+            messages=messages,
+            temperature=0.0,
+        )
         return task, model, code
 
     jobs: List[Tuple[TaskExample, str]] = [
