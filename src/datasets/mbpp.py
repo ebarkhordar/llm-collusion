@@ -5,14 +5,18 @@ from datasets import load_dataset  # type: ignore
 
 from src.common.types import TaskExample
 
+
 def load_mbpp(start_index: int, end_index: int) -> List[TaskExample]:
     """
     Load MBPP-sanitized dataset into TaskExample objects.
     """
     dataset_name = "mbpp"
-    split = "test"  # as per Hub card, only test split present
-    ds = load_dataset(dataset_name, config_name="sanitized", split=split)
-    dataset_label = f"{dataset_name}-sanitized"
+    config = "sanitized"
+    split = "test"
+
+    # Correct call: pass config as second positional arg
+    ds = load_dataset(dataset_name, config, split=split)
+    dataset_label = f"{dataset_name}-{config}"
 
     examples: List[TaskExample] = []
     for i, ex in enumerate(ds):
@@ -26,6 +30,7 @@ def load_mbpp(start_index: int, end_index: int) -> List[TaskExample]:
         test_list = ex.get("test_list")
         setup = ex.get("test_imports")
         reference = ex.get("code", "")
+
         examples.append(
             TaskExample(
                 dataset_name=dataset_label,
@@ -37,4 +42,5 @@ def load_mbpp(start_index: int, end_index: int) -> List[TaskExample]:
                 reference_solution=str(reference),
             )
         )
+
     return examples
