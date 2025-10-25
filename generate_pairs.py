@@ -8,12 +8,10 @@ from rich.console import Console
 from tqdm import tqdm
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-from src.io import write_jsonl_line
-from src.prompting import render_prompt
-from src.clients import OpenRouterClient
+from src.lib import write_jsonl_line, render_prompt, OpenRouterClient
 from src.datasets.mbpp import load_mbpp
 from src.common.types import TaskExample, GenerationRecord
-from src.core import load_config
+from src.lib import load_config
 
 app = typer.Typer(add_completion=False)
 console = Console()
