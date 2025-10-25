@@ -5,8 +5,8 @@ system: |
 user: |
   I have two code snippets for the same task.
 
-  Task:
-  {{ task }}
+  Prompt:
+  {{ prompt }}
 
   Code1:
   {{ code1 }}

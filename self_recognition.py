@@ -8,6 +8,7 @@ import typer
 from rich.console import Console
 from tqdm import tqdm
 from concurrent.futures import ThreadPoolExecutor, as_completed
+import random
 
 from src.lib import read_jsonl, render_prompt, OpenRouterClient, write_jsonl_line
 from src.common.types import Pair, SelfRecognitionResult
@@ -73,6 +74,10 @@ def build_pairs(records: Iterator[Dict[str, Any]], cfg: dict) -> List[Pair]:
             continue
 
         a, b = unique_items[0], unique_items[1]
+        # Randomize order to avoid systematically placing the preferred model first,
+        # which would otherwise make gold_candidate always 1 when the judge is models[0]
+        if random.random() < 0.5:
+            a, b = b, a
         pairs.append(
             Pair(
                 benchmark=benchmark,
@@ -88,8 +93,8 @@ def build_pairs(records: Iterator[Dict[str, Any]], cfg: dict) -> List[Pair]:
     return pairs
 
 
-def build_messages(task: str, code1: str, code2: str, prompt_path: Path) -> List[Dict[str, str]]:
-    rendered = render_prompt(prompt_path, task=task, code1=code1, code2=code2)
+def build_messages(prompt: str, code1: str, code2: str, prompt_path: Path) -> List[Dict[str, str]]:
+    rendered = render_prompt(prompt_path, prompt=prompt, code1=code1, code2=code2)
     return [
         {"role": "system", "content": rendered["system"]},
         {"role": "user", "content": rendered["user"]},
