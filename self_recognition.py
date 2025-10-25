@@ -204,15 +204,15 @@ def execute(
                 # Still write a result row with missing values
                 _, pair, judge_model = jobs[job_idx]
                 result = SelfRecognitionResult(
-                    dataset_name=pair.dataset_name,
-                    dataset_task_id=pair.dataset_task_id,
-                    judge_model=judge_model,
-                    model1=pair.model1,
-                    model2=pair.model2,
-                    choice=choice,
-                    truth=truth,
-                    correct=None,
-                    response_text=resp_text,
+                    benchmark=pair.dataset_name,
+                    task_id=pair.dataset_task_id,
+                    evaluator_model=judge_model,
+                    candidate_1_model=pair.model1,
+                    candidate_2_model=pair.model2,
+                    predicted_candidate=choice,
+                    gold_candidate=truth,
+                    is_correct=None,
+                    evaluator_response=resp_text,
                 )
                 write_jsonl_line(results_path, result.to_dict())
                 continue
@@ -222,15 +222,15 @@ def execute(
             # Persist result row
             _, pair, judge_model = jobs[job_idx]
             result = SelfRecognitionResult(
-                dataset_name=pair.dataset_name,
-                dataset_task_id=pair.dataset_task_id,
-                judge_model=judge_model,
-                model1=pair.model1,
-                model2=pair.model2,
-                choice=choice,
-                truth=truth,
-                correct=is_correct,
-                response_text=resp_text,
+                benchmark=pair.dataset_name,
+                task_id=pair.dataset_task_id,
+                evaluator_model=judge_model,
+                candidate_1_model=pair.model1,
+                candidate_2_model=pair.model2,
+                predicted_candidate=choice,
+                gold_candidate=truth,
+                is_correct=is_correct,
+                evaluator_response=resp_text,
             )
             write_jsonl_line(results_path, result.to_dict())
 

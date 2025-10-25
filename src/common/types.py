@@ -49,25 +49,25 @@ class Pair:
 
 @dataclass
 class SelfRecognitionResult:
-    dataset_name: str
-    dataset_task_id: str
-    judge_model: str
-    model1: str
-    model2: str
-    choice: Optional[int]
-    truth: Optional[int]
-    correct: Optional[bool]
-    response_text: str
+    benchmark: str
+    task_id: str
+    evaluator_model: str
+    candidate_1_model: str
+    candidate_2_model: str
+    predicted_candidate: Optional[int]
+    gold_candidate: Optional[int]
+    is_correct: Optional[bool]
+    evaluator_response: str
 
     def to_dict(self) -> Dict[str, Any]:
         return {
-            "dataset_name": self.dataset_name,
-            "dataset_task_id": self.dataset_task_id,
-            "judge_model": self.judge_model,
-            "model1": self.model1,
-            "model2": self.model2,
-            "choice": self.choice,
-            "truth": self.truth,
-            "correct": self.correct,
-            "response_text": self.response_text,
+            "benchmark": self.benchmark,
+            "task_id": self.task_id,
+            "evaluator_model": self.evaluator_model,
+            "candidate_1_model": self.candidate_1_model,
+            "candidate_2_model": self.candidate_2_model,
+            "predicted_candidate": self.predicted_candidate,
+            "gold_candidate": self.gold_candidate,
+            "is_correct": self.is_correct,
+            "evaluator_response": self.evaluator_response,
         }
