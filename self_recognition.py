@@ -9,8 +9,8 @@ from rich.console import Console
 from tqdm import tqdm
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-from src.lib import read_jsonl, render_prompt, OpenRouterClient
-from src.common.types import Pair
+from src.lib import read_jsonl, render_prompt, OpenRouterClient, write_jsonl_line
+from src.common.types import Pair, SelfRecognitionResult
 from src.lib import load_config
 
 
@@ -165,6 +165,17 @@ def execute(
     processed = 0
     skipped = len(pairs) - total
 
+    # Determine results output path
+    paths = cfg.get("paths", {})
+    data_dir = Path(paths.get("data_dir", "data"))
+    results_dir = data_dir / "results"
+    results_dir.mkdir(parents=True, exist_ok=True)
+    # filename includes dataset and timestamp
+    from datetime import datetime
+    ts = datetime.now().strftime("%Y%m%d-%H%M%S")
+    ds_tag = normalize_dataset_name(dataset) if dataset else "all"
+    results_path = results_dir / f"self_recognition-{ds_tag}-{ts}.jsonl"
+
     def submit_job(job: Tuple[int, Pair, str]) -> Tuple[int, str, Optional[int], Optional[int]]:
         _, p, judge_model = job
         messages = build_messages(p.task_prompt, p.code1, p.code2, prompt_path)
@@ -178,16 +189,45 @@ def execute(
         futures = [executor.submit(submit_job, job) for job in jobs]
         for fut in tqdm(as_completed(futures), total=len(futures), desc="Judging", unit="req"):
             try:
-                _, resp_text, choice, truth = fut.result()
+                job_idx, resp_text, choice, truth = fut.result()
             except Exception as e:  # noqa: BLE001
                 console.print(f"[red]Judge request failed[/]: {e}")
                 continue
 
             processed += 1
             if choice is None or truth is None:
+                # Still write a result row with missing values
+                _, pair, judge_model = jobs[job_idx]
+                result = SelfRecognitionResult(
+                    dataset_name=pair.dataset_name,
+                    dataset_task_id=pair.dataset_task_id,
+                    judge_model=judge_model,
+                    model1=pair.model1,
+                    model2=pair.model2,
+                    choice=choice,
+                    truth=truth,
+                    correct=None,
+                    response_text=resp_text,
+                )
+                write_jsonl_line(results_path, result.to_dict())
                 continue
-            if choice == truth:
+            is_correct = choice == truth
+            if is_correct:
                 correct += 1
+            # Persist result row
+            _, pair, judge_model = jobs[job_idx]
+            result = SelfRecognitionResult(
+                dataset_name=pair.dataset_name,
+                dataset_task_id=pair.dataset_task_id,
+                judge_model=judge_model,
+                model1=pair.model1,
+                model2=pair.model2,
+                choice=choice,
+                truth=truth,
+                correct=is_correct,
+                response_text=resp_text,
+            )
+            write_jsonl_line(results_path, result.to_dict())
 
     if processed == 0:
         console.print("[yellow]No judge responses processed.[/]")
@@ -198,6 +238,7 @@ def execute(
         f"[green]Done.[/] Valid pairs: {total}, Processed: {processed}, Skipped: {skipped}, "
         f"Correct: {correct}, Accuracy: {acc:.3f}"
     )
+    console.print(f"[green]Saved results[/] -> {results_path}")
 
 
 @app.command()
