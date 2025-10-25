@@ -39,16 +39,21 @@ class TestOutcome:
 
 def strip_code_fences(code: str) -> str:
     s = str(code or "").strip()
-    if s.startswith("```"):
-        # Remove first line fence
-        lines = s.splitlines()
-        # Drop first line (``` or ```python)
+    if not s.startswith("```"):
+        return s
+
+    # Remove the opening fence line (``` or ```lang)
+    lines = s.splitlines()
+    if lines:
         lines = lines[1:]
-        # Drop trailing ``` if present
-        if lines and lines[-1].strip().startswith("```"):
-            lines = lines[:-1]
-        return "\n".join(lines)
-    return s
+
+    # Remove a closing fence line if present at the end
+    while lines and lines[-1].strip() == "":
+        lines.pop()
+    if lines and lines[-1].strip().startswith("```"):
+        lines = lines[:-1]
+
+    return "\n".join(lines)
 
 
 def run_single_record(record: Dict[str, Any]) -> TestOutcome:
