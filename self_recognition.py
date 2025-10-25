@@ -142,13 +142,18 @@ def execute(
     def judge_for_dataset(ds: str) -> Optional[str]:
         if judge_model_override:
             return judge_model_override
-        models = list(cfg.get("datasets", {}).get(ds, {}).get("models", []))
+        norm_ds = normalize_dataset_name(ds)
+        models = list(cfg.get("datasets", {}).get(norm_ds, {}).get("models", []))
         return models[0] if models else None
 
     # Submit all valid jobs
+    # Precompute judge model per dataset once
+    dataset_names = {p.dataset_name for p in pairs}
+    ds_to_judge: Dict[str, Optional[str]] = {ds: judge_for_dataset(ds) for ds in dataset_names}
+
     jobs: List[Tuple[int, Pair, str]] = []
     for idx, pair in enumerate(pairs):
-        judge_model = judge_for_dataset(pair.dataset_name)
+        judge_model = ds_to_judge.get(pair.dataset_name) or None
         if not judge_model:
             continue
         # Only valid if judge is one of the two models in the pair
