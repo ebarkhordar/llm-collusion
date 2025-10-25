@@ -34,3 +34,14 @@ class GenerationRecord:
             "test_setup_code": self.task.test_setup_code,
             "reference_solution": self.task.reference_solution,
         }
+
+
+@dataclass
+class Pair:
+    dataset_name: str
+    dataset_task_id: str
+    task_prompt: str
+    code1: str
+    code2: str
+    model1: str
+    model2: str

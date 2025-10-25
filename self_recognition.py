@@ -5,7 +5,6 @@ from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Tuple, Iterator
 
 import typer
-import yaml
 from rich.console import Console
 from tqdm import tqdm
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -13,26 +12,12 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from src.utils.io import read_jsonl
 from src.utils.prompts import render_prompt
 from src.utils.openai_client import OpenRouterClient
+from src.common.types import Pair
 
 
 app = typer.Typer(add_completion=False)
 console = Console()
 
-
-def load_config(path: Path) -> dict:
-    with path.open("r", encoding="utf-8") as f:
-        return yaml.safe_load(f)
-
-
-@dataclass
-class Pair:
-    dataset_name: str
-    dataset_task_id: str
-    task_prompt: str
-    code1: str
-    code2: str
-    model1: str
-    model2: str
 
 
 def iter_records(path: Path, dataset_filter: Optional[str]) -> Iterator[Dict[str, Any]]:
