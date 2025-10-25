@@ -16,7 +16,8 @@ def load_mbpp(start_index: int, end_index: int) -> List[TaskExample]:
 
     # Correct call: pass config as second positional arg
     ds = load_dataset(dataset_name, config, split=split)
-    dataset_label = f"{dataset_name}-{config}"
+    # We standardize the benchmark label to 'mbpp' everywhere
+    dataset_label = "mbpp"
 
     examples: List[TaskExample] = []
     for i, ex in enumerate(ds):

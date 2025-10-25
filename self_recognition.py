@@ -18,24 +18,11 @@ from src.lib import load_config
 app = typer.Typer(add_completion=False)
 console = Console()
 
-
-
-def normalize_dataset_name(name: Optional[str]) -> str:
-    """Normalize dataset names to allow flexible filtering.
-
-    Treat related variants like "mbpp" and "mbpp-sanitized" as the same family
-    for the purpose of filtering, while preserving original names elsewhere.
-    """
-    s = str(name or "").strip().lower()
-    if s.startswith("mbpp"):
-        return "mbpp"
-    return s
-
-
 def iter_records(path: Path, dataset_filter: Optional[str]) -> Iterator[Dict[str, Any]]:
-    norm_filter = normalize_dataset_name(dataset_filter) if dataset_filter else None
+    norm_filter = (str(dataset_filter).strip().lower()) if dataset_filter else None
     for rec in read_jsonl(path):
-        if norm_filter and normalize_dataset_name(rec.get("benchmark")) != norm_filter:
+        rec_ds = str(rec.get("benchmark", "")).strip().lower()
+        if norm_filter and rec_ds != norm_filter:
             continue
         yield rec
 
@@ -52,7 +39,7 @@ def build_pairs(records: Iterator[Dict[str, Any]], cfg: dict) -> List[Pair]:
     pairs: List[Pair] = []
     for (benchmark, task_id), items in grouped.items():
         # Prefer order of models as configured for this dataset if present
-        ds_cfg = cfg.get("datasets", {}).get(normalize_dataset_name(benchmark), {})
+        ds_cfg = cfg.get("datasets", {}).get(str(benchmark).strip().lower(), {})
         preferred_order: List[str] = list(ds_cfg.get("models", []))
 
         # dedupe by model, keep first occurrence
@@ -147,8 +134,8 @@ def execute(
     def judge_for_dataset(ds: str) -> Optional[str]:
         if judge_model_override:
             return judge_model_override
-        norm_ds = normalize_dataset_name(ds)
-        models = list(cfg.get("datasets", {}).get(norm_ds, {}).get("models", []))
+        key = str(ds).strip().lower()
+        models = list(cfg.get("datasets", {}).get(key, {}).get("models", []))
         return models[0] if models else None
 
     # Submit all valid jobs
@@ -183,7 +170,7 @@ def execute(
     # filename includes dataset and timestamp
     from datetime import datetime
     ts = datetime.now().strftime("%Y%m%d-%H%M%S")
-    ds_tag = normalize_dataset_name(dataset) if dataset else "all"
+    ds_tag = (str(dataset).strip().lower()) if dataset else "all"
     results_path = results_dir / f"self_recognition-{ds_tag}-{ts}.jsonl"
 
     def submit_job(job: Tuple[int, Pair, str]) -> Tuple[int, str, Optional[int], Optional[int]]:
