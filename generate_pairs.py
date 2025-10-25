@@ -4,7 +4,6 @@ from pathlib import Path
 from typing import Callable, Dict, List, Tuple
 
 import typer
-import yaml
 from rich.console import Console
 from tqdm import tqdm
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -14,14 +13,10 @@ from src.utils.prompts import render_prompt
 from src.utils.openai_client import OpenRouterClient
 from src.datasets.mbpp import load_mbpp
 from src.common.types import TaskExample, GenerationRecord
+from src.common.utils import load_config
 
 app = typer.Typer(add_completion=False)
 console = Console()
-
-
-def load_config(path: Path) -> dict:
-    with path.open("r", encoding="utf-8") as f:
-        return yaml.safe_load(f)
 
 
 def get_dataset_registry() -> Dict[str, Callable[[int, int], List[TaskExample]]]:

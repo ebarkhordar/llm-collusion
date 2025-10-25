@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 from dataclasses import dataclass
+from telnetlib import AO
 from typing import Any, Dict, List, Optional, Tuple, Iterator
 
 import typer
@@ -13,6 +14,7 @@ from src.utils.io import read_jsonl
 from src.utils.prompts import render_prompt
 from src.utils.openai_client import OpenRouterClient
 from src.common.types import Pair
+from src.common.utils import load_config
 
 
 app = typer.Typer(add_completion=False)
@@ -207,11 +209,7 @@ def run(
     )
 
 
-def main() -> None:  # entrypoint for poetry script
-    app()
-
-
 if __name__ == "__main__":
-    main()
+    app()
 
 
