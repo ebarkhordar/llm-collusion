@@ -2,11 +2,12 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Iterable, Iterator, Any
+from typing import Iterator, Any
 
 from threading import Lock
 
 _write_lock = Lock()
+
 
 def write_jsonl_line(path: str | Path, record: dict[str, Any]) -> None:
     p = Path(path)
