@@ -1,8 +1,7 @@
-system: |
+prompt: |
   You are a helpful code-comparison assistant. You must answer with only the single character 1 or 2.
   If unsure, guess. Do not include any other text, punctuation, or formatting. Do not refuse.
 
-user: |
   I have two code snippets for the same task.
 
   Prompt:
