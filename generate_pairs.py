@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Iterable, List, Dict, Tuple
+from typing import Callable, Dict, List, Tuple
 
 import typer
 import yaml
@@ -13,6 +13,7 @@ from src.utils.io import write_jsonl_line
 from src.utils.prompts import render_prompt
 from src.utils.openai_client import OpenRouterClient
 from src.datasets.mbpp import load_mbpp
+from src.common.types import TaskExample
 
 app = typer.Typer(add_completion=False)
 console = Console()
@@ -23,25 +24,55 @@ def load_config(path: Path) -> dict:
         return yaml.safe_load(f)
 
 
-def get_tasks(source: str, start_index: int, end_index: int) -> List[Dict[str, str]]:
-    # Only MBPP for now
-    if source.lower() != "mbpp":
-        source = "mbpp"
-    examples = load_mbpp(start_index=start_index, end_index=end_index)
-    items: List[Dict[str, str]] = []
-    for ex in examples:
-        items.append(
-            {
-                "dataset_name": ex.dataset_name,
-                "dataset_task_id": ex.dataset_task_id,
-                "prompt": ex.prompt,
-                "test_list": ex.test_list,
-                "challenge_test_list": ex.challenge_test_list,
-                "test_setup_code": ex.test_setup_code,
-                "reference_solution": ex.reference_solution,
-            }
-        )
-    return items
+def get_dataset_registry() -> Dict[str, Callable[[int, int], List[TaskExample]]]:
+    """Return a mapping from dataset key to its loader.
+
+    New datasets can be registered here by adding an entry mapping a dataset
+    identifier (CLI value) to a loader function that returns TaskExample items.
+    """
+    return {
+        "mbpp": load_mbpp,
+    }
+
+
+def load_tasks(dataset: str, start_index: int, end_index: int) -> List[TaskExample]:
+    registry = get_dataset_registry()
+    key = dataset.lower()
+    if key not in registry:
+        available = ", ".join(sorted(registry.keys()))
+        raise typer.BadParameter(f"Unknown dataset '{dataset}'. Available: {available}")
+    loader = registry[key]
+    return loader(start_index=start_index, end_index=end_index)
+
+
+def compute_output_path(base_dir: Path, source: str) -> Path:
+    from datetime import datetime
+    ts = datetime.now().strftime("%Y%m%d-%H%M%S")
+    out_path = base_dir / f"{source}-{ts}.jsonl"
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    return out_path
+
+
+def build_messages(prompt: str, gen_prompt_path: Path) -> List[Dict[str, str]]:
+    rendered = render_prompt(gen_prompt_path, prompt=prompt)
+    return [
+        {"role": "system", "content": rendered["system"]},
+        {"role": "user", "content": rendered["user"]},
+    ]
+
+
+def make_record(task: TaskExample, model_name: str, code: str) -> Dict[str, object]:
+    return {
+        "dataset_name": task.dataset_name,
+        "dataset_task_id": task.dataset_task_id,
+        "prompt": task.prompt,
+        "model_name": model_name,
+        "generated_code": code,
+        "test_list": task.test_list,
+        "challenge_test_list": task.challenge_test_list,
+        "test_setup_code": task.test_setup_code,
+        "reference_solution": task.reference_solution,
+    }
 
 
 def execute(config_path: Path, dataset: str, start_index: int, end_index: int) -> None:
@@ -58,33 +89,27 @@ def execute(config_path: Path, dataset: str, start_index: int, end_index: int) -
 
     paths = cfg.get("paths", {})
     data_dir = Path(paths.get("data_dir", "data"))
-    from datetime import datetime
-    ts = datetime.now().strftime("%Y%m%d-%H%M%S")
-    out = data_dir / f"{source}-{ts}.jsonl"
-    out.parent.mkdir(parents=True, exist_ok=True)
+    out = compute_output_path(data_dir, source)
 
     client = OpenRouterClient(api_key=cfg.get("api", {}).get("openrouter_api_key") or None)
     gen_prompt_path = Path("prompts/generation.yaml")
 
-    tasks = get_tasks(source, start_index, end_index)
+    tasks = load_tasks(source, start_index, end_index)
     console.print(f"Generating code for {len(tasks)} tasks using models: {models[:2]}")
 
     # Determine concurrency level
     max_workers = int(cfg.get("api", {}).get("concurrency", 4))
 
-    def submit_job(task: Dict[str, str], model: str) -> Tuple[Dict[str, str], str, str]:
-        rendered = render_prompt(gen_prompt_path, prompt=task["prompt"])
-        messages = [
-            {"role": "system", "content": rendered["system"]},
-            {"role": "user", "content": rendered["user"]},
-        ]
+    def submit_job(task: TaskExample, model: str) -> Tuple[TaskExample, str, str]:
+        messages = build_messages(task.prompt, gen_prompt_path)
         code = client.generate_code(prompt="", model=model, messages=messages)
         return task, model, code
 
-    jobs: List[Tuple[Dict[str, str], str]] = []
-    for task in tasks:
-        for model in models[:2]:
-            jobs.append((task, model))
+    jobs: List[Tuple[TaskExample, str]] = [
+        (task, model)
+        for task in tasks
+        for model in models[:2]
+    ]
 
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         futures = [executor.submit(submit_job, task, model) for task, model in jobs]
@@ -94,17 +119,7 @@ def execute(config_path: Path, dataset: str, start_index: int, end_index: int) -
             except Exception as e:  # noqa: BLE001
                 console.print(f"[red]Generation failed[/]: {e}")
                 continue
-            record = {
-                "dataset_name": task["dataset_name"],
-                "dataset_task_id": task["dataset_task_id"],
-                "prompt": task["prompt"],
-                "model_name": model_name,
-                "generated_code": code,
-                "test_list": task.get("test_list"),
-                "challenge_test_list": task.get("challenge_test_list"),
-                "test_setup_code": task.get("test_setup_code"),
-                "reference_solution": task.get("reference_solution"),
-            }
+            record = make_record(task, model_name, code)
             write_jsonl_line(out, record)
 
     console.print(f"[green]Saved[/] -> {out}")
