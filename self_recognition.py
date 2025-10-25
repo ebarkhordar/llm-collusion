@@ -34,31 +34,31 @@ def normalize_dataset_name(name: Optional[str]) -> str:
 def iter_records(path: Path, dataset_filter: Optional[str]) -> Iterator[Dict[str, Any]]:
     norm_filter = normalize_dataset_name(dataset_filter) if dataset_filter else None
     for rec in read_jsonl(path):
-        if norm_filter and normalize_dataset_name(rec.get("dataset_name")) != norm_filter:
+        if norm_filter and normalize_dataset_name(rec.get("benchmark")) != norm_filter:
             continue
         yield rec
 
 
 def build_pairs(records: Iterator[Dict[str, Any]], cfg: dict) -> List[Pair]:
-    # group by (dataset_name, dataset_task_id)
+    # group by (benchmark, task_id)
     from collections import defaultdict
 
     grouped: Dict[Tuple[str, str], List[Dict[str, Any]]] = defaultdict(list)
     for r in records:
-        key = (str(r.get("dataset_name")), str(r.get("dataset_task_id")))
+        key = (str(r.get("benchmark")), str(r.get("task_id")))
         grouped[key].append(r)
 
     pairs: List[Pair] = []
-    for (dataset_name, dataset_task_id), items in grouped.items():
+    for (benchmark, task_id), items in grouped.items():
         # Prefer order of models as configured for this dataset if present
-        ds_cfg = cfg.get("datasets", {}).get(dataset_name, {})
+        ds_cfg = cfg.get("datasets", {}).get(normalize_dataset_name(benchmark), {})
         preferred_order: List[str] = list(ds_cfg.get("models", []))
 
         # dedupe by model, keep first occurrence
         seen_models: set[str] = set()
         unique_items: List[Dict[str, Any]] = []
         for it in items:
-            m = str(it.get("model_name"))
+            m = str(it.get("model_id"))
             if m in seen_models:
                 continue
             seen_models.add(m)
@@ -67,7 +67,7 @@ def build_pairs(records: Iterator[Dict[str, Any]], cfg: dict) -> List[Pair]:
         # Sort unique_items by preferred order when available
         if preferred_order:
             idx = {m: i for i, m in enumerate(preferred_order)}
-            unique_items.sort(key=lambda it: idx.get(str(it.get("model_name")), 1_000_000))
+            unique_items.sort(key=lambda it: idx.get(str(it.get("model_id")), 1_000_000))
 
         if len(unique_items) < 2:
             continue
@@ -75,13 +75,13 @@ def build_pairs(records: Iterator[Dict[str, Any]], cfg: dict) -> List[Pair]:
         a, b = unique_items[0], unique_items[1]
         pairs.append(
             Pair(
-                dataset_name=dataset_name,
-                dataset_task_id=str(dataset_task_id),
+                benchmark=benchmark,
+                task_id=str(task_id),
                 task_prompt=str(a.get("prompt", "")),
                 code1=str(a.get("generated_code", "")),
                 code2=str(b.get("generated_code", "")),
-                model1=str(a.get("model_name", "")),
-                model2=str(b.get("model_name", "")),
+                model1=str(a.get("model_id", "")),
+                model2=str(b.get("model_id", "")),
             )
         )
 
@@ -148,12 +148,12 @@ def execute(
 
     # Submit all valid jobs
     # Precompute judge model per dataset once
-    dataset_names = {p.dataset_name for p in pairs}
+    dataset_names = {p.benchmark for p in pairs}
     ds_to_judge: Dict[str, Optional[str]] = {ds: judge_for_dataset(ds) for ds in dataset_names}
 
     jobs: List[Tuple[int, Pair, str]] = []
     for idx, pair in enumerate(pairs):
-        judge_model = ds_to_judge.get(pair.dataset_name) or None
+        judge_model = ds_to_judge.get(pair.benchmark) or None
         if not judge_model:
             continue
         # Only valid if judge is one of the two models in the pair
@@ -204,8 +204,8 @@ def execute(
                 # Still write a result row with missing values
                 _, pair, judge_model = jobs[job_idx]
                 result = SelfRecognitionResult(
-                    benchmark=pair.dataset_name,
-                    task_id=pair.dataset_task_id,
+                    benchmark=pair.benchmark,
+                    task_id=pair.task_id,
                     evaluator_model=judge_model,
                     candidate_1_model=pair.model1,
                     candidate_2_model=pair.model2,
@@ -222,8 +222,8 @@ def execute(
             # Persist result row
             _, pair, judge_model = jobs[job_idx]
             result = SelfRecognitionResult(
-                benchmark=pair.dataset_name,
-                task_id=pair.dataset_task_id,
+                benchmark=pair.benchmark,
+                task_id=pair.task_id,
                 evaluator_model=judge_model,
                 candidate_1_model=pair.model1,
                 candidate_2_model=pair.model2,

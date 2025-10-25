@@ -25,21 +25,29 @@ def load_mbpp(start_index: int, end_index: int) -> List[TaskExample]:
         if i >= end_index:
             break
 
-        # sanitized schema
+        # MBPP sanitized original schema
         prompt = ex.get("prompt", "")
-        test_list = ex.get("test_list")
-        setup = ex.get("test_imports")
-        reference = ex.get("code", "")
+        test_list_raw = ex.get("test_list")
+        test_imports_raw = ex.get("test_imports")
+        reference_code = ex.get("code", "")
+
+        # Coerce to lists of strings
+        def as_list(value) -> List[str]:
+            if value is None:
+                return []
+            if isinstance(value, list):
+                return [str(v) for v in value]
+            # If provided as a string, split by newline for robustness
+            return [s for s in str(value).splitlines() if s]
 
         examples.append(
             TaskExample(
-                dataset_name=dataset_label,
-                dataset_task_id=str(ex["task_id"]),
+                benchmark=dataset_label,
+                task_id=str(ex.get("task_id")),
                 prompt=str(prompt),
-                test_list=list(test_list) if test_list else None,
-                challenge_test_list=None,
-                test_setup_code="\n".join(setup) if isinstance(setup, list) else str(setup) if setup else None,
-                reference_solution=str(reference),
+                code=str(reference_code),
+                test_imports=as_list(test_imports_raw),
+                test_list=as_list(test_list_raw),
             )
         )
 
