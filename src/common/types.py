@@ -19,7 +19,7 @@ class TaskExample:
 class GenerationRecord:
     # Record of a single model generation for a given task
     task: TaskExample
-    model_id: str
+    model_name: str
     generated_code: str
 
     def to_dict(self) -> Dict[str, Any]:
@@ -31,7 +31,7 @@ class GenerationRecord:
             "reference_code": self.task.code,
             "test_imports": self.task.test_imports,
             "test_list": self.task.test_list,
-            "model_id": self.model_id,
+            "model_name": self.model_name,
             "generated_code": self.generated_code,
         }
 

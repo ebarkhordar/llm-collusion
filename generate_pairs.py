@@ -55,7 +55,7 @@ def build_messages(prompt: str, gen_prompt_path: Path) -> List[Dict[str, str]]:
 
 
 def make_record(task: TaskExample, model_name: str, code: str) -> GenerationRecord:
-    return GenerationRecord(task=task, model_id=model_name, generated_code=code)
+    return GenerationRecord(task=task, model_name=model_name, generated_code=code)
 
 
 def execute(config_path: Path, dataset: str, start_index: int, end_index: int) -> None:

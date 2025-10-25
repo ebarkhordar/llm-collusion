@@ -58,7 +58,7 @@ def build_pairs(records: Iterator[Dict[str, Any]], cfg: dict) -> List[Pair]:
         seen_models: set[str] = set()
         unique_items: List[Dict[str, Any]] = []
         for it in items:
-            m = str(it.get("model_id"))
+            m = str(it.get("model_name"))
             if m in seen_models:
                 continue
             seen_models.add(m)
@@ -67,7 +67,7 @@ def build_pairs(records: Iterator[Dict[str, Any]], cfg: dict) -> List[Pair]:
         # Sort unique_items by preferred order when available
         if preferred_order:
             idx = {m: i for i, m in enumerate(preferred_order)}
-            unique_items.sort(key=lambda it: idx.get(str(it.get("model_id")), 1_000_000))
+            unique_items.sort(key=lambda it: idx.get(str(it.get("model_name")), 1_000_000))
 
         if len(unique_items) < 2:
             continue
@@ -80,8 +80,8 @@ def build_pairs(records: Iterator[Dict[str, Any]], cfg: dict) -> List[Pair]:
                 task_prompt=str(a.get("prompt", "")),
                 code1=str(a.get("generated_code", "")),
                 code2=str(b.get("generated_code", "")),
-                model1=str(a.get("model_id", "")),
-                model2=str(b.get("model_id", "")),
+                model1=str(a.get("model_name", "")),
+                model2=str(b.get("model_name", "")),
             )
         )
 
