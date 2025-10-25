@@ -16,6 +16,8 @@ prompt: |
     ```
 
   Implement the required function(s) for this task.
+  If a function name is provided, you must implement exactly that function name and signature:
+  Function name: {{ function_name }}
   Return only the final Python code solution, valid for direct testing.
 
   Task:

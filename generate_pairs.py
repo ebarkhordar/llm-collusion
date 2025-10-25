@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Callable, Dict, List, Tuple
+from typing import Callable, Dict, List, Tuple, Optional
+from collections import Counter
+import ast
 
 import typer
 from rich.console import Console
@@ -46,8 +48,55 @@ def compute_output_path(base_dir: Path, source: str) -> Path:
     return out_path
 
 
-def build_messages(prompt: str, gen_prompt_path: Path) -> List[Dict[str, str]]:
-    rendered = render_prompt(gen_prompt_path, prompt=prompt)
+def _extract_function_names_from_test(line: str) -> List[str]:
+    names: List[str] = []
+    try:
+        tree = ast.parse(line)
+    except Exception:
+        return names
+
+    class CallVisitor(ast.NodeVisitor):
+        def visit_Call(self, node: ast.Call) -> None:  # type: ignore[override]
+            func = node.func
+            if isinstance(func, ast.Name):
+                names.append(func.id)
+            self.generic_visit(node)
+
+    CallVisitor().visit(tree)
+    return names
+
+
+def _extract_function_name_from_code(code: str) -> Optional[str]:
+    try:
+        tree = ast.parse(code)
+    except Exception:
+        return None
+    for node in tree.body:
+        if isinstance(node, ast.FunctionDef):
+            # Return the first top-level function definition
+            return node.name
+    return None
+
+
+def extract_function_name(task: TaskExample) -> Optional[str]:
+    # Prefer names referenced in tests
+    counts: Counter[str] = Counter()
+    for line in task.test_list:
+        for name in _extract_function_names_from_test(line):
+            # Filter obvious non-solution calls
+            if name in {"print", "len", "range", "int", "float", "str", "list", "set", "dict", "tuple"}:
+                continue
+            counts[name] += 1
+    if counts:
+        return counts.most_common(1)[0][0]
+
+    # Fallback to the reference code's first function def
+    return _extract_function_name_from_code(task.code)
+
+
+def build_messages(task: TaskExample, gen_prompt_path: Path) -> List[Dict[str, str]]:
+    fn_name = extract_function_name(task) or ""
+    rendered = render_prompt(gen_prompt_path, prompt=task.prompt, function_name=fn_name)
     return [
         {"role": "user", "content": str(rendered.get("user", "")).strip()},
     ]
@@ -83,7 +132,7 @@ def execute(config_path: Path, dataset: str, start_index: int, end_index: int) -
     max_workers = int(cfg.get("api", {}).get("concurrency", 4))
 
     def submit_job(task: TaskExample, model: str) -> Tuple[TaskExample, str, str]:
-        messages = build_messages(task.prompt, gen_prompt_path)
+        messages = build_messages(task, gen_prompt_path)
         code = client.generate_code(
             model=model,
             messages=messages,
