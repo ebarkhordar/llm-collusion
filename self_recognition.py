@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from pathlib import Path
 from dataclasses import dataclass
-from telnetlib import AO
 from typing import Any, Dict, List, Optional, Tuple, Iterator
 
 import typer
@@ -20,9 +19,22 @@ console = Console()
 
 
 
+def normalize_dataset_name(name: Optional[str]) -> str:
+    """Normalize dataset names to allow flexible filtering.
+
+    Treat related variants like "mbpp" and "mbpp-sanitized" as the same family
+    for the purpose of filtering, while preserving original names elsewhere.
+    """
+    s = str(name or "").strip().lower()
+    if s.startswith("mbpp"):
+        return "mbpp"
+    return s
+
+
 def iter_records(path: Path, dataset_filter: Optional[str]) -> Iterator[Dict[str, Any]]:
+    norm_filter = normalize_dataset_name(dataset_filter) if dataset_filter else None
     for rec in read_jsonl(path):
-        if dataset_filter and rec.get("dataset_name") != dataset_filter:
+        if norm_filter and normalize_dataset_name(rec.get("dataset_name")) != norm_filter:
             continue
         yield rec
 
