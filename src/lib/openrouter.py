@@ -35,9 +35,11 @@ class OpenRouterClient:
         self,
         prompt: str,
         model: str,
-        temperature: float = 0.2,
+        temperature: float = 0.0,
         system: Optional[str] = None,
         messages: Optional[List[Dict[str, str]]] = None,
+        max_tokens: Optional[int] = 512,
+        stop: Optional[List[str]] = None,
         max_retries: int = 5,
         initial_backoff_s: float = 1.0,
     ) -> str:
@@ -62,11 +64,15 @@ class OpenRouterClient:
             if prompt:
                 messages.append({"role": "user", "content": prompt})
 
-        body = {
+        body: Dict[str, object] = {
             "model": model,
             "messages": messages,
             "temperature": temperature,
         }
+        if max_tokens is not None:
+            body["max_tokens"] = max_tokens
+        if stop:
+            body["stop"] = stop
         attempt = 0
         backoff = initial_backoff_s
         while True:
