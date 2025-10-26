@@ -152,6 +152,14 @@ def execute(
             continue
         jobs.append((idx, pair, judge_model))
 
+    # Print evaluator model(s) that will be used
+    unique_judges = sorted({jm for _, _, jm in jobs})
+    if unique_judges:
+        if len(unique_judges) == 1:
+            console.print(f"Evaluator model: {unique_judges[0]}")
+        else:
+            console.print(f"Evaluator models: {', '.join(unique_judges)}")
+
     if not jobs:
         console.print("[yellow]No valid pairs where judge model is one of the two.[/]")
         return
