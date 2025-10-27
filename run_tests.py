@@ -48,13 +48,22 @@ def strip_code_fences(code: str) -> str:
     if lines:
         lines = lines[1:]
 
-    # Remove a closing fence line if present at the end
-    while lines and lines[-1].strip() == "":
-        lines.pop()
-    if lines and lines[-1].strip().startswith("```"):
-        lines = lines[:-1]
+    # Find and remove the first closing fence, then stop
+    # This handles cases where additional text follows the code block
+    result_lines = []
+    found_closing = False
+    for line in lines:
+        if not found_closing and line.strip().startswith("```"):
+            found_closing = True
+            continue
+        if not found_closing:
+            result_lines.append(line)
+    
+    # If no closing fence was found, return everything (might just be the content)
+    if not found_closing:
+        return "\n".join(lines)
 
-    return "\n".join(lines)
+    return "\n".join(result_lines)
 
 
 def run_single_record(record: Dict[str, Any]) -> TestOutcome:
