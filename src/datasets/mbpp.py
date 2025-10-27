@@ -6,13 +6,17 @@ from datasets import load_dataset  # type: ignore
 from src.common.types import TaskExample
 
 
-def load_mbpp(start_index: int, end_index: int) -> List[TaskExample]:
+def load_mbpp(start_index: int, end_index: int, split: str = "test") -> List[TaskExample]:
     """
     Load MBPP-sanitized dataset into TaskExample objects.
+    
+    Args:
+        start_index: Start index (inclusive)
+        end_index: End index (exclusive, -1 for all)
+        split: Dataset split - one of "train", "test", "validation", "prompt"
     """
     dataset_name = "mbpp"
     config = "sanitized"
-    split = "test"
 
     # Correct call: pass config as second positional arg
     ds = load_dataset(dataset_name, config, split=split)

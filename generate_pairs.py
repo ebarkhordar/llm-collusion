@@ -19,7 +19,7 @@ app = typer.Typer(add_completion=False)
 console = Console()
 
 
-def get_dataset_registry() -> Dict[str, Callable[[int, int], List[TaskExample]]]:
+def get_dataset_registry() -> Dict[str, Callable[[int, int, str], List[TaskExample]]]:
     """Return a mapping from dataset key to its loader.
 
     New datasets can be registered here by adding an entry mapping a dataset
@@ -30,20 +30,20 @@ def get_dataset_registry() -> Dict[str, Callable[[int, int], List[TaskExample]]]
     }
 
 
-def load_tasks(dataset: str, start_index: int, end_index: int) -> List[TaskExample]:
+def load_tasks(dataset: str, start_index: int, end_index: int, split: str = "test") -> List[TaskExample]:
     registry = get_dataset_registry()
     key = dataset.lower()
     if key not in registry:
         available = ", ".join(sorted(registry.keys()))
         raise typer.BadParameter(f"Unknown dataset '{dataset}'. Available: {available}")
     loader = registry[key]
-    return loader(start_index=start_index, end_index=end_index)
+    return loader(start_index=start_index, end_index=end_index, split=split)
 
 
-def compute_output_path(base_dir: Path, source: str, model_name: str, timestamp: str) -> Path:
+def compute_output_path(base_dir: Path, source: str, model_name: str, split: str) -> Path:
     # Normalize model name for filesystem (replace / with -)
     safe_model = model_name.replace("/", "-")
-    out_path = base_dir / "results" / timestamp / f"{source}-{safe_model}.jsonl"
+    out_path = base_dir / "results" / f"{source}-sanitized" / split / f"{safe_model}.jsonl"
     out_path.parent.mkdir(parents=True, exist_ok=True)
     return out_path
 
@@ -152,7 +152,7 @@ def strip_markdown_code_blocks(text: str) -> str:
     return ""
 
 
-def execute(dataset: str, start_index: int, end_index: int) -> None:
+def execute(dataset: str, start_index: int, end_index: int, split: str = "test") -> None:
     config_path = Path("configs/config.yaml")
     cfg = load_config(config_path)
 
@@ -171,19 +171,15 @@ def execute(dataset: str, start_index: int, end_index: int) -> None:
     client = OpenRouterClient(api_key=cfg.get("api", {}).get("openrouter_api_key") or None)
     gen_prompt_path = Path("prompts/generation.md")
 
-    tasks = load_tasks(source, start_index, end_index)
-    console.print(f"Generating code for {len(tasks)} tasks using models: {models[:2]}")
+    tasks = load_tasks(source, start_index, end_index, split)
+    console.print(f"Generating code for {len(tasks)} tasks from {split} split using models: {models[:2]}")
 
     # Determine concurrency level
     max_workers = int(cfg.get("api", {}).get("concurrency", 4))
     
-    # Create timestamp for this run
-    from datetime import datetime
-    timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
-    
     # Create output paths for each model
     model_outputs = {
-        model: compute_output_path(data_dir, source, model, timestamp)
+        model: compute_output_path(data_dir, source, model, split)
         for model in models[:2]
     }
 
@@ -228,8 +224,9 @@ def run(
     dataset: str = typer.Option("mbpp", help="Dataset name (e.g., mbpp)"),
     start_index: int = typer.Option(0, help="Start index (inclusive)"),
     end_index: int = typer.Option(10, help="End index (exclusive)"),
+    split: str = typer.Option("test", help="Dataset split (train, test, validation, prompt)"),
 ):
-    execute(dataset=dataset, start_index=start_index, end_index=end_index)
+    execute(dataset=dataset, start_index=start_index, end_index=end_index, split=split)
 
 
 if __name__ == "__main__":
