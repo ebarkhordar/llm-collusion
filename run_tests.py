@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List
 from glob import glob
 
 import typer
@@ -37,46 +37,16 @@ class TestOutcome:
             "errors": self.errors,
         }
 
-
-def strip_code_fences(code: str) -> str:
-    s = str(code or "").strip()
-    if not s.startswith("```"):
-        return s
-
-    # Remove the opening fence line (``` or ```lang)
-    lines = s.splitlines()
-    if lines:
-        lines = lines[1:]
-
-    # Find and remove the first closing fence, then stop
-    # This handles cases where additional text follows the code block
-    result_lines = []
-    found_closing = False
-    for line in lines:
-        if not found_closing and line.strip().startswith("```"):
-            found_closing = True
-            continue
-        if not found_closing:
-            result_lines.append(line)
-    
-    # If no closing fence was found, return everything (might just be the content)
-    if not found_closing:
-        return "\n".join(lines)
-
-    return "\n".join(result_lines)
-
-
 def run_single_record(record: Dict[str, Any]) -> TestOutcome:
     benchmark = str(record.get("benchmark", "")).strip()
     task_id = str(record.get("task_id", "")).strip()
     model_name = str(record.get("model_name", "")).strip()
     test_imports: List[str] = [str(x) for x in (record.get("test_imports") or [])]
     test_list: List[str] = [str(x) for x in (record.get("test_list") or [])]
-    code = strip_code_fences(record.get("generated_code") or "")
+    code = str(record.get("generated_code") or "").strip()
 
     # Isolated namespace for executing candidate code and tests
     globals_ns: Dict[str, Any] = {"__name__": "tested_module"}
-    locals_ns: Dict[str, Any] = globals_ns
 
     errors: List[str] = []
     passed_count = 0
@@ -84,15 +54,15 @@ def run_single_record(record: Dict[str, Any]) -> TestOutcome:
     try:
         # Execute required imports first
         for imp in test_imports:
-            exec(imp, globals_ns, locals_ns)
+            exec(imp, globals_ns, globals_ns)
 
         # Load candidate solution
-        exec(code, globals_ns, locals_ns)
+        exec(code, globals_ns, globals_ns)
 
         # Run assertions
         for t in test_list:
             try:
-                exec(t, globals_ns, locals_ns)
+                exec(t, globals_ns, globals_ns)
                 passed_count += 1
             except Exception as e:  # noqa: BLE001
                 errors.append(f"{type(e).__name__}: {e}")
@@ -175,7 +145,6 @@ def run(
             all_model_outputs[model_name] = out_path
             
             # Aggregate stats
-            per_model: Dict[str, Dict[str, int]] = {}
             model_total = 0
             model_passed = 0
             model_tests = 0
