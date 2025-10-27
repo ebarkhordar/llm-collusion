@@ -7,7 +7,6 @@
       "request": "launch",
       "program": "${workspaceFolder}/generate_pairs.py",
       "args": [
-        "run",
         "--dataset",
         "mbpp",
         "--start-index",
