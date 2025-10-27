@@ -40,12 +40,10 @@ def load_tasks(dataset: str, start_index: int, end_index: int) -> List[TaskExamp
     return loader(start_index=start_index, end_index=end_index)
 
 
-def compute_output_path(base_dir: Path, source: str, model_name: str) -> Path:
-    from datetime import datetime
-    ts = datetime.now().strftime("%Y%m%d-%H%M%S")
+def compute_output_path(base_dir: Path, source: str, model_name: str, timestamp: str) -> Path:
     # Normalize model name for filesystem (replace / with -)
     safe_model = model_name.replace("/", "-")
-    out_path = base_dir / f"{source}-{safe_model}-{ts}.jsonl"
+    out_path = base_dir / "results" / timestamp / f"{source}-{safe_model}.jsonl"
     out_path.parent.mkdir(parents=True, exist_ok=True)
     return out_path
 
@@ -133,9 +131,13 @@ def execute(dataset: str, start_index: int, end_index: int) -> None:
     # Determine concurrency level
     max_workers = int(cfg.get("api", {}).get("concurrency", 4))
     
+    # Create timestamp for this run
+    from datetime import datetime
+    timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+    
     # Create output paths for each model
     model_outputs = {
-        model: compute_output_path(data_dir, source, model)
+        model: compute_output_path(data_dir, source, model, timestamp)
         for model in models[:2]
     }
 
@@ -166,9 +168,11 @@ def execute(dataset: str, start_index: int, end_index: int) -> None:
             # Write to the appropriate model-specific file
             write_jsonl_line(model_outputs[model_name], record.to_dict())
 
-    # Print all output files
+    # Print all output files and the results directory
+    results_dir = model_outputs[models[0]].parent
+    console.print(f"\n[green]Results saved in:[/] {results_dir}")
     for model, output_path in model_outputs.items():
-        console.print(f"[green]Saved {model}[/] -> {output_path}")
+        console.print(f"  {model} -> {output_path.name}")
 
 
 @app.command()
