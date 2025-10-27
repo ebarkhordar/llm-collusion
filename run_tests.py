@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
+from glob import glob
 
 import typer
 from rich.console import Console
@@ -102,78 +103,119 @@ def run_single_record(record: Dict[str, Any]) -> TestOutcome:
     )
 
 
-def compute_output_path(base_dir: Path, source: str) -> Path:
-    from datetime import datetime
-
-    ts = datetime.now().strftime("%Y%m%d-%H%M%S")
-    out_dir = base_dir / "results"
+def compute_output_path(base_dir: Path, source_dir: str, model_name: str) -> Path:
+    # Normalize model name for filesystem (replace / with -)
+    safe_model = model_name.replace("/", "-")
+    # Extract timestamp from source directory (e.g., "20251027-170334" from "data/results/20251027-170334")
+    timestamp = Path(source_dir).name
+    out_dir = base_dir / "tests" / timestamp
     out_dir.mkdir(parents=True, exist_ok=True)
-    return out_dir / f"unit_eval-{source}-{ts}.jsonl"
+    return out_dir / f"tests-{safe_model}.jsonl"
 
 
 @app.command()
 def run(
-    input_path: Path = typer.Option(..., "--input", "-i", help="Path to generations JSONL"),
-    output_path: Optional[Path] = typer.Option(None, "--output", "-o", help="Where to write per-record outcomes JSONL"),
+    input_path: Path = typer.Option(..., "--input", "-i", help="Path to input directory or JSONL file"),
 ):
     p = input_path.resolve()
     if not p.exists():
-        raise typer.BadParameter(f"Input JSONL not found: {p}")
+        raise typer.BadParameter(f"Input not found: {p}")
 
-    # Derive a source tag from input filename for default output naming
-    source_tag = p.stem
-    default_out = compute_output_path(base_dir=Path("data"), source=source_tag)
-    out_path = (output_path or default_out).resolve()
+    # Collect all jsonl files to process
+    jsonl_files: List[Path] = []
+    
+    if p.is_dir():
+        # Find all jsonl files in the directory
+        jsonl_files = [Path(f) for f in glob(str(p / "*.jsonl"))]
+        if not jsonl_files:
+            console.print("[yellow]No JSONL files found in directory.[/]")
+            raise typer.Exit(0)
+    elif p.is_file() and p.suffix == ".jsonl":
+        jsonl_files = [p]
+    else:
+        raise typer.BadParameter(f"Input must be a directory or JSONL file: {p}")
 
-    records = list(read_jsonl(p))
-    if not records:
-        console.print("[yellow]No records found in input.[/]")
-        raise typer.Exit(0)
+    # Determine the source directory for output naming
+    if p.is_dir():
+        source_dir = str(p)
+    else:
+        # For a file, find the parent results directory
+        # e.g., if input is data/results/20251027-170334/file.jsonl, source_dir should be data/results/20251027-170334
+        source_dir = str(p.parent)
+    
+    # Process each JSONL file (one per model)
+    all_model_outputs = {}
+    overall_stats = {"total_records": 0, "tasks_passed": 0, "total_tests": 0, "total_tests_passed": 0}
+    
+    for jsonl_file in sorted(jsonl_files):
+        # Determine output path for this model
+        try:
+            records = list(read_jsonl(jsonl_file))
+            if not records:
+                console.print(f"[yellow]No records found in {jsonl_file}[/]")
+                continue
+            
+            # Get model name from first record
+            model_name = records[0].get("model_name")
+            if not model_name:
+                console.print(f"[red]No model_name found in {jsonl_file}[/]")
+                continue
+            
+            out_path = compute_output_path(base_dir=Path("data"), source_dir=source_dir, model_name=model_name)
+            all_model_outputs[model_name] = out_path
+            
+            # Aggregate stats
+            per_model: Dict[str, Dict[str, int]] = {}
 
-    # Aggregate stats
-    total_records = 0
-    tasks_passed = 0
-    total_tests = 0
-    total_tests_passed = 0
-    per_model: Dict[str, Dict[str, int]] = {}
+            for rec in tqdm(records, desc=f"Testing {jsonl_file.name}", unit="rec"):
+                overall_stats["total_records"] += 1
+                outcome = run_single_record(rec)
+                write_jsonl_line(out_path, outcome.to_dict())
 
-    for rec in tqdm(records, desc="Testing", unit="rec"):
-        total_records += 1
-        outcome = run_single_record(rec)
-        write_jsonl_line(out_path, outcome.to_dict())
+                overall_stats["total_tests"] += outcome.num_tests
+                overall_stats["total_tests_passed"] += outcome.num_passed
+                if outcome.passed:
+                    overall_stats["tasks_passed"] += 1
 
-        total_tests += outcome.num_tests
-        total_tests_passed += outcome.num_passed
-        if outcome.passed:
-            tasks_passed += 1
+                stats = per_model.setdefault(outcome.model_name, {"records": 0, "tasks_passed": 0, "tests": 0, "tests_passed": 0})
+                stats["records"] += 1
+                stats["tests"] += outcome.num_tests
+                stats["tests_passed"] += outcome.num_passed
+                if outcome.passed:
+                    stats["tasks_passed"] += 1
+            
+            # Print results for this model
+            console.print(f"\n[green]Saved results for {model_name}[/] -> {out_path}")
+            
+            if per_model:
+                for model, s in per_model.items():
+                    m_task_acc = (s["tasks_passed"] / s["records"]) if s["records"] else 0.0
+                    m_test_acc = (s["tests_passed"] / s["tests"]) if s["tests"] else 0.0
+                    console.print(
+                        f"  {model}: tasks {s['tasks_passed']}/{s['records']} ({m_task_acc:.3f}), "
+                        f"tests {s['tests_passed']}/{s['tests']} ({m_test_acc:.3f})"
+                    )
+        except Exception as e:
+            console.print(f"[red]Error processing {jsonl_file}: {e}[/]")
+            continue
 
-        stats = per_model.setdefault(outcome.model_name, {"records": 0, "tasks_passed": 0, "tests": 0, "tests_passed": 0})
-        stats["records"] += 1
-        stats["tests"] += outcome.num_tests
-        stats["tests_passed"] += outcome.num_passed
-        if outcome.passed:
-            stats["tasks_passed"] += 1
-
-    # Render summary
-    console.print(f"[green]Saved per-record results[/] -> {out_path}")
-
-    console.print()
-    console.print("[bold]Overall[/]")
-    task_acc = (tasks_passed / total_records) if total_records else 0.0
-    test_acc = (total_tests_passed / total_tests) if total_tests else 0.0
-    console.print(f"Tasks: {tasks_passed}/{total_records} passed ({task_acc:.3f})")
-    console.print(f"Tests: {total_tests_passed}/{total_tests} passed ({test_acc:.3f})")
-
-    if per_model:
+    # Print overall summary
+    if overall_stats["total_records"] > 0:
         console.print()
-        console.print("[bold]Per-model[/]")
-        for model, s in per_model.items():
-            m_task_acc = (s["tasks_passed"] / s["records"]) if s["records"] else 0.0
-            m_test_acc = (s["tests_passed"] / s["tests"]) if s["tests"] else 0.0
-            console.print(
-                f"- {model}: tasks {s['tasks_passed']}/{s['records']} ({m_task_acc:.3f}), "
-                f"tests {s['tests_passed']}/{s['tests']} ({m_test_acc:.3f})"
-            )
+        console.print("[bold]Overall Summary[/]")
+        task_acc = (overall_stats["tasks_passed"] / overall_stats["total_records"]) if overall_stats["total_records"] else 0.0
+        test_acc = (overall_stats["total_tests_passed"] / overall_stats["total_tests"]) if overall_stats["total_tests"] else 0.0
+        console.print(f"Tasks: {overall_stats['tasks_passed']}/{overall_stats['total_records']} passed ({task_acc:.3f})")
+        console.print(f"Tests: {overall_stats['total_tests_passed']}/{overall_stats['total_tests']} passed ({test_acc:.3f})")
+        
+        # Show where results were saved
+        if all_model_outputs:
+            console.print()
+            console.print("[bold]Output files:[/]")
+            results_dir = list(all_model_outputs.values())[0].parent
+            console.print(f"[green]{results_dir}[/]")
+            for model, path in all_model_outputs.items():
+                console.print(f"  {model} -> {path.name}")
 
 
 
