@@ -18,13 +18,29 @@ from src.lib import load_config
 app = typer.Typer(add_completion=False)
 console = Console()
 
-def iter_records(path: Path, dataset_filter: Optional[str]) -> Iterator[Dict[str, Any]]:
+def iter_records(source_path: Path, dataset_filter: Optional[str]) -> Iterator[Dict[str, Any]]:
+    """Read records from either a single JSONL file or all JSONL files in a directory."""
     norm_filter = (str(dataset_filter).strip().lower()) if dataset_filter else None
-    for rec in read_jsonl(path):
-        rec_ds = str(rec.get("benchmark", "")).strip().lower()
-        if norm_filter and rec_ds != norm_filter:
-            continue
-        yield rec
+    
+    # If source_path is a directory, read all JSONL files from it
+    if source_path.is_dir():
+        jsonl_files = sorted(source_path.glob("*.jsonl"))
+        if not jsonl_files:
+            console.print(f"[yellow]No JSONL files found in directory: {source_path}[/]")
+            return
+        for jsonl_file in jsonl_files:
+            for rec in read_jsonl(jsonl_file):
+                rec_ds = str(rec.get("benchmark", "")).strip().lower()
+                if norm_filter and rec_ds != norm_filter:
+                    continue
+                yield rec
+    else:
+        # Single file mode (backward compatibility)
+        for rec in read_jsonl(source_path):
+            rec_ds = str(rec.get("benchmark", "")).strip().lower()
+            if norm_filter and rec_ds != norm_filter:
+                continue
+            yield rec
 
 
 def build_pairs(records: Iterator[Dict[str, Any]], cfg: dict) -> List[Pair]:
@@ -108,10 +124,27 @@ def execute(
     cfg = load_config(config_path)
 
     paths = cfg.get("paths", {})
-    default_input = paths.get("output_path")
-    source_path = Path(input_path or default_input or "").resolve()
-    if not source_path.exists():
-        raise typer.BadParameter(f"Input JSONL not found: {source_path}")
+    data_dir = Path(paths.get("data_dir", "data"))
+    results_dir = data_dir / "results"
+    
+    # If no input_path specified, look for latest timestamp directory in results
+    if input_path is None:
+        if results_dir.exists():
+            # Find all timestamp directories
+            timestamp_dirs = [d for d in results_dir.iterdir() if d.is_dir() and d.name]
+            if timestamp_dirs:
+                # Sort by name (timestamp) and use latest
+                timestamp_dirs.sort(reverse=True)
+                source_path = timestamp_dirs[0]
+                console.print(f"[blue]Using latest results directory: {source_path}[/]")
+            else:
+                raise typer.BadParameter(f"No timestamp directories found in {results_dir}")
+        else:
+            raise typer.BadParameter(f"Results directory not found: {results_dir}")
+    else:
+        source_path = Path(input_path).resolve()
+        if not source_path.exists():
+            raise typer.BadParameter(f"Input path not found: {source_path}")
 
     # Client
     client = OpenRouterClient(api_key=cfg.get("api", {}).get("openrouter_api_key") or None)
@@ -172,13 +205,17 @@ def execute(
     # Determine results output path
     paths = cfg.get("paths", {})
     data_dir = Path(paths.get("data_dir", "data"))
-    results_dir = data_dir / "results"
-    results_dir.mkdir(parents=True, exist_ok=True)
-    # filename includes dataset and timestamp
+    self_recognition_dir = data_dir / "self_recognition"
+    self_recognition_dir.mkdir(parents=True, exist_ok=True)
+    # Create timestamp subdirectory to match generate_pairs.py structure
     from datetime import datetime
     ts = datetime.now().strftime("%Y%m%d-%H%M%S")
+    results_subdir = self_recognition_dir / ts
+    results_subdir.mkdir(parents=True, exist_ok=True)
+    
+    # For self-recognition, we create one file per dataset
     ds_tag = (str(dataset).strip().lower()) if dataset else "all"
-    results_path = results_dir / f"self_recognition-{ds_tag}-{ts}.jsonl"
+    results_path = results_subdir / f"self_recognition-{ds_tag}.jsonl"
 
     def submit_job(job: Tuple[int, Pair, str]) -> Tuple[int, str, Optional[int], Optional[int]]:
         _, p, judge_model = job
@@ -242,7 +279,8 @@ def execute(
         f"[green]Done.[/] Valid pairs: {total}, Processed: {processed}, Skipped: {skipped}, "
         f"Correct: {correct}, Accuracy: {acc:.3f}"
     )
-    console.print(f"[green]Saved results[/] -> {results_path}")
+    console.print(f"\n[green]Results saved in:[/] {results_subdir}")
+    console.print(f"  -> {results_path.name}")
 
 
 @app.command()
