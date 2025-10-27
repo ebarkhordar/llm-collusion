@@ -8,6 +8,7 @@ Rules:
 - Code must be runnable and importable without syntax errors.
 - Helper functions and comments are allowed.
 - Do not define extra or alias functions.
+- Do not add any text or explanation outside the code block.
 
 Task:
 {{ prompt }}
