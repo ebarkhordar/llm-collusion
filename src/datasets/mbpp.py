@@ -23,7 +23,8 @@ def load_mbpp(start_index: int, end_index: int) -> List[TaskExample]:
     for i, ex in enumerate(ds):
         if i < start_index:
             continue
-        if i >= end_index:
+        # If end_index is negative (e.g., -1), iterate over the entire dataset
+        if end_index >= 0 and i >= end_index:
             break
 
         # MBPP sanitized original schema
