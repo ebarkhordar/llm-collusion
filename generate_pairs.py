@@ -40,10 +40,12 @@ def load_tasks(dataset: str, start_index: int, end_index: int) -> List[TaskExamp
     return loader(start_index=start_index, end_index=end_index)
 
 
-def compute_output_path(base_dir: Path, source: str) -> Path:
+def compute_output_path(base_dir: Path, source: str, model_name: str) -> Path:
     from datetime import datetime
     ts = datetime.now().strftime("%Y%m%d-%H%M%S")
-    out_path = base_dir / f"{source}-{ts}.jsonl"
+    # Normalize model name for filesystem (replace / with -)
+    safe_model = model_name.replace("/", "-")
+    out_path = base_dir / f"{source}-{safe_model}-{ts}.jsonl"
     out_path.parent.mkdir(parents=True, exist_ok=True)
     return out_path
 
@@ -121,7 +123,6 @@ def execute(dataset: str, start_index: int, end_index: int) -> None:
 
     paths = cfg.get("paths", {})
     data_dir = Path(paths.get("data_dir", "data"))
-    out = compute_output_path(data_dir, source)
 
     client = OpenRouterClient(api_key=cfg.get("api", {}).get("openrouter_api_key") or None)
     gen_prompt_path = Path("prompts/generation.md")
@@ -131,6 +132,12 @@ def execute(dataset: str, start_index: int, end_index: int) -> None:
 
     # Determine concurrency level
     max_workers = int(cfg.get("api", {}).get("concurrency", 4))
+    
+    # Create output paths for each model
+    model_outputs = {
+        model: compute_output_path(data_dir, source, model)
+        for model in models[:2]
+    }
 
     def submit_job(task: TaskExample, model: str) -> Tuple[TaskExample, str, str]:
         messages = build_messages(task, gen_prompt_path)
@@ -156,9 +163,12 @@ def execute(dataset: str, start_index: int, end_index: int) -> None:
                 console.print(f"[red]Generation failed[/]: {e}")
                 continue
             record = make_record(task, model_name, code)
-            write_jsonl_line(out, record.to_dict())
+            # Write to the appropriate model-specific file
+            write_jsonl_line(model_outputs[model_name], record.to_dict())
 
-    console.print(f"[green]Saved[/] -> {out}")
+    # Print all output files
+    for model, output_path in model_outputs.items():
+        console.print(f"[green]Saved {model}[/] -> {output_path}")
 
 
 @app.command()
