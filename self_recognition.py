@@ -113,6 +113,26 @@ def parse_choice(text: str) -> Optional[int]:
     return None
 
 
+def extract_dataset_and_split(input_path: Path, data_dir: Path) -> Tuple[Optional[str], Optional[str]]:
+    """
+    Extract dataset name and split from input path.
+    E.g., data/results/mbpp-sanitized/train -> ('mbpp-sanitized', 'train')
+    """
+    try:
+        # Make path relative to data_dir/results if possible
+        results_dir = data_dir / "results"
+        if input_path.is_relative_to(results_dir):
+            rel_path = input_path.relative_to(results_dir)
+            parts = rel_path.parts
+            if len(parts) >= 2:
+                return parts[0], parts[1]  # dataset, split
+            elif len(parts) == 1:
+                return parts[0], None  # dataset only
+    except (ValueError, IndexError):
+        pass
+    return None, None
+
+
 def execute(
     input_path: Optional[Path],
     dataset: Optional[str],
@@ -202,20 +222,33 @@ def execute(
     processed = 0
     skipped = len(pairs) - total
 
-    # Determine results output path
+    # Determine results output path based on input structure
     paths = cfg.get("paths", {})
     data_dir = Path(paths.get("data_dir", "data"))
     self_recognition_dir = data_dir / "self_recognition"
-    self_recognition_dir.mkdir(parents=True, exist_ok=True)
-    # Create timestamp subdirectory to match generate_pairs.py structure
-    from datetime import datetime
-    ts = datetime.now().strftime("%Y%m%d-%H%M%S")
-    results_subdir = self_recognition_dir / ts
-    results_subdir.mkdir(parents=True, exist_ok=True)
     
-    # For self-recognition, we create one file per dataset
-    ds_tag = (str(dataset).strip().lower()) if dataset else "all"
-    results_path = results_subdir / f"self_recognition-{ds_tag}.jsonl"
+    # Extract dataset and split from input path for mirrored output structure
+    extracted_dataset, extracted_split = extract_dataset_and_split(source_path, data_dir)
+    
+    # Build output directory to mirror input structure
+    if extracted_dataset and extracted_split:
+        results_subdir = self_recognition_dir / extracted_dataset / extracted_split
+        results_subdir.mkdir(parents=True, exist_ok=True)
+        results_path = results_subdir / f"self_recognition-{extracted_dataset}-{extracted_split}.jsonl"
+        console.print(f"[blue]Results will be saved to: {results_subdir}[/]")
+    elif extracted_dataset:
+        results_subdir = self_recognition_dir / extracted_dataset
+        results_subdir.mkdir(parents=True, exist_ok=True)
+        ds_tag = (str(dataset).strip().lower()) if dataset else extracted_dataset
+        results_path = results_subdir / f"self_recognition-{ds_tag}.jsonl"
+    else:
+        # Fallback to timestamp-based structure
+        from datetime import datetime
+        ts = datetime.now().strftime("%Y%m%d-%H%M%S")
+        results_subdir = self_recognition_dir / ts
+        results_subdir.mkdir(parents=True, exist_ok=True)
+        ds_tag = (str(dataset).strip().lower()) if dataset else "all"
+        results_path = results_subdir / f"self_recognition-{ds_tag}.jsonl"
 
     def submit_job(job: Tuple[int, Pair, str]) -> Tuple[int, str, Optional[int], Optional[int]]:
         _, p, judge_model = job
@@ -285,7 +318,7 @@ def execute(
 
 @app.command()
 def run(
-    input_path: Optional[Path] = typer.Option(None, "--input", "-i", help="Path to generations JSONL"),
+    input_path: Optional[Path] = typer.Option(None, "--input", "-i", help="Path to folder containing JSONL files (e.g., data/results/mbpp-sanitized/train)"),
     dataset: Optional[str] = typer.Option(None, help="Filter to a dataset name (optional)"),
     judge_model: Optional[str] = typer.Option(None, help="Override judge model ID"),
     concurrency: Optional[int] = typer.Option(None, help="Override concurrency for judge requests"),
