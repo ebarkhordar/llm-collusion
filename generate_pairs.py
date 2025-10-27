@@ -106,20 +106,50 @@ def make_record(task: TaskExample, model_name: str, code: str) -> GenerationReco
     return GenerationRecord(task=task, model_name=model_name, generated_code=code)
 
 
-def strip_markdown_code_blocks(code: str) -> str:
-    """Remove markdown code blocks (```python ... ```) from generated code."""
-    lines = code.split('\n')
-    stripped_lines = []
-    in_code_block = False
-    
+def strip_markdown_code_blocks(text: str) -> str:
+    """Extract code from fenced markdown blocks.
+
+    - If one or more fenced code blocks exist, prefer the first with a
+      python/py language tag; otherwise return the longest fenced block.
+    - If no fences are present, return the original text stripped.
+    """
+    if "```" not in text:
+        return text.strip()
+
+    lines = text.split("\n")
+    in_block = False
+    current_block_lines: List[str] = []
+    current_lang = ""
+    blocks: List[Tuple[str, str]] = []
+
     for line in lines:
-        if line.strip().startswith('```'):
-            in_code_block = not in_code_block
+        stripped = line.strip()
+        if stripped.startswith("```"):
+            if not in_block:
+                in_block = True
+                current_lang = stripped[3:].strip().lower()
+                current_block_lines = []
+            else:
+                in_block = False
+                block_text = "\n".join(current_block_lines).strip()
+                blocks.append((current_lang, block_text))
+                current_lang = ""
+                current_block_lines = []
             continue
-        if not in_code_block:
-            stripped_lines.append(line)
-    
-    return '\n'.join(stripped_lines).strip()
+        if in_block:
+            current_block_lines.append(line)
+
+    # Prefer python code block
+    for lang, code in blocks:
+        if lang in {"python", "py"} and code:
+            return code
+
+    # Fall back to longest non-empty block
+    non_empty_blocks = [code for _, code in blocks if code]
+    if non_empty_blocks:
+        return max(non_empty_blocks, key=len)
+
+    return ""
 
 
 def execute(dataset: str, start_index: int, end_index: int) -> None:
