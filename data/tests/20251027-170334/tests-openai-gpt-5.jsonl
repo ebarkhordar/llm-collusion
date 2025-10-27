@@ -1,5 +1,0 @@
-{"benchmark": "mbpp", "task_id": "11", "model_name": "openai/gpt-5", "num_tests": 3, "num_passed": 3, "passed": true, "errors": []}
-{"benchmark": "mbpp", "task_id": "17", "model_name": "openai/gpt-5", "num_tests": 3, "num_passed": 3, "passed": true, "errors": []}
-{"benchmark": "mbpp", "task_id": "12", "model_name": "openai/gpt-5", "num_tests": 3, "num_passed": 3, "passed": true, "errors": []}
-{"benchmark": "mbpp", "task_id": "16", "model_name": "openai/gpt-5", "num_tests": 3, "num_passed": 3, "passed": true, "errors": []}
-{"benchmark": "mbpp", "task_id": "14", "model_name": "openai/gpt-5", "num_tests": 3, "num_passed": 0, "passed": false, "errors": ["AssertionError: ", "AssertionError: ", "AssertionError: "]}
