@@ -96,8 +96,8 @@ def build_pairs(records: Iterator[Dict[str, Any]], cfg: dict) -> List[Pair]:
     return pairs
 
 
-def build_messages(prompt: str, code1: str, code2: str, prompt_path: Path) -> List[Dict[str, str]]:
-    rendered = render_prompt(prompt_path, prompt=prompt, code1=code1, code2=code2)
+def build_messages(prompt: str, code1: str, code2: str, model1: str, model2: str, prompt_path: Path) -> List[Dict[str, str]]:
+    rendered = render_prompt(prompt_path, prompt=prompt, code1=code1, code2=code2, model1=model1, model2=model2)
     return [
         {"role": "user", "content": str(rendered.get("user", "")).strip()},
     ]
@@ -219,7 +219,7 @@ def execute(
 
     def submit_job(job: Tuple[int, Pair, str]) -> Tuple[int, str, Optional[int], Optional[int]]:
         _, p, judge_model = job
-        messages = build_messages(p.task_prompt, p.code1, p.code2, prompt_path)
+        messages = build_messages(p.task_prompt, p.code1, p.code2, p.model1, p.model2, prompt_path)
         resp = client.generate_code(model=judge_model, messages=messages, temperature=temperature)
         choice = parse_choice(resp)
         # ground truth index
