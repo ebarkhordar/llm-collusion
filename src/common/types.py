@@ -71,3 +71,24 @@ class SelfRecognitionResult:
             "is_correct": self.is_correct,
             "evaluator_response": self.evaluator_response,
         }
+
+@dataclass
+class TestOutcome:
+    benchmark: str
+    task_id: str
+    model_name: str
+    num_tests: int
+    num_passed: int
+    passed: bool
+    errors: List[str]
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "benchmark": self.benchmark,
+            "task_id": self.task_id,
+            "model_name": self.model_name,
+            "num_tests": self.num_tests,
+            "num_passed": self.num_passed,
+            "passed": self.passed,
+            "errors": self.errors,
+        }

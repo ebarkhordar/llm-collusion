@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List
 from glob import glob
@@ -8,6 +7,7 @@ from glob import glob
 import typer
 from rich.console import Console
 from tqdm import tqdm
+from src.common.types import TestOutcome
 
 from src.lib import read_jsonl, write_jsonl_line
 
@@ -15,27 +15,6 @@ from src.lib import read_jsonl, write_jsonl_line
 app = typer.Typer(add_completion=False)
 console = Console()
 
-
-@dataclass
-class TestOutcome:
-    benchmark: str
-    task_id: str
-    model_name: str
-    num_tests: int
-    num_passed: int
-    passed: bool
-    errors: List[str]
-
-    def to_dict(self) -> Dict[str, Any]:
-        return {
-            "benchmark": self.benchmark,
-            "task_id": self.task_id,
-            "model_name": self.model_name,
-            "num_tests": self.num_tests,
-            "num_passed": self.num_passed,
-            "passed": self.passed,
-            "errors": self.errors,
-        }
 
 def run_single_record(record: Dict[str, Any]) -> TestOutcome:
     benchmark = str(record.get("benchmark", "")).strip()
