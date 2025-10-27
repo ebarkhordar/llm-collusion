@@ -61,12 +61,27 @@ def run_single_record(record: Dict[str, Any]) -> TestOutcome:
     )
 
 
-def compute_output_path(base_dir: Path, source_dir: str, model_name: str) -> Path:
+def compute_output_path(base_dir: Path, source_path: Path, model_name: str) -> Path:
     # Normalize model name for filesystem (replace / with -)
     safe_model = model_name.replace("/", "-")
-    # Extract timestamp from source directory (e.g., "20251027-170334" from "data/results/20251027-170334")
-    timestamp = Path(source_dir).name
-    out_dir = base_dir / "tests" / timestamp
+    
+    # Check if this is mbpp-sanitized structure
+    if "mbpp-sanitized" in source_path.parts:
+        # Find the index of mbpp-sanitized in the path
+        parts = source_path.parts
+        mbpp_idx = parts.index("mbpp-sanitized")
+        
+        # Get the subfolder (e.g., "prompt", "test", "train", "validation")
+        if mbpp_idx + 1 < len(parts):
+            subfolder = parts[mbpp_idx + 1]
+            out_dir = base_dir / "tests" / "mbpp-sanitized" / subfolder
+        else:
+            out_dir = base_dir / "tests" / "mbpp-sanitized"
+    else:
+        # Extract timestamp from source directory (e.g., "20251027-170334" from "data/results/20251027-170334")
+        timestamp = source_path.name
+        out_dir = base_dir / "tests" / timestamp
+    
     out_dir.mkdir(parents=True, exist_ok=True)
     return out_dir / f"tests-{safe_model}.jsonl"
 
@@ -83,8 +98,13 @@ def run(
     jsonl_files: List[Path] = []
     
     if p.is_dir():
-        # Find all jsonl files in the directory
-        jsonl_files = [Path(f) for f in glob(str(p / "*.jsonl"))]
+        # Check if this is mbpp-sanitized directory - use recursive search
+        if "mbpp-sanitized" in p.parts:
+            jsonl_files = [Path(f) for f in glob(str(p / "**/*.jsonl"), recursive=True)]
+        else:
+            # Find all jsonl files in the directory (non-recursive)
+            jsonl_files = [Path(f) for f in glob(str(p / "*.jsonl"))]
+        
         if not jsonl_files:
             console.print("[yellow]No JSONL files found in directory.[/]")
             raise typer.Exit(0)
@@ -93,14 +113,6 @@ def run(
     else:
         raise typer.BadParameter(f"Input must be a directory or JSONL file: {p}")
 
-    # Determine the source directory for output naming
-    if p.is_dir():
-        source_dir = str(p)
-    else:
-        # For a file, find the parent results directory
-        # e.g., if input is data/results/20251027-170334/file.jsonl, source_dir should be data/results/20251027-170334
-        source_dir = str(p.parent)
-    
     # Process each JSONL file (one per model)
     all_model_outputs = {}
     overall_stats = {"total_records": 0, "tasks_passed": 0, "total_tests": 0, "total_tests_passed": 0}
@@ -120,7 +132,9 @@ def run(
                 console.print(f"[red]No model_name found in {jsonl_file}[/]")
                 continue
             
-            out_path = compute_output_path(base_dir=Path("data"), source_dir=source_dir, model_name=model_name)
+            # Use the parent directory of the JSONL file as the source path
+            source_path = jsonl_file.parent
+            out_path = compute_output_path(base_dir=Path("data"), source_path=source_path, model_name=model_name)
             all_model_outputs[model_name] = out_path
             
             # Aggregate stats
