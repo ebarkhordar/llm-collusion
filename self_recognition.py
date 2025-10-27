@@ -135,6 +135,8 @@ def extract_dataset_and_split(input_path: Path, data_dir: Path) -> Tuple[Optiona
 
 def execute(
     input_path: Optional[Path],
+    dataset_folder: Optional[str],
+    split: Optional[str],
     dataset: Optional[str],
     judge_model_override: Optional[str],
     concurrency_override: Optional[int],
@@ -147,8 +149,18 @@ def execute(
     data_dir = Path(paths.get("data_dir", "data"))
     results_dir = data_dir / "results"
     
-    # If no input_path specified, look for latest timestamp directory in results
-    if input_path is None:
+    # Build input path from dataset_folder and split if provided
+    if dataset_folder and split:
+        source_path = results_dir / dataset_folder / split
+        if not source_path.exists():
+            raise typer.BadParameter(f"Input path not found: {source_path}")
+        console.print(f"[blue]Using input path: {source_path}[/]")
+    elif input_path is not None:
+        source_path = Path(input_path).resolve()
+        if not source_path.exists():
+            raise typer.BadParameter(f"Input path not found: {source_path}")
+    else:
+        # If no input_path specified, look for latest timestamp directory in results
         if results_dir.exists():
             # Find all timestamp directories
             timestamp_dirs = [d for d in results_dir.iterdir() if d.is_dir() and d.name]
@@ -161,10 +173,6 @@ def execute(
                 raise typer.BadParameter(f"No timestamp directories found in {results_dir}")
         else:
             raise typer.BadParameter(f"Results directory not found: {results_dir}")
-    else:
-        source_path = Path(input_path).resolve()
-        if not source_path.exists():
-            raise typer.BadParameter(f"Input path not found: {source_path}")
 
     # Client
     client = OpenRouterClient(api_key=cfg.get("api", {}).get("openrouter_api_key") or None)
@@ -230,17 +238,29 @@ def execute(
     # Extract dataset and split from input path for mirrored output structure
     extracted_dataset, extracted_split = extract_dataset_and_split(source_path, data_dir)
     
+    # Get evaluator model name for filename (use first unique judge model)
+    evaluator_name = None
+    if unique_judges:
+        # Convert model name to filename-safe format (e.g., "anthropic/claude-haiku-4.5" -> "anthropic-claude-haiku-4.5")
+        evaluator_name = unique_judges[0].replace("/", "-").replace(":", "-")
+    
     # Build output directory to mirror input structure
     if extracted_dataset and extracted_split:
         results_subdir = self_recognition_dir / extracted_dataset / extracted_split
         results_subdir.mkdir(parents=True, exist_ok=True)
-        results_path = results_subdir / f"self_recognition-{extracted_dataset}-{extracted_split}.jsonl"
+        if evaluator_name:
+            results_path = results_subdir / f"{evaluator_name}.jsonl"
+        else:
+            results_path = results_subdir / f"self_recognition-{extracted_dataset}-{extracted_split}.jsonl"
         console.print(f"[blue]Results will be saved to: {results_subdir}[/]")
     elif extracted_dataset:
         results_subdir = self_recognition_dir / extracted_dataset
         results_subdir.mkdir(parents=True, exist_ok=True)
         ds_tag = (str(dataset).strip().lower()) if dataset else extracted_dataset
-        results_path = results_subdir / f"self_recognition-{ds_tag}.jsonl"
+        if evaluator_name:
+            results_path = results_subdir / f"{evaluator_name}.jsonl"
+        else:
+            results_path = results_subdir / f"self_recognition-{ds_tag}.jsonl"
     else:
         # Fallback to timestamp-based structure
         from datetime import datetime
@@ -248,7 +268,10 @@ def execute(
         results_subdir = self_recognition_dir / ts
         results_subdir.mkdir(parents=True, exist_ok=True)
         ds_tag = (str(dataset).strip().lower()) if dataset else "all"
-        results_path = results_subdir / f"self_recognition-{ds_tag}.jsonl"
+        if evaluator_name:
+            results_path = results_subdir / f"{evaluator_name}.jsonl"
+        else:
+            results_path = results_subdir / f"self_recognition-{ds_tag}.jsonl"
 
     def submit_job(job: Tuple[int, Pair, str]) -> Tuple[int, str, Optional[int], Optional[int]]:
         _, p, judge_model = job
@@ -318,16 +341,20 @@ def execute(
 
 @app.command()
 def run(
+    dataset_folder: Optional[str] = typer.Option(None, "--dataset-folder", help="Dataset folder name (e.g., mbpp-sanitized)"),
+    split: Optional[str] = typer.Option(None, "--split", help="Dataset split (e.g., test, train, validation)"),
+    evaluator: Optional[str] = typer.Option(None, "--evaluator", help="Evaluator model ID (e.g., anthropic/claude-haiku-4.5)"),
     input_path: Optional[Path] = typer.Option(None, "--input", "-i", help="Path to folder containing JSONL files (e.g., data/results/mbpp-sanitized/train)"),
     dataset: Optional[str] = typer.Option(None, help="Filter to a dataset name (optional)"),
-    judge_model: Optional[str] = typer.Option(None, help="Override judge model ID"),
     concurrency: Optional[int] = typer.Option(None, help="Override concurrency for judge requests"),
     temperature: float = typer.Option(0.0, help="Temperature for judge model"),
 ):
     execute(
         input_path=input_path,
+        dataset_folder=dataset_folder,
+        split=split,
         dataset=dataset,
-        judge_model_override=judge_model,
+        judge_model_override=evaluator,
         concurrency_override=concurrency,
         temperature=temperature,
     )
