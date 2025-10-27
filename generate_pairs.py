@@ -124,7 +124,7 @@ def execute(dataset: str, start_index: int, end_index: int) -> None:
     out = compute_output_path(data_dir, source)
 
     client = OpenRouterClient(api_key=cfg.get("api", {}).get("openrouter_api_key") or None)
-    gen_prompt_path = Path("prompts/generation.yaml")
+    gen_prompt_path = Path("prompts/generation.md")
 
     tasks = load_tasks(source, start_index, end_index)
     console.print(f"Generating code for {len(tasks)} tasks using models: {models[:2]}")

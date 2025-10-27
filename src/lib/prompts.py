@@ -7,14 +7,24 @@ import yaml
 
 
 def render_prompt(path: Path, **kwargs: Any) -> Dict[str, str]:
-    with path.open("r", encoding="utf-8") as f:
-        data = yaml.safe_load(f)
-
+    """Render a prompt template from YAML or markdown files."""
+    
     def _render(text: str) -> str:
         out = text
         for k, v in kwargs.items():
             out = out.replace(f"{{{{ {k} }}}}", str(v))
         return out
+
+    # Handle markdown files
+    if path.suffix == ".md":
+        with path.open("r", encoding="utf-8") as f:
+            content = f.read()
+        user_text = _render(content)
+        return {"user": user_text}
+
+    # Handle YAML files
+    with path.open("r", encoding="utf-8") as f:
+        data = yaml.safe_load(f)
 
     # Support README-style single-block prompts or legacy dict formats
     if isinstance(data, str):
