@@ -106,6 +106,22 @@ def make_record(task: TaskExample, model_name: str, code: str) -> GenerationReco
     return GenerationRecord(task=task, model_name=model_name, generated_code=code)
 
 
+def strip_markdown_code_blocks(code: str) -> str:
+    """Remove markdown code blocks (```python ... ```) from generated code."""
+    lines = code.split('\n')
+    stripped_lines = []
+    in_code_block = False
+    
+    for line in lines:
+        if line.strip().startswith('```'):
+            in_code_block = not in_code_block
+            continue
+        if not in_code_block:
+            stripped_lines.append(line)
+    
+    return '\n'.join(stripped_lines).strip()
+
+
 def execute(dataset: str, start_index: int, end_index: int) -> None:
     config_path = Path("configs/config.yaml")
     cfg = load_config(config_path)
@@ -148,6 +164,8 @@ def execute(dataset: str, start_index: int, end_index: int) -> None:
             messages=messages,
             temperature=0.0,
         )
+        # Remove markdown code blocks from generated code
+        code = strip_markdown_code_blocks(code)
         return task, model, code
 
     jobs: List[Tuple[TaskExample, str]] = [
