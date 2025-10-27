@@ -146,6 +146,7 @@ def run(
     # Process each JSONL file (one per model)
     all_model_outputs = {}
     overall_stats = {"total_records": 0, "tasks_passed": 0, "total_tests": 0, "total_tests_passed": 0}
+    model_stats = {}
     
     for jsonl_file in sorted(jsonl_files):
         # Determine output path for this model
@@ -166,35 +167,32 @@ def run(
             
             # Aggregate stats
             per_model: Dict[str, Dict[str, int]] = {}
+            model_total = 0
+            model_passed = 0
+            model_tests = 0
+            model_tests_passed = 0
 
             for rec in tqdm(records, desc=f"Testing {jsonl_file.name}", unit="rec"):
                 overall_stats["total_records"] += 1
+                model_total += 1
                 outcome = run_single_record(rec)
                 write_jsonl_line(out_path, outcome.to_dict())
 
                 overall_stats["total_tests"] += outcome.num_tests
                 overall_stats["total_tests_passed"] += outcome.num_passed
+                model_tests += outcome.num_tests
+                model_tests_passed += outcome.num_passed
                 if outcome.passed:
                     overall_stats["tasks_passed"] += 1
-
-                stats = per_model.setdefault(outcome.model_name, {"records": 0, "tasks_passed": 0, "tests": 0, "tests_passed": 0})
-                stats["records"] += 1
-                stats["tests"] += outcome.num_tests
-                stats["tests_passed"] += outcome.num_passed
-                if outcome.passed:
-                    stats["tasks_passed"] += 1
+                    model_passed += 1
             
-            # Print results for this model
-            console.print(f"\n[green]Saved results for {model_name}[/] -> {out_path}")
-            
-            if per_model:
-                for model, s in per_model.items():
-                    m_task_acc = (s["tasks_passed"] / s["records"]) if s["records"] else 0.0
-                    m_test_acc = (s["tests_passed"] / s["tests"]) if s["tests"] else 0.0
-                    console.print(
-                        f"  {model}: tasks {s['tasks_passed']}/{s['records']} ({m_task_acc:.3f}), "
-                        f"tests {s['tests_passed']}/{s['tests']} ({m_test_acc:.3f})"
-                    )
+            # Store per-model stats
+            model_stats[model_name] = {
+                "records": model_total,
+                "tasks_passed": model_passed,
+                "tests": model_tests,
+                "tests_passed": model_tests_passed
+            }
         except Exception as e:
             console.print(f"[red]Error processing {jsonl_file}: {e}[/]")
             continue
@@ -202,20 +200,27 @@ def run(
     # Print overall summary
     if overall_stats["total_records"] > 0:
         console.print()
-        console.print("[bold]Overall Summary[/]")
+        console.print("[bold]Results:[/]")
+        
+        # Show per-model results
+        for model, s in model_stats.items():
+            m_task_acc = (s["tasks_passed"] / s["records"]) if s["records"] else 0.0
+            m_test_acc = (s["tests_passed"] / s["tests"]) if s["tests"] else 0.0
+            console.print(
+                f"  {model}: {s['tasks_passed']}/{s['records']} tasks ({m_task_acc:.3f}), "
+                f"{s['tests_passed']}/{s['tests']} tests ({m_test_acc:.3f})"
+            )
+        
+        # Overall stats
         task_acc = (overall_stats["tasks_passed"] / overall_stats["total_records"]) if overall_stats["total_records"] else 0.0
         test_acc = (overall_stats["total_tests_passed"] / overall_stats["total_tests"]) if overall_stats["total_tests"] else 0.0
-        console.print(f"Tasks: {overall_stats['tasks_passed']}/{overall_stats['total_records']} passed ({task_acc:.3f})")
-        console.print(f"Tests: {overall_stats['total_tests_passed']}/{overall_stats['total_tests']} passed ({test_acc:.3f})")
+        console.print(f"\nOverall: {overall_stats['tasks_passed']}/{overall_stats['total_records']} tasks ({task_acc:.3f}), "
+                     f"{overall_stats['total_tests_passed']}/{overall_stats['total_tests']} tests ({test_acc:.3f})")
         
         # Show where results were saved
         if all_model_outputs:
-            console.print()
-            console.print("[bold]Output files:[/]")
             results_dir = list(all_model_outputs.values())[0].parent
-            console.print(f"[green]{results_dir}[/]")
-            for model, path in all_model_outputs.items():
-                console.print(f"  {model} -> {path.name}")
+            console.print(f"\n[green]Saved to: {results_dir}[/]")
 
 
 
