@@ -98,13 +98,13 @@ def parse_choice(text: str) -> Optional[int]:
 
 
 def execute(
-    config_path: Path,
     input_path: Optional[Path],
     dataset: Optional[str],
     judge_model_override: Optional[str],
     concurrency_override: Optional[int],
     temperature: float,
 ) -> None:
+    config_path = Path("configs/config.yaml")
     cfg = load_config(config_path)
 
     paths = cfg.get("paths", {})
@@ -247,7 +247,6 @@ def execute(
 
 @app.command()
 def run(
-    config_path: Path = typer.Option(Path("configs/config.yaml"), help="Path to config YAML"),
     input_path: Optional[Path] = typer.Option(None, "--input", "-i", help="Path to generations JSONL"),
     dataset: Optional[str] = typer.Option(None, help="Filter to a dataset name (optional)"),
     judge_model: Optional[str] = typer.Option(None, help="Override judge model ID"),
@@ -255,7 +254,6 @@ def run(
     temperature: float = typer.Option(0.0, help="Temperature for judge model"),
 ):
     execute(
-        config_path=config_path,
         input_path=input_path,
         dataset=dataset,
         judge_model_override=judge_model,

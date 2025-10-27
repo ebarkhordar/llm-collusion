@@ -106,7 +106,8 @@ def make_record(task: TaskExample, model_name: str, code: str) -> GenerationReco
     return GenerationRecord(task=task, model_name=model_name, generated_code=code)
 
 
-def execute(config_path: Path, dataset: str, start_index: int, end_index: int) -> None:
+def execute(dataset: str, start_index: int, end_index: int) -> None:
+    config_path = Path("configs/config.yaml")
     cfg = load_config(config_path)
 
     # Read models from per-dataset config
@@ -162,12 +163,11 @@ def execute(config_path: Path, dataset: str, start_index: int, end_index: int) -
 
 @app.command()
 def run(
-    config_path: Path = typer.Option(Path("configs/config.yaml"), help="Path to config YAML"),
     dataset: str = typer.Option("mbpp", help="Dataset name (e.g., mbpp)"),
     start_index: int = typer.Option(0, help="Start index (inclusive)"),
     end_index: int = typer.Option(10, help="End index (exclusive)"),
 ):
-    execute(config_path=config_path, dataset=dataset, start_index=start_index, end_index=end_index)
+    execute(dataset=dataset, start_index=start_index, end_index=end_index)
 
 
 if __name__ == "__main__":
