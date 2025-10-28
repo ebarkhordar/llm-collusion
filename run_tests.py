@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any, Dict, List
 from glob import glob
+import multiprocessing
 
 import typer
 from rich.console import Console
@@ -16,21 +17,20 @@ app = typer.Typer(add_completion=False)
 console = Console()
 
 
-def run_single_record(record: Dict[str, Any]) -> TestOutcome:
-    benchmark = str(record.get("benchmark", "")).strip()
-    task_id = str(record.get("task_id", "")).strip()
-    model_name = str(record.get("model_name", "")).strip()
-    test_imports: List[str] = [str(x) for x in (record.get("test_imports") or [])]
-    test_list: List[str] = [str(x) for x in (record.get("test_list") or [])]
-    code = str(record.get("generated_code") or "").strip()
-
-    # Isolated namespace for executing candidate code and tests
-    globals_ns: Dict[str, Any] = {"__name__": "tested_module"}
-
+def _execute_code_worker(
+    test_imports: List[str],
+    code: str,
+    test_list: List[str],
+    result_queue: Any,
+) -> None:
+    """Worker function that runs in a separate process to execute code."""
     errors: List[str] = []
     passed_count = 0
-
+    
     try:
+        # Isolated namespace for executing candidate code and tests
+        globals_ns: Dict[str, Any] = {"__name__": "tested_module"}
+        
         # Execute required imports first
         for imp in test_imports:
             exec(imp, globals_ns, globals_ns)
@@ -46,8 +46,52 @@ def run_single_record(record: Dict[str, Any]) -> TestOutcome:
             except Exception as e:  # noqa: BLE001
                 errors.append(f"{type(e).__name__}: {e}")
     except Exception as e:  # noqa: BLE001
-        # Fatal error loading code or imports; mark all tests failed
+        # Fatal error loading code or imports
         errors.append(f"SetupError {type(e).__name__}: {e}")
+    
+    # Send results back to parent process
+    result_queue.put((passed_count, errors))
+
+
+def run_single_record(record: Dict[str, Any], timeout_seconds: int = 5) -> TestOutcome:
+    benchmark = str(record.get("benchmark", "")).strip()
+    task_id = str(record.get("task_id", "")).strip()
+    model_name = str(record.get("model_name", "")).strip()
+    test_imports: List[str] = [str(x) for x in (record.get("test_imports") or [])]
+    test_list: List[str] = [str(x) for x in (record.get("test_list") or [])]
+    code = str(record.get("generated_code") or "").strip()
+
+    errors: List[str] = []
+    passed_count = 0
+    
+    # Use spawn context for better compatibility across platforms
+    ctx = multiprocessing.get_context('spawn')
+    
+    # Create a queue for the worker to send results back
+    result_queue = ctx.Queue()
+    
+    # Create and start the worker process
+    process = ctx.Process(
+        target=_execute_code_worker,
+        args=(test_imports, code, test_list, result_queue),
+    )
+    process.start()
+    
+    # Wait for the process to complete with timeout
+    process.join(timeout=timeout_seconds)
+    
+    if process.is_alive():
+        # Process is still running - timeout occurred
+        process.terminate()
+        process.join(timeout=1)  # Give it 1 second to terminate gracefully
+        if process.is_alive():
+            process.kill()  # Force kill if still alive
+            process.join()
+        errors.append("TimeoutError: Code execution timed out")
+    else:
+        # Process completed - get results
+        if not result_queue.empty():
+            passed_count, errors = result_queue.get()
 
     total_tests = len(test_list)
     return TestOutcome(
@@ -89,6 +133,7 @@ def compute_output_path(base_dir: Path, source_path: Path, model_name: str) -> P
 @app.command()
 def run(
     input_path: Path = typer.Option(..., "--input", "-i", help="Path to input directory or JSONL file"),
+    timeout: int = typer.Option(5, "--timeout", "-t", help="Timeout in seconds for code execution"),
 ):
     p = input_path.resolve()
     if not p.exists():
@@ -146,7 +191,7 @@ def run(
             for rec in tqdm(records, desc=f"Testing {jsonl_file.name}", unit="rec"):
                 overall_stats["total_records"] += 1
                 model_total += 1
-                outcome = run_single_record(rec)
+                outcome = run_single_record(rec, timeout_seconds=timeout)
                 write_jsonl_line(out_path, outcome.to_dict())
 
                 overall_stats["total_tests"] += outcome.num_tests

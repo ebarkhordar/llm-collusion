@@ -1,0 +1,120 @@
+{"benchmark": "mbpp", "task_id": "606", "model_name": "google/gemini-2.5-flash", "num_tests": 3, "num_passed": 3, "passed": true, "errors": []}
+{"benchmark": "mbpp", "task_id": "604", "model_name": "google/gemini-2.5-flash", "num_tests": 3, "num_passed": 0, "passed": false, "errors": ["AssertionError: ", "AssertionError: ", "AssertionError: "]}
+{"benchmark": "mbpp", "task_id": "610", "model_name": "google/gemini-2.5-flash", "num_tests": 3, "num_passed": 1, "passed": false, "errors": ["AssertionError: ", "AssertionError: "]}
+{"benchmark": "mbpp", "task_id": "605", "model_name": "google/gemini-2.5-flash", "num_tests": 3, "num_passed": 3, "passed": true, "errors": []}
+{"benchmark": "mbpp", "task_id": "602", "model_name": "google/gemini-2.5-flash", "num_tests": 3, "num_passed": 2, "passed": false, "errors": ["AssertionError: "]}
+{"benchmark": "mbpp", "task_id": "615", "model_name": "google/gemini-2.5-flash", "num_tests": 3, "num_passed": 0, "passed": false, "errors": ["AssertionError: ", "AssertionError: ", "AssertionError: "]}
+{"benchmark": "mbpp", "task_id": "614", "model_name": "google/gemini-2.5-flash", "num_tests": 3, "num_passed": 3, "passed": true, "errors": []}
+{"benchmark": "mbpp", "task_id": "619", "model_name": "google/gemini-2.5-flash", "num_tests": 3, "num_passed": 3, "passed": true, "errors": []}
+{"benchmark": "mbpp", "task_id": "607", "model_name": "google/gemini-2.5-flash", "num_tests": 3, "num_passed": 0, "passed": false, "errors": ["AssertionError: ", "AssertionError: ", "AssertionError: "]}
+{"benchmark": "mbpp", "task_id": "616", "model_name": "google/gemini-2.5-flash", "num_tests": 3, "num_passed": 3, "passed": true, "errors": []}
+{"benchmark": "mbpp", "task_id": "612", "model_name": "google/gemini-2.5-flash", "num_tests": 3, "num_passed": 2, "passed": false, "errors": ["AssertionError: "]}
+{"benchmark": "mbpp", "task_id": "618", "model_name": "google/gemini-2.5-flash", "num_tests": 3, "num_passed": 3, "passed": true, "errors": []}
+{"benchmark": "mbpp", "task_id": "611", "model_name": "google/gemini-2.5-flash", "num_tests": 3, "num_passed": 3, "passed": true, "errors": []}
+{"benchmark": "mbpp", "task_id": "620", "model_name": "google/gemini-2.5-flash", "num_tests": 3, "num_passed": 3, "passed": true, "errors": []}
+{"benchmark": "mbpp", "task_id": "608", "model_name": "google/gemini-2.5-flash", "num_tests": 3, "num_passed": 3, "passed": true, "errors": []}
+{"benchmark": "mbpp", "task_id": "624", "model_name": "google/gemini-2.5-flash", "num_tests": 3, "num_passed": 3, "passed": true, "errors": []}
+{"benchmark": "mbpp", "task_id": "623", "model_name": "google/gemini-2.5-flash", "num_tests": 3, "num_passed": 3, "passed": true, "errors": []}
+{"benchmark": "mbpp", "task_id": "625", "model_name": "google/gemini-2.5-flash", "num_tests": 3, "num_passed": 3, "passed": true, "errors": []}
+{"benchmark": "mbpp", "task_id": "617", "model_name": "google/gemini-2.5-flash", "num_tests": 3, "num_passed": 0, "passed": false, "errors": ["TypeError: bad operand type for abs(): 'tuple'", "AssertionError: ", "TypeError: bad operand type for abs(): 'tuple'"]}
+{"benchmark": "mbpp", "task_id": "628", "model_name": "google/gemini-2.5-flash", "num_tests": 3, "num_passed": 3, "passed": true, "errors": []}
+{"benchmark": "mbpp", "task_id": "622", "model_name": "google/gemini-2.5-flash", "num_tests": 3, "num_passed": 0, "passed": false, "errors": ["TypeError: get_median() takes 2 positional arguments but 3 were given", "TypeError: get_median() takes 2 positional arguments but 3 were given", "TypeError: get_median() takes 2 positional arguments but 3 were given"]}
+{"benchmark": "mbpp", "task_id": "626", "model_name": "google/gemini-2.5-flash", "num_tests": 3, "num_passed": 2, "passed": false, "errors": ["ValueError: Radius cannot be negative."]}
+{"benchmark": "mbpp", "task_id": "629", "model_name": "google/gemini-2.5-flash", "num_tests": 3, "num_passed": 3, "passed": true, "errors": []}
+{"benchmark": "mbpp", "task_id": "627", "model_name": "google/gemini-2.5-flash", "num_tests": 3, "num_passed": 0, "passed": false, "errors": ["AssertionError: ", "AssertionError: ", "AssertionError: "]}
+{"benchmark": "mbpp", "task_id": "632", "model_name": "google/gemini-2.5-flash", "num_tests": 3, "num_passed": 0, "passed": false, "errors": ["AssertionError: ", "AssertionError: ", "AssertionError: "]}
+{"benchmark": "mbpp", "task_id": "631", "model_name": "google/gemini-2.5-flash", "num_tests": 3, "num_passed": 3, "passed": true, "errors": []}
+{"benchmark": "mbpp", "task_id": "630", "model_name": "google/gemini-2.5-flash", "num_tests": 3, "num_passed": 0, "passed": false, "errors": ["AssertionError: ", "AssertionError: ", "AssertionError: "]}
+{"benchmark": "mbpp", "task_id": "637", "model_name": "google/gemini-2.5-flash", "num_tests": 3, "num_passed": 3, "passed": true, "errors": []}
+{"benchmark": "mbpp", "task_id": "603", "model_name": "google/gemini-2.5-flash", "num_tests": 3, "num_passed": 0, "passed": false, "errors": ["TimeoutError: Code execution timed out"]}
+{"benchmark": "mbpp", "task_id": "633", "model_name": "google/gemini-2.5-flash", "num_tests": 3, "num_passed": 0, "passed": false, "errors": ["TypeError: pair_xor_Sum() takes 1 positional argument but 2 were given", "TypeError: pair_xor_Sum() takes 1 positional argument but 2 were given", "TypeError: pair_xor_Sum() takes 1 positional argument but 2 were given"]}
+{"benchmark": "mbpp", "task_id": "639", "model_name": "google/gemini-2.5-flash", "num_tests": 3, "num_passed": 3, "passed": true, "errors": []}
+{"benchmark": "mbpp", "task_id": "640", "model_name": "google/gemini-2.5-flash", "num_tests": 3, "num_passed": 0, "passed": false, "errors": ["AssertionError: ", "AssertionError: ", "AssertionError: "]}
+{"benchmark": "mbpp", "task_id": "638", "model_name": "google/gemini-2.5-flash", "num_tests": 3, "num_passed": 0, "passed": false, "errors": ["AssertionError: ", "AssertionError: ", "AssertionError: "]}
+{"benchmark": "mbpp", "task_id": "641", "model_name": "google/gemini-2.5-flash", "num_tests": 3, "num_passed": 3, "passed": true, "errors": []}
+{"benchmark": "mbpp", "task_id": "643", "model_name": "google/gemini-2.5-flash", "num_tests": 3, "num_passed": 3, "passed": true, "errors": []}
+{"benchmark": "mbpp", "task_id": "635", "model_name": "google/gemini-2.5-flash", "num_tests": 3, "num_passed": 3, "passed": true, "errors": []}
+{"benchmark": "mbpp", "task_id": "644", "model_name": "google/gemini-2.5-flash", "num_tests": 3, "num_passed": 0, "passed": false, "errors": ["AssertionError: ", "AssertionError: ", "AssertionError: "]}
+{"benchmark": "mbpp", "task_id": "720", "model_name": "google/gemini-2.5-flash", "num_tests": 3, "num_passed": 3, "passed": true, "errors": []}
+{"benchmark": "mbpp", "task_id": "723", "model_name": "google/gemini-2.5-flash", "num_tests": 4, "num_passed": 4, "passed": true, "errors": []}
+{"benchmark": "mbpp", "task_id": "724", "model_name": "google/gemini-2.5-flash", "num_tests": 4, "num_passed": 4, "passed": true, "errors": []}
+{"benchmark": "mbpp", "task_id": "722", "model_name": "google/gemini-2.5-flash", "num_tests": 3, "num_passed": 2, "passed": false, "errors": ["AssertionError: "]}
+{"benchmark": "mbpp", "task_id": "725", "model_name": "google/gemini-2.5-flash", "num_tests": 4, "num_passed": 4, "passed": true, "errors": []}
+{"benchmark": "mbpp", "task_id": "726", "model_name": "google/gemini-2.5-flash", "num_tests": 4, "num_passed": 4, "passed": true, "errors": []}
+{"benchmark": "mbpp", "task_id": "728", "model_name": "google/gemini-2.5-flash", "num_tests": 3, "num_passed": 3, "passed": true, "errors": []}
+{"benchmark": "mbpp", "task_id": "730", "model_name": "google/gemini-2.5-flash", "num_tests": 4, "num_passed": 4, "passed": true, "errors": []}
+{"benchmark": "mbpp", "task_id": "731", "model_name": "google/gemini-2.5-flash", "num_tests": 3, "num_passed": 3, "passed": true, "errors": []}
+{"benchmark": "mbpp", "task_id": "721", "model_name": "google/gemini-2.5-flash", "num_tests": 4, "num_passed": 4, "passed": true, "errors": []}
+{"benchmark": "mbpp", "task_id": "732", "model_name": "google/gemini-2.5-flash", "num_tests": 3, "num_passed": 3, "passed": true, "errors": []}
+{"benchmark": "mbpp", "task_id": "734", "model_name": "google/gemini-2.5-flash", "num_tests": 3, "num_passed": 3, "passed": true, "errors": []}
+{"benchmark": "mbpp", "task_id": "733", "model_name": "google/gemini-2.5-flash", "num_tests": 3, "num_passed": 3, "passed": true, "errors": []}
+{"benchmark": "mbpp", "task_id": "737", "model_name": "google/gemini-2.5-flash", "num_tests": 3, "num_passed": 3, "passed": true, "errors": []}
+{"benchmark": "mbpp", "task_id": "738", "model_name": "google/gemini-2.5-flash", "num_tests": 3, "num_passed": 0, "passed": false, "errors": ["AssertionError: ", "AssertionError: ", "AssertionError: "]}
+{"benchmark": "mbpp", "task_id": "736", "model_name": "google/gemini-2.5-flash", "num_tests": 3, "num_passed": 3, "passed": true, "errors": []}
+{"benchmark": "mbpp", "task_id": "740", "model_name": "google/gemini-2.5-flash", "num_tests": 3, "num_passed": 3, "passed": true, "errors": []}
+{"benchmark": "mbpp", "task_id": "735", "model_name": "google/gemini-2.5-flash", "num_tests": 5, "num_passed": 5, "passed": true, "errors": []}
+{"benchmark": "mbpp", "task_id": "741", "model_name": "google/gemini-2.5-flash", "num_tests": 3, "num_passed": 3, "passed": true, "errors": []}
+{"benchmark": "mbpp", "task_id": "744", "model_name": "google/gemini-2.5-flash", "num_tests": 3, "num_passed": 3, "passed": true, "errors": []}
+{"benchmark": "mbpp", "task_id": "742", "model_name": "google/gemini-2.5-flash", "num_tests": 3, "num_passed": 3, "passed": true, "errors": []}
+{"benchmark": "mbpp", "task_id": "745", "model_name": "google/gemini-2.5-flash", "num_tests": 3, "num_passed": 3, "passed": true, "errors": []}
+{"benchmark": "mbpp", "task_id": "743", "model_name": "google/gemini-2.5-flash", "num_tests": 3, "num_passed": 3, "passed": true, "errors": []}
+{"benchmark": "mbpp", "task_id": "748", "model_name": "google/gemini-2.5-flash", "num_tests": 3, "num_passed": 3, "passed": true, "errors": []}
+{"benchmark": "mbpp", "task_id": "746", "model_name": "google/gemini-2.5-flash", "num_tests": 3, "num_passed": 3, "passed": true, "errors": []}
+{"benchmark": "mbpp", "task_id": "749", "model_name": "google/gemini-2.5-flash", "num_tests": 3, "num_passed": 0, "passed": false, "errors": ["AssertionError: ", "AssertionError: ", "AssertionError: "]}
+{"benchmark": "mbpp", "task_id": "750", "model_name": "google/gemini-2.5-flash", "num_tests": 3, "num_passed": 0, "passed": false, "errors": ["AssertionError: ", "AssertionError: ", "AssertionError: "]}
+{"benchmark": "mbpp", "task_id": "747", "model_name": "google/gemini-2.5-flash", "num_tests": 3, "num_passed": 3, "passed": true, "errors": []}
+{"benchmark": "mbpp", "task_id": "752", "model_name": "google/gemini-2.5-flash", "num_tests": 4, "num_passed": 4, "passed": true, "errors": []}
+{"benchmark": "mbpp", "task_id": "755", "model_name": "google/gemini-2.5-flash", "num_tests": 4, "num_passed": 4, "passed": true, "errors": []}
+{"benchmark": "mbpp", "task_id": "751", "model_name": "google/gemini-2.5-flash", "num_tests": 3, "num_passed": 3, "passed": true, "errors": []}
+{"benchmark": "mbpp", "task_id": "753", "model_name": "google/gemini-2.5-flash", "num_tests": 3, "num_passed": 2, "passed": false, "errors": ["AssertionError: "]}
+{"benchmark": "mbpp", "task_id": "754", "model_name": "google/gemini-2.5-flash", "num_tests": 4, "num_passed": 4, "passed": true, "errors": []}
+{"benchmark": "mbpp", "task_id": "756", "model_name": "google/gemini-2.5-flash", "num_tests": 6, "num_passed": 0, "passed": false, "errors": ["AssertionError: ", "AssertionError: ", "AssertionError: ", "AssertionError: ", "AssertionError: "]}
+{"benchmark": "mbpp", "task_id": "739", "model_name": "google/gemini-2.5-flash", "num_tests": 3, "num_passed": 3, "passed": true, "errors": []}
+{"benchmark": "mbpp", "task_id": "758", "model_name": "google/gemini-2.5-flash", "num_tests": 4, "num_passed": 4, "passed": true, "errors": []}
+{"benchmark": "mbpp", "task_id": "760", "model_name": "google/gemini-2.5-flash", "num_tests": 3, "num_passed": 3, "passed": true, "errors": []}
+{"benchmark": "mbpp", "task_id": "762", "model_name": "google/gemini-2.5-flash", "num_tests": 3, "num_passed": 3, "passed": true, "errors": []}
+{"benchmark": "mbpp", "task_id": "757", "model_name": "google/gemini-2.5-flash", "num_tests": 3, "num_passed": 3, "passed": true, "errors": []}
+{"benchmark": "mbpp", "task_id": "763", "model_name": "google/gemini-2.5-flash", "num_tests": 3, "num_passed": 0, "passed": false, "errors": ["TypeError: find_min_diff() takes 1 positional argument but 2 were given", "TypeError: find_min_diff() takes 1 positional argument but 2 were given", "TypeError: find_min_diff() takes 1 positional argument but 2 were given"]}
+{"benchmark": "mbpp", "task_id": "764", "model_name": "google/gemini-2.5-flash", "num_tests": 4, "num_passed": 4, "passed": true, "errors": []}
+{"benchmark": "mbpp", "task_id": "765", "model_name": "google/gemini-2.5-flash", "num_tests": 3, "num_passed": 1, "passed": false, "errors": ["AssertionError: ", "AssertionError: "]}
+{"benchmark": "mbpp", "task_id": "766", "model_name": "google/gemini-2.5-flash", "num_tests": 4, "num_passed": 0, "passed": false, "errors": ["AssertionError: ", "AssertionError: ", "AssertionError: ", "AssertionError: "]}
+{"benchmark": "mbpp", "task_id": "770", "model_name": "google/gemini-2.5-flash", "num_tests": 3, "num_passed": 3, "passed": true, "errors": []}
+{"benchmark": "mbpp", "task_id": "769", "model_name": "google/gemini-2.5-flash", "num_tests": 3, "num_passed": 2, "passed": false, "errors": ["AssertionError: "]}
+{"benchmark": "mbpp", "task_id": "767", "model_name": "google/gemini-2.5-flash", "num_tests": 4, "num_passed": 4, "passed": true, "errors": []}
+{"benchmark": "mbpp", "task_id": "771", "model_name": "google/gemini-2.5-flash", "num_tests": 3, "num_passed": 3, "passed": true, "errors": []}
+{"benchmark": "mbpp", "task_id": "772", "model_name": "google/gemini-2.5-flash", "num_tests": 3, "num_passed": 3, "passed": true, "errors": []}
+{"benchmark": "mbpp", "task_id": "773", "model_name": "google/gemini-2.5-flash", "num_tests": 4, "num_passed": 1, "passed": false, "errors": ["AssertionError: ", "AssertionError: ", "AssertionError: "]}
+{"benchmark": "mbpp", "task_id": "759", "model_name": "google/gemini-2.5-flash", "num_tests": 5, "num_passed": 5, "passed": true, "errors": []}
+{"benchmark": "mbpp", "task_id": "777", "model_name": "google/gemini-2.5-flash", "num_tests": 3, "num_passed": 0, "passed": false, "errors": ["AssertionError: ", "AssertionError: ", "AssertionError: "]}
+{"benchmark": "mbpp", "task_id": "776", "model_name": "google/gemini-2.5-flash", "num_tests": 3, "num_passed": 1, "passed": false, "errors": ["AssertionError: ", "AssertionError: "]}
+{"benchmark": "mbpp", "task_id": "779", "model_name": "google/gemini-2.5-flash", "num_tests": 3, "num_passed": 3, "passed": true, "errors": []}
+{"benchmark": "mbpp", "task_id": "775", "model_name": "google/gemini-2.5-flash", "num_tests": 3, "num_passed": 0, "passed": false, "errors": ["AssertionError: ", "AssertionError: ", "AssertionError: "]}
+{"benchmark": "mbpp", "task_id": "778", "model_name": "google/gemini-2.5-flash", "num_tests": 3, "num_passed": 3, "passed": true, "errors": []}
+{"benchmark": "mbpp", "task_id": "781", "model_name": "google/gemini-2.5-flash", "num_tests": 3, "num_passed": 3, "passed": true, "errors": []}
+{"benchmark": "mbpp", "task_id": "780", "model_name": "google/gemini-2.5-flash", "num_tests": 3, "num_passed": 0, "passed": false, "errors": ["TypeError: find_combinations() missing 1 required positional argument: 'K'", "TypeError: find_combinations() missing 1 required positional argument: 'K'", "TypeError: find_combinations() missing 1 required positional argument: 'K'"]}
+{"benchmark": "mbpp", "task_id": "784", "model_name": "google/gemini-2.5-flash", "num_tests": 3, "num_passed": 3, "passed": true, "errors": []}
+{"benchmark": "mbpp", "task_id": "785", "model_name": "google/gemini-2.5-flash", "num_tests": 4, "num_passed": 4, "passed": true, "errors": []}
+{"benchmark": "mbpp", "task_id": "787", "model_name": "google/gemini-2.5-flash", "num_tests": 4, "num_passed": 4, "passed": true, "errors": []}
+{"benchmark": "mbpp", "task_id": "786", "model_name": "google/gemini-2.5-flash", "num_tests": 3, "num_passed": 3, "passed": true, "errors": []}
+{"benchmark": "mbpp", "task_id": "788", "model_name": "google/gemini-2.5-flash", "num_tests": 3, "num_passed": 0, "passed": false, "errors": ["AssertionError: ", "AssertionError: ", "AssertionError: "]}
+{"benchmark": "mbpp", "task_id": "783", "model_name": "google/gemini-2.5-flash", "num_tests": 3, "num_passed": 0, "passed": false, "errors": ["AssertionError: ", "AssertionError: ", "AssertionError: "]}
+{"benchmark": "mbpp", "task_id": "782", "model_name": "google/gemini-2.5-flash", "num_tests": 3, "num_passed": 3, "passed": true, "errors": []}
+{"benchmark": "mbpp", "task_id": "790", "model_name": "google/gemini-2.5-flash", "num_tests": 3, "num_passed": 3, "passed": true, "errors": []}
+{"benchmark": "mbpp", "task_id": "791", "model_name": "google/gemini-2.5-flash", "num_tests": 4, "num_passed": 4, "passed": true, "errors": []}
+{"benchmark": "mbpp", "task_id": "794", "model_name": "google/gemini-2.5-flash", "num_tests": 3, "num_passed": 3, "passed": true, "errors": []}
+{"benchmark": "mbpp", "task_id": "792", "model_name": "google/gemini-2.5-flash", "num_tests": 3, "num_passed": 3, "passed": true, "errors": []}
+{"benchmark": "mbpp", "task_id": "793", "model_name": "google/gemini-2.5-flash", "num_tests": 3, "num_passed": 3, "passed": true, "errors": []}
+{"benchmark": "mbpp", "task_id": "796", "model_name": "google/gemini-2.5-flash", "num_tests": 3, "num_passed": 3, "passed": true, "errors": []}
+{"benchmark": "mbpp", "task_id": "798", "model_name": "google/gemini-2.5-flash", "num_tests": 3, "num_passed": 3, "passed": true, "errors": []}
+{"benchmark": "mbpp", "task_id": "800", "model_name": "google/gemini-2.5-flash", "num_tests": 4, "num_passed": 4, "passed": true, "errors": []}
+{"benchmark": "mbpp", "task_id": "799", "model_name": "google/gemini-2.5-flash", "num_tests": 7, "num_passed": 7, "passed": true, "errors": []}
+{"benchmark": "mbpp", "task_id": "801", "model_name": "google/gemini-2.5-flash", "num_tests": 3, "num_passed": 3, "passed": true, "errors": []}
+{"benchmark": "mbpp", "task_id": "797", "model_name": "google/gemini-2.5-flash", "num_tests": 3, "num_passed": 3, "passed": true, "errors": []}
+{"benchmark": "mbpp", "task_id": "802", "model_name": "google/gemini-2.5-flash", "num_tests": 5, "num_passed": 4, "passed": false, "errors": ["AssertionError: "]}
+{"benchmark": "mbpp", "task_id": "803", "model_name": "google/gemini-2.5-flash", "num_tests": 6, "num_passed": 6, "passed": true, "errors": []}
+{"benchmark": "mbpp", "task_id": "807", "model_name": "google/gemini-2.5-flash", "num_tests": 3, "num_passed": 3, "passed": true, "errors": []}
+{"benchmark": "mbpp", "task_id": "806", "model_name": "google/gemini-2.5-flash", "num_tests": 3, "num_passed": 3, "passed": true, "errors": []}
+{"benchmark": "mbpp", "task_id": "805", "model_name": "google/gemini-2.5-flash", "num_tests": 3, "num_passed": 3, "passed": true, "errors": []}
+{"benchmark": "mbpp", "task_id": "808", "model_name": "google/gemini-2.5-flash", "num_tests": 3, "num_passed": 0, "passed": false, "errors": ["TypeError: argument of type 'int' is not iterable", "TypeError: argument of type 'int' is not iterable", "TypeError: argument of type 'int' is not iterable"]}
+{"benchmark": "mbpp", "task_id": "804", "model_name": "google/gemini-2.5-flash", "num_tests": 3, "num_passed": 3, "passed": true, "errors": []}
+{"benchmark": "mbpp", "task_id": "809", "model_name": "google/gemini-2.5-flash", "num_tests": 3, "num_passed": 3, "passed": true, "errors": []}
