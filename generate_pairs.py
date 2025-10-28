@@ -159,20 +159,35 @@ def execute(dataset: str, start_index: int, end_index: int, split: str = "test")
     # Read models from per-dataset config
     source = dataset
     ds_cfg = cfg.get("datasets", {}).get(source, {})
-    models: List[str] = list(ds_cfg.get("models", []))
-    if len(models) < 2:
+    all_models: List[str] = list(ds_cfg.get("models", []))
+    if len(all_models) < 1:
         raise typer.BadParameter(
-            f"Config for dataset '{source}' must specify at least two models."
+            f"Config for dataset '{source}' must specify at least one model."
         )
 
     paths = cfg.get("paths", {})
     data_dir = Path(paths.get("data_dir", "data"))
 
+    # Filter out models that already have output files
+    models: List[str] = []
+    for model in all_models:
+        output_path = compute_output_path(data_dir, source, model, split)
+        if output_path.exists():
+            console.print(f"[yellow]Skipping {model}[/] - output file already exists: {output_path}")
+        else:
+            models.append(model)
+    
+    if not models:
+        console.print("[green]All models already have output files. Nothing to generate.[/]")
+        return
+
+    console.print(f"[green]Generating code for models:[/] {models}")
+
     client = OpenRouterClient(api_key=cfg.get("api", {}).get("openrouter_api_key") or None)
     gen_prompt_path = Path("prompts/generation.md")
 
     tasks = load_tasks(source, start_index, end_index, split)
-    console.print(f"Generating code for {len(tasks)} tasks from {split} split using models: {models[:2]}")
+    console.print(f"Generating code for {len(tasks)} tasks from {split} split")
 
     # Determine concurrency level
     max_workers = int(cfg.get("api", {}).get("concurrency", 4))
@@ -180,7 +195,7 @@ def execute(dataset: str, start_index: int, end_index: int, split: str = "test")
     # Create output paths for each model
     model_outputs = {
         model: compute_output_path(data_dir, source, model, split)
-        for model in models[:2]
+        for model in models
     }
 
     def submit_job(task: TaskExample, model: str) -> Tuple[TaskExample, str, str]:
@@ -197,7 +212,7 @@ def execute(dataset: str, start_index: int, end_index: int, split: str = "test")
     jobs: List[Tuple[TaskExample, str]] = [
         (task, model)
         for task in tasks
-        for model in models[:2]
+        for model in models
     ]
 
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
