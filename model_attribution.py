@@ -325,7 +325,6 @@ def execute(
                 predicted_attribution=predicted_attr,
                 gold_attribution=gold_attr,
                 is_correct=is_correct,
-                evaluator_response=predicted_attr,  # Use parsed dict instead of raw string
             )
             write_jsonl_line(results_path, result.to_dict())
 

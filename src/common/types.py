@@ -57,7 +57,6 @@ class ModelAttributionResult:
     predicted_attribution: Optional[Dict[str, str]]  # {"Code1": "model_name", "Code2": "model_name"}
     gold_attribution: Dict[str, str]  # {"Code1": "model_name", "Code2": "model_name"}
     is_correct: Optional[bool]
-    evaluator_response: Optional[Dict[str, str]]  # Parsed JSON response
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -69,7 +68,6 @@ class ModelAttributionResult:
             "predicted_attribution": self.predicted_attribution,
             "gold_attribution": self.gold_attribution,
             "is_correct": self.is_correct,
-            "evaluator_response": self.evaluator_response,
         }
 
 
