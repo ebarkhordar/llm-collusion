@@ -48,6 +48,32 @@ class Pair:
 
 
 @dataclass
+class ModelAttributionResult:
+    benchmark: str
+    task_id: str
+    judge_model: str
+    model1: str
+    model2: str
+    predicted_attribution: Optional[Dict[str, str]]  # {"Code1": "model_name", "Code2": "model_name"}
+    gold_attribution: Dict[str, str]  # {"Code1": "model_name", "Code2": "model_name"}
+    is_correct: Optional[bool]
+    evaluator_response: Optional[Dict[str, str]]  # Parsed JSON response
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "benchmark": self.benchmark,
+            "task_id": self.task_id,
+            "judge_model": self.judge_model,
+            "model1": self.model1,
+            "model2": self.model2,
+            "predicted_attribution": self.predicted_attribution,
+            "gold_attribution": self.gold_attribution,
+            "is_correct": self.is_correct,
+            "evaluator_response": self.evaluator_response,
+        }
+
+
+@dataclass
 class SelfRecognitionResult:
     benchmark: str
     task_id: str

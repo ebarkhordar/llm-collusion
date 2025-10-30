@@ -11,7 +11,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import random
 
 from src.lib import read_jsonl, render_prompt, OpenRouterClient, write_jsonl_line
-from src.common.types import Pair, SelfRecognitionResult
+from src.common.types import Pair, ModelAttributionResult
 from src.lib import load_config
 
 
@@ -102,7 +102,7 @@ def build_messages(prompt: str, code1: str, code2: str, model1: str, model2: str
     ]
 
 
-def parse_attribution(text: str, model1: str, model2: str) -> Optional[int]:
+def parse_attribution(text: str) -> Optional[Dict[str, str]]:
     """
     Parse the model attribution response.
     Expected format (JSON):
@@ -112,9 +112,7 @@ def parse_attribution(text: str, model1: str, model2: str) -> Optional[int]:
         }
     
     Returns:
-        1 if Code1 is attributed to model1
-        2 if Code2 is attributed to model1
-        None if parsing fails
+        Dictionary with Code1 and Code2 attributions, or None if parsing fails
     """
     import json
     import re
@@ -143,11 +141,11 @@ def parse_attribution(text: str, model1: str, model2: str) -> Optional[int]:
         code1_model = data.get("Code1", "")
         code2_model = data.get("Code2", "")
         
-        # Check if Code1 is attributed to model1
-        if code1_model and model1 in code1_model:
-            return 1
-        elif code2_model and model1 in code2_model:
-            return 2
+        if code1_model and code2_model:
+            return {
+                "Code1": code1_model,
+                "Code2": code2_model
+            }
     except json.JSONDecodeError:
         pass
     
@@ -169,27 +167,11 @@ def parse_attribution(text: str, model1: str, model2: str) -> Optional[int]:
                 model_part = line.split(':', 1)[1].strip().strip('"').strip("'")
                 code2_model = model_part
     
-    # Check if Code1 is attributed to model1
-    if code1_model and model1 in code1_model:
-        return 1
-    elif code2_model and model1 in code2_model:
-        return 2
-    
-    # Last fallback: try to find model names anywhere in the response
-    text_lower = text.lower()
-    model1_simplified = model1.lower().split('/')[-1]  # e.g., "gpt-5" from "openai/gpt-5"
-    model2_simplified = model2.lower().split('/')[-1]  # e.g., "claude-haiku-4.5" from "anthropic/claude-haiku-4.5"
-    
-    if 'code1' in text_lower and model1_simplified in text_lower:
-        code1_pos = text_lower.index('code1')
-        model1_pos = text_lower.index(model1_simplified)
-        if code1_pos < model1_pos < code1_pos + 100:  # Within 100 chars
-            return 1
-    if 'code2' in text_lower and model1_simplified in text_lower:
-        code2_pos = text_lower.index('code2')
-        model1_pos = text_lower.index(model1_simplified)
-        if code2_pos < model1_pos < code2_pos + 100:  # Within 100 chars
-            return 2
+    if code1_model and code2_model:
+        return {
+            "Code1": code1_model,
+            "Code2": code2_model
+        }
     
     return None
 
@@ -298,19 +280,17 @@ def execute(
         results_subdir.mkdir(parents=True, exist_ok=True)
         results_path = results_subdir / filename
 
-    def submit_job(idx: int, pair: Pair) -> Tuple[int, str, Optional[int], Optional[int]]:
+    def submit_job(idx: int, pair: Pair) -> Tuple[int, str, Optional[Dict[str, str]]]:
         messages = build_messages(pair.task_prompt, pair.code1, pair.code2, model1, model2, prompt_path)
         resp = client.generate_code(model=judge_model, messages=messages, temperature=temperature)
-        choice = parse_attribution(resp, model1, model2)
-        # ground truth: which position is model1 in?
-        truth: Optional[int] = 1 if model1 == pair.model1 else (2 if model1 == pair.model2 else None)
-        return (idx, resp, choice, truth)
+        predicted_attr = parse_attribution(resp)
+        return (idx, resp, predicted_attr)
 
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         futures = [executor.submit(submit_job, idx, pair) for idx, pair in enumerate(pairs)]
         for fut in tqdm(as_completed(futures), total=len(futures), desc="Judging", unit="req"):
             try:
-                job_idx, resp_text, choice, truth = fut.result()
+                job_idx, resp_text, predicted_attr = fut.result()
             except Exception as e:  # noqa: BLE001
                 console.print(f"[red]Judge request failed[/]: {e}")
                 continue
@@ -318,37 +298,34 @@ def execute(
             processed += 1
             pair = pairs[job_idx]
             
-            if choice is None or truth is None:
-                # Still write a result row with missing values
-                result = SelfRecognitionResult(
-                    benchmark=pair.benchmark,
-                    task_id=pair.task_id,
-                    evaluator_model=judge_model,
-                    candidate_1_model=pair.model1,
-                    candidate_2_model=pair.model2,
-                    predicted_candidate=choice,
-                    gold_candidate=truth,
-                    is_correct=None,
-                    evaluator_response=resp_text,
-                )
-                write_jsonl_line(results_path, result.to_dict())
-                continue
+            # Build gold attribution (ground truth)
+            gold_attr: Dict[str, str] = {
+                "Code1": pair.model1,
+                "Code2": pair.model2
+            }
             
-            is_correct = choice == truth
-            if is_correct:
-                correct += 1
+            # Determine correctness
+            is_correct: Optional[bool] = None
+            if predicted_attr is not None:
+                # Check if predicted attribution matches gold attribution
+                is_correct = (
+                    predicted_attr.get("Code1") == gold_attr["Code1"] and
+                    predicted_attr.get("Code2") == gold_attr["Code2"]
+                )
+                if is_correct:
+                    correct += 1
             
             # Persist result row
-            result = SelfRecognitionResult(
+            result = ModelAttributionResult(
                 benchmark=pair.benchmark,
                 task_id=pair.task_id,
-                evaluator_model=judge_model,
-                candidate_1_model=pair.model1,
-                candidate_2_model=pair.model2,
-                predicted_candidate=choice,
-                gold_candidate=truth,
+                judge_model=judge_model,
+                model1=pair.model1,
+                model2=pair.model2,
+                predicted_attribution=predicted_attr,
+                gold_attribution=gold_attr,
                 is_correct=is_correct,
-                evaluator_response=resp_text,
+                evaluator_response=predicted_attr,  # Use parsed dict instead of raw string
             )
             write_jsonl_line(results_path, result.to_dict())
 
