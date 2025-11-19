@@ -96,6 +96,34 @@ class SelfRecognitionResult:
             "evaluator_response": self.evaluator_response,
         }
 
+
+@dataclass
+class CrossModelDetectionResult:
+    benchmark: str
+    task_id: str
+    judge_model: str
+    target_model: str
+    candidate_1_model: str
+    candidate_2_model: str
+    predicted_candidate: Optional[int]
+    gold_candidate: Optional[int]
+    is_correct: Optional[bool]
+    judge_response: str
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "benchmark": self.benchmark,
+            "task_id": self.task_id,
+            "judge_model": self.judge_model,
+            "target_model": self.target_model,
+            "candidate_1_model": self.candidate_1_model,
+            "candidate_2_model": self.candidate_2_model,
+            "predicted_candidate": self.predicted_candidate,
+            "gold_candidate": self.gold_candidate,
+            "is_correct": self.is_correct,
+            "judge_response": self.judge_response,
+        }
+
 @dataclass
 class TestOutcome:
     benchmark: str

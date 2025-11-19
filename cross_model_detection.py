@@ -11,7 +11,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import random
 
 from src.lib import read_jsonl, render_prompt, OpenRouterClient, write_jsonl_line
-from src.common.types import Pair, SelfRecognitionResult
+from src.common.types import Pair, CrossModelDetectionResult
 from src.lib import load_config
 
 
@@ -247,16 +247,17 @@ def execute(
             
             if choice is None or truth is None:
                 # Still write a result row with missing values
-                result = SelfRecognitionResult(
+                result = CrossModelDetectionResult(
                     benchmark=pair.benchmark,
                     task_id=pair.task_id,
-                    evaluator_model=judge_model,
+                    judge_model=judge_model,
+                    target_model=target_model,
                     candidate_1_model=pair.model1,
                     candidate_2_model=pair.model2,
                     predicted_candidate=choice,
                     gold_candidate=truth,
                     is_correct=None,
-                    evaluator_response=resp_text,
+                    judge_response=resp_text,
                 )
                 write_jsonl_line(results_path, result.to_dict())
                 continue
@@ -266,16 +267,17 @@ def execute(
                 correct += 1
             
             # Persist result row
-            result = SelfRecognitionResult(
+            result = CrossModelDetectionResult(
                 benchmark=pair.benchmark,
                 task_id=pair.task_id,
-                evaluator_model=judge_model,
+                judge_model=judge_model,
+                target_model=target_model,
                 candidate_1_model=pair.model1,
                 candidate_2_model=pair.model2,
                 predicted_candidate=choice,
                 gold_candidate=truth,
                 is_correct=is_correct,
-                evaluator_response=resp_text,
+                judge_response=resp_text,
             )
             write_jsonl_line(results_path, result.to_dict())
 
