@@ -290,6 +290,88 @@ def execute(
 
 
 @app.command()
+def interactive():
+    """
+    Interactive mode: Prompts for all required parameters.
+    """
+    console.print("[cyan]=== Target Identification - Interactive Mode ===[/]\n")
+    
+    # Prompt for input method
+    console.print("[yellow]Input method:[/]")
+    console.print("1. Use dataset folder and split")
+    console.print("2. Use custom input path")
+    input_method = typer.prompt("Choose option (1 or 2)", default="1")
+    
+    dataset_folder = None
+    split = None
+    input_path = None
+    
+    if input_method == "1":
+        dataset_folder = typer.prompt("Dataset folder name", default="mbpp-sanitized")
+        split = typer.prompt("Split (test/train/validation)", default="test")
+    else:
+        input_path_str = typer.prompt("Input path (folder containing JSONL files)")
+        input_path = Path(input_path_str)
+    
+    dataset = typer.prompt("Dataset filter (optional, press Enter to skip)", default="", show_default=False)
+    dataset = dataset.strip() if dataset else None
+    
+    # Prompt for models
+    console.print("\n[yellow]Model configuration:[/]")
+    model1 = typer.prompt("Model 1 ID", default="anthropic/claude-haiku-4.5")
+    model2 = typer.prompt("Model 2 ID", default="deepseek/deepseek-chat-v3-0324")
+    
+    # Prompt for target (must be one of model1 or model2)
+    while True:
+        target = typer.prompt("Target model to identify (must be model1 or model2)", default=model1)
+        if target == model1 or target == model2:
+            break
+        console.print(f"[red]Error: Target must be either '{model1}' or '{model2}'[/]")
+    
+    judge = typer.prompt("Judge model ID", default="openai/gpt-5")
+    
+    # Optional parameters
+    console.print("\n[yellow]Optional parameters:[/]")
+    concurrency_str = typer.prompt("Concurrency (press Enter for default)", default="", show_default=False)
+    concurrency = int(concurrency_str) if concurrency_str.strip() else None
+    
+    temperature_str = typer.prompt("Temperature (press Enter for 0.0)", default="0.0")
+    temperature = float(temperature_str)
+    
+    # Confirm and execute
+    console.print("\n[cyan]Configuration:[/]")
+    if dataset_folder and split:
+        console.print(f"  Input: {dataset_folder}/{split}")
+    else:
+        console.print(f"  Input: {input_path}")
+    console.print(f"  Model 1: {model1}")
+    console.print(f"  Model 2: {model2}")
+    console.print(f"  Target: {target}")
+    console.print(f"  Judge: {judge}")
+    if concurrency:
+        console.print(f"  Concurrency: {concurrency}")
+    console.print(f"  Temperature: {temperature}")
+    
+    confirm = typer.confirm("\nProceed with this configuration?", default=True)
+    if not confirm:
+        console.print("[yellow]Cancelled.[/]")
+        raise typer.Abort()
+    
+    execute(
+        input_path=input_path,
+        dataset_folder=dataset_folder,
+        split=split,
+        dataset=dataset,
+        judge_model=judge,
+        model1=model1,
+        model2=model2,
+        target_model=target,
+        concurrency_override=concurrency,
+        temperature=temperature,
+    )
+
+
+@app.command()
 def run(
     dataset_folder: Optional[str] = typer.Option(None, "--dataset-folder", help="Dataset folder name (e.g., mbpp-sanitized)"),
     split: Optional[str] = typer.Option(None, "--split", help="Dataset split (e.g., test, train, validation)"),
@@ -322,6 +404,18 @@ def run(
         concurrency_override=concurrency,
         temperature=temperature,
     )
+
+
+@app.callback(invoke_without_command=True)
+def main(ctx: typer.Context):
+    """
+    Target identification: Have a judge model identify code written by a specific target model.
+    
+    Run without arguments for interactive mode, or use 'run' command with arguments.
+    """
+    if ctx.invoked_subcommand is None:
+        # No subcommand provided, run interactive mode
+        ctx.invoke(interactive)
 
 
 if __name__ == "__main__":
