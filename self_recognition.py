@@ -176,7 +176,7 @@ def execute(
 
     # Client
     client = OpenRouterClient(api_key=cfg.get("api", {}).get("openrouter_api_key") or None)
-    prompt_path = Path("prompts/self_recognition.md")
+    prompt_path = Path("prompts/model_attribution/self_recognition.md")
 
     # Concurrency
     max_workers = int(concurrency_override or int(cfg.get("api", {}).get("concurrency", 4)))
