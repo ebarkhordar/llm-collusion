@@ -1,53 +1,88 @@
 {
-  "version": "0.2.0",
-  "configurations": [
-    {
-      "name": "Python: generate_pairs (mbpp 0..10)",
-      "type": "debugpy",
-      "request": "launch",
-      "program": "${workspaceFolder}/generate_pairs.py",
-      "args": [
-        "--dataset",
-        "mbpp",
-        "--start-index",
-        "0",
-        "--end-index",
-        "10"
-      ],
-      "cwd": "${workspaceFolder}",
-      "console": "integratedTerminal",
-      "justMyCode": true,
-      "envFile": "${workspaceFolder}/.env"
-    },
-    {
-      "name": "Python: cross_model_detection (mbpp test)",
-      "type": "debugpy",
-      "request": "launch",
-      "program": "${workspaceFolder}/cross_model_detection.py",
-      "args": [
-        "run",
-        "--dataset-folder",
-        "mbpp-sanitized",
-        "--split",
-        "test",
-        "--judge",
-        "openai/gpt-5",
-        "--target",
-        "deepseek/deepseek-chat-v3-0324",
-        "--other",
-        "x-ai/grok-4-fast",
-        "--temperature",
-        "0.0"
-      ],
-      "cwd": "${workspaceFolder}",
-      "console": "integratedTerminal",
-      "justMyCode": true,
-      "envFile": "${workspaceFolder}/.env",
-      "env": {
-        "PYTHONPATH": "${workspaceFolder}/src"
-      }
-    }
-  ]
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug target_identification.py",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/target_identification.py",
+            "console": "integratedTerminal",
+            "args": [
+                "run",
+                "--dataset-folder", "mbpp-sanitized",
+                "--split", "test",
+                "--model1", "anthropic/claude-haiku-4.5",
+                "--model2", "deepseek/deepseek-chat-v3-0324",
+                "--target", "deepseek/deepseek-chat-v3-0324",
+                "--judge", "openai/gpt-5"
+            ],
+            "justMyCode": false,
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
+        },
+        {
+            "name": "Debug target_identification.py (GPT-5 vs Claude)",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/target_identification.py",
+            "console": "integratedTerminal",
+            "args": [
+                "run",
+                "--dataset-folder", "mbpp-sanitized",
+                "--split", "test",
+                "--model1", "openai/gpt-5",
+                "--model2", "anthropic/claude-haiku-4.5",
+                "--target", "anthropic/claude-haiku-4.5",
+                "--judge", "openai/gpt-5",
+                "--concurrency", "4",
+                "--temperature", "0.0"
+            ],
+            "justMyCode": false,
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
+        },
+        {
+            "name": "Debug target_identification.py (Custom Input)",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/target_identification.py",
+            "console": "integratedTerminal",
+            "args": [
+                "run",
+                "--input", "data/code_generation/mbpp-sanitized/test",
+                "--model1", "anthropic/claude-haiku-4.5",
+                "--model2", "deepseek/deepseek-chat-v3-0324",
+                "--target", "deepseek/deepseek-chat-v3-0324",
+                "--judge", "openai/gpt-5"
+            ],
+            "justMyCode": false,
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
+        },
+        {
+            "name": "Debug target_identification.py (Low Concurrency)",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/target_identification.py",
+            "console": "integratedTerminal",
+            "args": [
+                "run",
+                "--dataset-folder", "mbpp-sanitized",
+                "--split", "test",
+                "--model1", "anthropic/claude-haiku-4.5",
+                "--model2", "deepseek/deepseek-chat-v3-0324",
+                "--target", "deepseek/deepseek-chat-v3-0324",
+                "--judge", "openai/gpt-5",
+                "--concurrency", "1"
+            ],
+            "justMyCode": false,
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
+        }
+    ]
 }
-
 
