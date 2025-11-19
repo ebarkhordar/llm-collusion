@@ -43,9 +43,9 @@ def iter_records(source_path: Path, dataset_filter: Optional[str]) -> Iterator[D
             yield rec
 
 
-def build_pairs(records: Iterator[Dict[str, Any]], target_model: str, other_model: Optional[str] = None) -> List[Pair]:
+def build_pairs(records: Iterator[Dict[str, Any]], model1: str, model2: str) -> List[Pair]:
     """
-    Build pairs where one code is from target_model and the other is from a different model.
+    Build pairs where one code is from model1 and the other is from model2.
     """
     from collections import defaultdict
 
@@ -56,34 +56,28 @@ def build_pairs(records: Iterator[Dict[str, Any]], target_model: str, other_mode
 
     pairs: List[Pair] = []
     for (benchmark, task_id), items in grouped.items():
-        # Find target model's code
-        target_item = None
-        other_items = []
+        # Find both models' code
+        model1_item = None
+        model2_item = None
         
         for item in items:
-            if str(item.get("model_name")) == target_model:
-                target_item = item
-            else:
-                other_items.append(item)
-        
-        # If user specified a particular other model, filter to it
-        if other_model is not None:
-            other_items = [it for it in other_items if str(it.get("model_name")) == other_model]
+            model_name = str(item.get("model_name"))
+            if model_name == model1:
+                model1_item = item
+            elif model_name == model2:
+                model2_item = item
 
-        # Skip if we don't have target model's code or no other models remaining
-        if target_item is None or not other_items:
+        # Skip if we don't have both models' code
+        if model1_item is None or model2_item is None:
             continue
-        
-        # Create a pair with target model and first other model
-        other_item = other_items[0]
         
         # Randomize order to avoid positional bias
         if random.random() < 0.5:
-            code1, code2 = target_item, other_item
-            model1, model2 = target_model, str(other_item.get("model_name"))
+            code1, code2 = model1_item, model2_item
+            pair_model1, pair_model2 = model1, model2
         else:
-            code1, code2 = other_item, target_item
-            model1, model2 = str(other_item.get("model_name")), target_model
+            code1, code2 = model2_item, model1_item
+            pair_model1, pair_model2 = model2, model1
         
         pairs.append(
             Pair(
@@ -92,8 +86,8 @@ def build_pairs(records: Iterator[Dict[str, Any]], target_model: str, other_mode
                 task_prompt=str(code1.get("prompt", "")),
                 code1=str(code1.get("generated_code", "")),
                 code2=str(code2.get("generated_code", "")),
-                model1=model1,
-                model2=model2,
+                model1=pair_model1,
+                model2=pair_model2,
             )
         )
 
@@ -143,8 +137,9 @@ def execute(
     split: Optional[str],
     dataset: Optional[str],
     judge_model: str,
+    model1: str,
+    model2: str,
     target_model: str,
-    other_model: Optional[str],
     concurrency_override: Optional[int],
     temperature: float,
 ) -> None:
@@ -175,23 +170,24 @@ def execute(
     # Concurrency
     max_workers = int(concurrency_override or int(cfg.get("api", {}).get("concurrency", 4)))
 
+    # Validate that target is one of model1 or model2
+    if target_model != model1 and target_model != model2:
+        raise typer.BadParameter(f"--target must be one of --model1 ({model1}) or --model2 ({model2})")
+
     # Build pairs
-    console.print(f"[blue]Building pairs with target model: {target_model}[/]")
-    if other_model:
-        if other_model == target_model:
-            raise typer.BadParameter("--other must be different from --target")
-        console.print(f"[blue]Restricting other model to: {other_model}[/]")
+    console.print(f"[blue]Building pairs: {model1} vs {model2}[/]")
+    console.print(f"[blue]Target model: {target_model}[/]")
     records = iter_records(source_path, dataset)
-    pairs = build_pairs(records, target_model, other_model)
+    pairs = build_pairs(records, model1, model2)
     if not pairs:
         console.print("[yellow]No pairs found to evaluate.[/]")
         return
 
     console.print(f"Evaluating cross-model detection on {len(pairs)} pairs")
     console.print(f"Judge model: {judge_model}")
+    console.print(f"Model 1: {model1}")
+    console.print(f"Model 2: {model2}")
     console.print(f"Target model: {target_model}")
-    if other_model:
-        console.print(f"Other model: {other_model}")
 
     total = len(pairs)
     correct = 0
@@ -297,9 +293,10 @@ def execute(
 def run(
     dataset_folder: Optional[str] = typer.Option(None, "--dataset-folder", help="Dataset folder name (e.g., mbpp-sanitized)"),
     split: Optional[str] = typer.Option(None, "--split", help="Dataset split (e.g., test, train, validation)"),
+    model1: str = typer.Option(..., "--model1", help="First model ID (e.g., anthropic/claude-haiku-4.5)"),
+    model2: str = typer.Option(..., "--model2", help="Second model ID (e.g., deepseek/deepseek-chat-v3-0324)"),
+    target: str = typer.Option(..., "--target", help="Target model to identify (must be one of model1 or model2)"),
     judge: str = typer.Option(..., "--judge", help="Judge model ID (e.g., openai/gpt-5)"),
-    target: str = typer.Option(..., "--target", help="Target model to identify (e.g., anthropic/claude-haiku-4.5)"),
-    other: Optional[str] = typer.Option(None, "--other", help="Specific other model to pair with target (optional)"),
     input_path: Optional[Path] = typer.Option(None, "--input", "-i", help="Path to folder containing JSONL files"),
     dataset: Optional[str] = typer.Option(None, help="Filter to a dataset name (optional)"),
     concurrency: Optional[int] = typer.Option(None, help="Override concurrency for judge requests"),
@@ -310,7 +307,8 @@ def run(
     
     Example:
         python cross_model_detection.py --dataset-folder mbpp-sanitized --split test \\
-               --judge openai/gpt-5 --target anthropic/claude-haiku-4.5
+               --model1 anthropic/claude-haiku-4.5 --model2 deepseek/deepseek-chat-v3-0324 \\
+               --target anthropic/claude-haiku-4.5 --judge openai/gpt-5
     """
     execute(
         input_path=input_path,
@@ -318,8 +316,9 @@ def run(
         split=split,
         dataset=dataset,
         judge_model=judge,
+        model1=model1,
+        model2=model2,
         target_model=target,
-        other_model=other,
         concurrency_override=concurrency,
         temperature=temperature,
     )
