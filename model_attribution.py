@@ -179,13 +179,13 @@ def parse_attribution(text: str) -> Optional[Dict[str, str]]:
 def extract_dataset_and_split(input_path: Path, data_dir: Path) -> Tuple[Optional[str], Optional[str]]:
     """
     Extract dataset name and split from input path.
-    E.g., data/results/mbpp-sanitized/train -> ('mbpp-sanitized', 'train')
+    E.g., data/code_generation/mbpp-sanitized/train -> ('mbpp-sanitized', 'train')
     """
     try:
-        # Make path relative to data_dir/results if possible
-        results_dir = data_dir / "results"
-        if input_path.is_relative_to(results_dir):
-            rel_path = input_path.relative_to(results_dir)
+        # Make path relative to data_dir/code_generation if possible
+        code_generation_dir = data_dir / "code_generation"
+        if input_path.is_relative_to(code_generation_dir):
+            rel_path = input_path.relative_to(code_generation_dir)
             parts = rel_path.parts
             if len(parts) >= 2:
                 return parts[0], parts[1]  # dataset, split
@@ -212,11 +212,11 @@ def execute(
 
     paths = cfg.get("paths", {})
     data_dir = Path(paths.get("data_dir", "data"))
-    results_dir = data_dir / "results"
+    code_generation_dir = data_dir / "code_generation"
     
     # Build input path from dataset_folder and split if provided
     if dataset_folder and split:
-        source_path = results_dir / dataset_folder / split
+        source_path = code_generation_dir / dataset_folder / split
         if not source_path.exists():
             raise typer.BadParameter(f"Input path not found: {source_path}")
         console.print(f"[blue]Using input path: {source_path}[/]")

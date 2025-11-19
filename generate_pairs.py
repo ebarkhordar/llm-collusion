@@ -43,7 +43,7 @@ def load_tasks(dataset: str, start_index: int, end_index: int, split: str = "tes
 def compute_output_path(base_dir: Path, source: str, model_name: str, split: str) -> Path:
     # Normalize model name for filesystem (replace / with -)
     safe_model = model_name.replace("/", "-")
-    out_path = base_dir / "results" / f"{source}-sanitized" / split / f"{safe_model}.jsonl"
+    out_path = base_dir / "code_generation" / f"{source}-sanitized" / split / f"{safe_model}.jsonl"
     out_path.parent.mkdir(parents=True, exist_ok=True)
     return out_path
 

@@ -122,7 +122,7 @@ def compute_output_path(base_dir: Path, source_path: Path, model_name: str) -> P
         else:
             out_dir = base_dir / "tests" / "mbpp-sanitized"
     else:
-        # Extract timestamp from source directory (e.g., "20251027-170334" from "data/results/20251027-170334")
+        # Extract timestamp from source directory (e.g., "20251027-170334" from "data/code_generation/20251027-170334")
         timestamp = source_path.name
         out_dir = base_dir / "tests" / timestamp
     

@@ -116,13 +116,13 @@ def parse_choice(text: str) -> Optional[int]:
 def extract_dataset_and_split(input_path: Path, data_dir: Path) -> Tuple[Optional[str], Optional[str]]:
     """
     Extract dataset name and split from input path.
-    E.g., data/results/mbpp-sanitized/train -> ('mbpp-sanitized', 'train')
+    E.g., data/code_generation/mbpp-sanitized/train -> ('mbpp-sanitized', 'train')
     """
     try:
-        # Make path relative to data_dir/results if possible
-        results_dir = data_dir / "results"
-        if input_path.is_relative_to(results_dir):
-            rel_path = input_path.relative_to(results_dir)
+        # Make path relative to data_dir/code_generation if possible
+        code_generation_dir = data_dir / "code_generation"
+        if input_path.is_relative_to(code_generation_dir):
+            rel_path = input_path.relative_to(code_generation_dir)
             parts = rel_path.parts
             if len(parts) >= 2:
                 return parts[0], parts[1]  # dataset, split
@@ -147,11 +147,11 @@ def execute(
 
     paths = cfg.get("paths", {})
     data_dir = Path(paths.get("data_dir", "data"))
-    results_dir = data_dir / "results"
+    code_generation_dir = data_dir / "code_generation"
     
     # Build input path from dataset_folder and split if provided
     if dataset_folder and split:
-        source_path = results_dir / dataset_folder / split
+        source_path = code_generation_dir / dataset_folder / split
         if not source_path.exists():
             raise typer.BadParameter(f"Input path not found: {source_path}")
         console.print(f"[blue]Using input path: {source_path}[/]")
@@ -160,19 +160,19 @@ def execute(
         if not source_path.exists():
             raise typer.BadParameter(f"Input path not found: {source_path}")
     else:
-        # If no input_path specified, look for latest timestamp directory in results
-        if results_dir.exists():
+        # If no input_path specified, look for latest timestamp directory in code_generation
+        if code_generation_dir.exists():
             # Find all timestamp directories
-            timestamp_dirs = [d for d in results_dir.iterdir() if d.is_dir() and d.name]
+            timestamp_dirs = [d for d in code_generation_dir.iterdir() if d.is_dir() and d.name]
             if timestamp_dirs:
                 # Sort by name (timestamp) and use latest
                 timestamp_dirs.sort(reverse=True)
                 source_path = timestamp_dirs[0]
-                console.print(f"[blue]Using latest results directory: {source_path}[/]")
+                console.print(f"[blue]Using latest code generation directory: {source_path}[/]")
             else:
-                raise typer.BadParameter(f"No timestamp directories found in {results_dir}")
+                raise typer.BadParameter(f"No timestamp directories found in {code_generation_dir}")
         else:
-            raise typer.BadParameter(f"Results directory not found: {results_dir}")
+            raise typer.BadParameter(f"Code generation directory not found: {code_generation_dir}")
 
     # Client
     client = OpenRouterClient(api_key=cfg.get("api", {}).get("openrouter_api_key") or None)
@@ -344,7 +344,7 @@ def run(
     dataset_folder: Optional[str] = typer.Option(None, "--dataset-folder", help="Dataset folder name (e.g., mbpp-sanitized)"),
     split: Optional[str] = typer.Option(None, "--split", help="Dataset split (e.g., test, train, validation)"),
     evaluator: Optional[str] = typer.Option(None, "--evaluator", help="Evaluator model ID (e.g., anthropic/claude-haiku-4.5)"),
-    input_path: Optional[Path] = typer.Option(None, "--input", "-i", help="Path to folder containing JSONL files (e.g., data/results/mbpp-sanitized/train)"),
+    input_path: Optional[Path] = typer.Option(None, "--input", "-i", help="Path to folder containing JSONL files (e.g., data/code_generation/mbpp-sanitized/train)"),
     dataset: Optional[str] = typer.Option(None, help="Filter to a dataset name (optional)"),
     concurrency: Optional[int] = typer.Option(None, help="Override concurrency for judge requests"),
     temperature: float = typer.Option(0.0, help="Temperature for judge model"),
