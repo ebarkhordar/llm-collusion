@@ -105,8 +105,8 @@ class CrossModelDetectionResult:
     target_model: str
     candidate_1_model: str
     candidate_2_model: str
-    predicted_candidate: Optional[int]
-    gold_candidate: Optional[int]
+    gold_target_code_id: Optional[str]  # "1" or "2" - which code block contains target model
+    predicted_target_code_id: Optional[str]  # "1" or "2" - which code block judge predicted
     is_correct: Optional[bool]
     judge_response: str
 
@@ -118,8 +118,8 @@ class CrossModelDetectionResult:
             "target_model": self.target_model,
             "candidate_1_model": self.candidate_1_model,
             "candidate_2_model": self.candidate_2_model,
-            "predicted_candidate": self.predicted_candidate,
-            "gold_candidate": self.gold_candidate,
+            "gold_target_code_id": self.gold_target_code_id,
+            "predicted_target_code_id": self.predicted_target_code_id,
             "is_correct": self.is_correct,
             "judge_response": self.judge_response,
         }

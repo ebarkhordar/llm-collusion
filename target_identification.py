@@ -44,9 +44,11 @@ def iter_records(source_path: Path, dataset_filter: Optional[str]) -> Iterator[D
             yield rec
 
 
-def build_pairs(records: Iterator[Dict[str, Any]], model1: str, model2: str) -> List[Pair]:
+def build_pairs(records: Iterator[Dict[str, Any]], model1: str, model2: str) -> Tuple[List[Pair], Dict[Tuple[str, str], Dict[str, str]]]:
     """
     Build pairs where one code is from model1 and the other is from model2.
+    Models stay fixed, but codes are randomly assigned to code1/code2 positions.
+    Returns pairs and a mapping of (benchmark, task_id) -> {"code1": model_name, "code2": model_name}
     """
     from collections import defaultdict
 
@@ -56,6 +58,8 @@ def build_pairs(records: Iterator[Dict[str, Any]], model1: str, model2: str) -> 
         grouped[key].append(r)
 
     pairs: List[Pair] = []
+    code_mapping: Dict[Tuple[str, str], Dict[str, str]] = {}
+    
     for (benchmark, task_id), items in grouped.items():
         # Find both models' code
         model1_item = None
@@ -72,13 +76,13 @@ def build_pairs(records: Iterator[Dict[str, Any]], model1: str, model2: str) -> 
         if model1_item is None or model2_item is None:
             continue
         
-        # Randomize order to avoid positional bias
+        # Keep model1 and model2 fixed, but randomly assign codes to code1/code2
         if random.random() < 0.5:
             code1, code2 = model1_item, model2_item
-            pair_model1, pair_model2 = model1, model2
+            code1_model, code2_model = model1, model2
         else:
             code1, code2 = model2_item, model1_item
-            pair_model1, pair_model2 = model2, model1
+            code1_model, code2_model = model2, model1
         
         pairs.append(
             Pair(
@@ -87,12 +91,18 @@ def build_pairs(records: Iterator[Dict[str, Any]], model1: str, model2: str) -> 
                 task_prompt=str(code1.get("prompt", "")),
                 code1=str(code1.get("generated_code", "")),
                 code2=str(code2.get("generated_code", "")),
-                model1=pair_model1,
-                model2=pair_model2,
+                model1=model1,  # Keep fixed
+                model2=model2,  # Keep fixed
             )
         )
+        
+        # Track which code block belongs to which model
+        code_mapping[(benchmark, task_id)] = {
+            "code1": code1_model,
+            "code2": code2_model,
+        }
 
-    return pairs
+    return pairs, code_mapping
 
 
 def build_messages(prompt: str, code1: str, code2: str, model1: str, model2: str, target_model: str, prompt_path: Path) -> List[Dict[str, str]]:
@@ -174,7 +184,7 @@ def execute(
     console.print(f"[blue]Building pairs: {model1} vs {model2}[/]")
     console.print(f"[blue]Target will be randomly selected for each pair[/]")
     records = iter_records(source_path, dataset)
-    pairs = build_pairs(records, model1, model2)
+    pairs, code_mapping = build_pairs(records, model1, model2)
     if not pairs:
         console.print("[yellow]No pairs found to evaluate.[/]")
         return
@@ -219,21 +229,30 @@ def execute(
         results_subdir.mkdir(parents=True, exist_ok=True)
         results_path = results_subdir / f"judge-{judge_name}_{model1_name}_vs_{model2_name}_random_{timestamp}.jsonl"
 
-    def submit_job(idx: int, pair: Pair) -> Tuple[int, str, Optional[int], Optional[int], str]:
+    def submit_job(idx: int, pair: Pair) -> Tuple[int, str, Optional[str], Optional[str], str]:
         # Randomly select target model for this pair
         target_model = random.choice([pair.model1, pair.model2])
         messages = build_messages(pair.task_prompt, pair.code1, pair.code2, pair.model1, pair.model2, target_model, prompt_path)
         resp = client.generate_code(model=judge_model, messages=messages, temperature=temperature)
-        choice = parse_choice(resp)
-        # ground truth: which position is the target model in?
-        truth: Optional[int] = 1 if target_model == pair.model1 else (2 if target_model == pair.model2 else None)
-        return (idx, resp, choice, truth, target_model)
+        choice_str = parse_choice(resp)
+        predicted_code_id = str(choice_str) if choice_str is not None else None
+        
+        # Determine which code block (1 or 2) contains the target model
+        key = (pair.benchmark, pair.task_id)
+        mapping = code_mapping.get(key, {})
+        gold_code_id: Optional[str] = None
+        if mapping.get("code1") == target_model:
+            gold_code_id = "1"
+        elif mapping.get("code2") == target_model:
+            gold_code_id = "2"
+        
+        return (idx, resp, predicted_code_id, gold_code_id, target_model)
 
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         futures = [executor.submit(submit_job, idx, pair) for idx, pair in enumerate(pairs)]
         for fut in tqdm(as_completed(futures), total=len(futures), desc="Judging", unit="req"):
             try:
-                job_idx, resp_text, choice, truth, target_model = fut.result()
+                job_idx, resp_text, predicted_code_id, gold_code_id, target_model = fut.result()
             except Exception as e:  # noqa: BLE001
                 console.print(f"[red]Judge request failed[/]: {e}")
                 continue
@@ -241,7 +260,7 @@ def execute(
             processed += 1
             pair = pairs[job_idx]
             
-            if choice is None or truth is None:
+            if predicted_code_id is None or gold_code_id is None:
                 # Still write a result row with missing values
                 result = CrossModelDetectionResult(
                     benchmark=pair.benchmark,
@@ -250,15 +269,15 @@ def execute(
                     target_model=target_model,
                     candidate_1_model=pair.model1,
                     candidate_2_model=pair.model2,
-                    predicted_candidate=choice,
-                    gold_candidate=truth,
+                    gold_target_code_id=gold_code_id,
+                    predicted_target_code_id=predicted_code_id,
                     is_correct=None,
                     judge_response=resp_text,
                 )
                 write_jsonl_line(results_path, result.to_dict())
                 continue
             
-            is_correct = choice == truth
+            is_correct = predicted_code_id == gold_code_id
             if is_correct:
                 correct += 1
             
@@ -270,8 +289,8 @@ def execute(
                 target_model=target_model,
                 candidate_1_model=pair.model1,
                 candidate_2_model=pair.model2,
-                predicted_candidate=choice,
-                gold_candidate=truth,
+                gold_target_code_id=gold_code_id,
+                predicted_target_code_id=predicted_code_id,
                 is_correct=is_correct,
                 judge_response=resp_text,
             )
