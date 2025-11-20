@@ -204,25 +204,24 @@ def execute(
     judge_name = judge_model.replace("/", "-").replace(":", "-")
     target_name = target_model.replace("/", "-").replace(":", "-")
     
-    # Generate timestamp for filename
+    # Generate timestamp for filename (format: YYYYMMDD-HHMMSS)
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
     
     # Build output directory to mirror input structure
     if extracted_dataset and extracted_split:
         results_subdir = target_identification_dir / extracted_dataset / extracted_split
         results_subdir.mkdir(parents=True, exist_ok=True)
-        results_path = results_subdir / f"judge-{judge_name}_target-{target_name}-{timestamp}.jsonl"
+        results_path = results_subdir / f"judge-{judge_name}_target-{target_name}_{timestamp}.jsonl"
         console.print(f"[blue]Results will be saved to: {results_path}[/]")
     elif extracted_dataset:
         results_subdir = target_identification_dir / extracted_dataset
         results_subdir.mkdir(parents=True, exist_ok=True)
-        results_path = results_subdir / f"judge-{judge_name}_target-{target_name}-{timestamp}.jsonl"
+        results_path = results_subdir / f"judge-{judge_name}_target-{target_name}_{timestamp}.jsonl"
     else:
         # Fallback to timestamp-based structure
-        ts = datetime.now().strftime("%Y%m%d-%H%M%S")
-        results_subdir = target_identification_dir / ts
+        results_subdir = target_identification_dir / timestamp
         results_subdir.mkdir(parents=True, exist_ok=True)
-        results_path = results_subdir / f"judge-{judge_name}_target-{target_name}-{timestamp}.jsonl"
+        results_path = results_subdir / f"judge-{judge_name}_target-{target_name}_{timestamp}.jsonl"
 
     def submit_job(idx: int, pair: Pair) -> Tuple[int, str, Optional[int], Optional[int]]:
         messages = build_messages(pair.task_prompt, pair.code1, pair.code2, pair.model1, pair.model2, target_model, prompt_path)
