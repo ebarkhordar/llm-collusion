@@ -140,7 +140,6 @@ def execute(
     judge_model: str,
     model1: str,
     model2: str,
-    target_model: str,
     concurrency_override: Optional[int],
     temperature: float,
 ) -> None:
@@ -171,13 +170,9 @@ def execute(
     # Concurrency
     max_workers = int(concurrency_override or int(cfg.get("api", {}).get("concurrency", 4)))
 
-    # Validate that target is one of model1 or model2
-    if target_model != model1 and target_model != model2:
-        raise typer.BadParameter(f"--target must be one of --model1 ({model1}) or --model2 ({model2})")
-
     # Build pairs
     console.print(f"[blue]Building pairs: {model1} vs {model2}[/]")
-    console.print(f"[blue]Target model: {target_model}[/]")
+    console.print(f"[blue]Target will be randomly selected for each pair[/]")
     records = iter_records(source_path, dataset)
     pairs = build_pairs(records, model1, model2)
     if not pairs:
@@ -188,7 +183,7 @@ def execute(
     console.print(f"Judge model: {judge_model}")
     console.print(f"Model 1: {model1}")
     console.print(f"Model 2: {model2}")
-    console.print(f"Target model: {target_model}")
+    console.print(f"Target: Randomly selected per pair")
 
     total = len(pairs)
     correct = 0
@@ -200,9 +195,10 @@ def execute(
     # Extract dataset and split from input path for mirrored output structure
     extracted_dataset, extracted_split = extract_dataset_and_split(source_path, data_dir)
     
-    # Get evaluator and target model names for filename
+    # Get evaluator and model names for filename
     judge_name = judge_model.replace("/", "-").replace(":", "-")
-    target_name = target_model.replace("/", "-").replace(":", "-")
+    model1_name = model1.replace("/", "-").replace(":", "-")
+    model2_name = model2.replace("/", "-").replace(":", "-")
     
     # Generate timestamp for filename (format: YYYYMMDD-HHMMSS)
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
@@ -211,31 +207,33 @@ def execute(
     if extracted_dataset and extracted_split:
         results_subdir = target_identification_dir / extracted_dataset / extracted_split
         results_subdir.mkdir(parents=True, exist_ok=True)
-        results_path = results_subdir / f"judge-{judge_name}_target-{target_name}_{timestamp}.jsonl"
+        results_path = results_subdir / f"judge-{judge_name}_{model1_name}_vs_{model2_name}_random_{timestamp}.jsonl"
         console.print(f"[blue]Results will be saved to: {results_path}[/]")
     elif extracted_dataset:
         results_subdir = target_identification_dir / extracted_dataset
         results_subdir.mkdir(parents=True, exist_ok=True)
-        results_path = results_subdir / f"judge-{judge_name}_target-{target_name}_{timestamp}.jsonl"
+        results_path = results_subdir / f"judge-{judge_name}_{model1_name}_vs_{model2_name}_random_{timestamp}.jsonl"
     else:
         # Fallback to timestamp-based structure
         results_subdir = target_identification_dir / timestamp
         results_subdir.mkdir(parents=True, exist_ok=True)
-        results_path = results_subdir / f"judge-{judge_name}_target-{target_name}_{timestamp}.jsonl"
+        results_path = results_subdir / f"judge-{judge_name}_{model1_name}_vs_{model2_name}_random_{timestamp}.jsonl"
 
-    def submit_job(idx: int, pair: Pair) -> Tuple[int, str, Optional[int], Optional[int]]:
+    def submit_job(idx: int, pair: Pair) -> Tuple[int, str, Optional[int], Optional[int], str]:
+        # Randomly select target model for this pair
+        target_model = random.choice([pair.model1, pair.model2])
         messages = build_messages(pair.task_prompt, pair.code1, pair.code2, pair.model1, pair.model2, target_model, prompt_path)
         resp = client.generate_code(model=judge_model, messages=messages, temperature=temperature)
         choice = parse_choice(resp)
         # ground truth: which position is the target model in?
         truth: Optional[int] = 1 if target_model == pair.model1 else (2 if target_model == pair.model2 else None)
-        return (idx, resp, choice, truth)
+        return (idx, resp, choice, truth, target_model)
 
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         futures = [executor.submit(submit_job, idx, pair) for idx, pair in enumerate(pairs)]
         for fut in tqdm(as_completed(futures), total=len(futures), desc="Judging", unit="req"):
             try:
-                job_idx, resp_text, choice, truth = fut.result()
+                job_idx, resp_text, choice, truth, target_model = fut.result()
             except Exception as e:  # noqa: BLE001
                 console.print(f"[red]Judge request failed[/]: {e}")
                 continue
@@ -322,13 +320,7 @@ def interactive():
     console.print("\n[yellow]Model configuration:[/]")
     model1 = typer.prompt("Model 1 ID", default="anthropic/claude-haiku-4.5")
     model2 = typer.prompt("Model 2 ID", default="deepseek/deepseek-chat-v3-0324")
-    
-    # Prompt for target (must be one of model1 or model2)
-    while True:
-        target = typer.prompt("Target model to identify (must be model1 or model2)", default=model1)
-        if target == model1 or target == model2:
-            break
-        console.print(f"[red]Error: Target must be either '{model1}' or '{model2}'[/]")
+    console.print("[blue]Note: Target will be randomly selected for each pair[/]")
     
     judge = typer.prompt("Judge model ID", default="openai/gpt-5")
     
@@ -348,7 +340,7 @@ def interactive():
         console.print(f"  Input: {input_path}")
     console.print(f"  Model 1: {model1}")
     console.print(f"  Model 2: {model2}")
-    console.print(f"  Target: {target}")
+    console.print(f"  Target: Randomly selected per pair")
     console.print(f"  Judge: {judge}")
     if concurrency:
         console.print(f"  Concurrency: {concurrency}")
@@ -367,7 +359,6 @@ def interactive():
         judge_model=judge,
         model1=model1,
         model2=model2,
-        target_model=target,
         concurrency_override=concurrency,
         temperature=temperature,
     )
@@ -379,7 +370,6 @@ def run(
     split: Optional[str] = typer.Option(None, "--split", help="Dataset split (e.g., test, train, validation)"),
     model1: str = typer.Option(..., "--model1", help="First model ID (e.g., anthropic/claude-haiku-4.5)"),
     model2: str = typer.Option(..., "--model2", help="Second model ID (e.g., deepseek/deepseek-chat-v3-0324)"),
-    target: str = typer.Option(..., "--target", help="Target model to identify (must be one of model1 or model2)"),
     judge: str = typer.Option(..., "--judge", help="Judge model ID (e.g., openai/gpt-5)"),
     input_path: Optional[Path] = typer.Option(None, "--input", "-i", help="Path to folder containing JSONL files"),
     dataset: Optional[str] = typer.Option(None, help="Filter to a dataset name (optional)"),
@@ -387,12 +377,13 @@ def run(
     temperature: float = typer.Option(0.0, help="Temperature for judge model"),
 ):
     """
-    Target identification: Have a judge model identify code written by a specific target model.
+    Target identification: Have a judge model identify code written by a randomly selected target model.
+    For each pair, the target model is randomly chosen from model1 or model2.
     
     Example:
         python target_identification.py --dataset-folder mbpp-sanitized --split test \\
                --model1 anthropic/claude-haiku-4.5 --model2 deepseek/deepseek-chat-v3-0324 \\
-               --target anthropic/claude-haiku-4.5 --judge openai/gpt-5
+               --judge openai/gpt-5
     """
     execute(
         input_path=input_path,
@@ -402,7 +393,6 @@ def run(
         judge_model=judge,
         model1=model1,
         model2=model2,
-        target_model=target,
         concurrency_override=concurrency,
         temperature=temperature,
     )
@@ -411,7 +401,8 @@ def run(
 @app.callback(invoke_without_command=True)
 def main(ctx: typer.Context):
     """
-    Target identification: Have a judge model identify code written by a specific target model.
+    Target identification: Have a judge model identify code written by a randomly selected target model.
+    For each pair, the target model is randomly chosen from model1 or model2.
     
     Run without arguments for interactive mode, or use 'run' command with arguments.
     """
