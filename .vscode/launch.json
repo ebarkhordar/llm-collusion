@@ -7,16 +7,6 @@
             "request": "launch",
             "program": "${workspaceFolder}/target_identification.py",
             "console": "integratedTerminal",
-            "args": [
-                "--input",
-                "${workspaceFolder}/data/code_generation/mbpp-sanitized/test",
-                "--model1",
-                "anthropic/claude-haiku-4.5",
-                "--model2",
-                "deepseek/deepseek-chat-v3-0324",
-                "--judge",
-                "openai/gpt-5"
-            ],
             "justMyCode": false,
             "env": {
                 "PYTHONPATH": "${workspaceFolder}"
@@ -28,16 +18,6 @@
             "request": "launch",
             "program": "${workspaceFolder}/full_attribution.py",
             "console": "integratedTerminal",
-            "args": [
-                "--input",
-                "${workspaceFolder}/data/code_generation/mbpp-sanitized/test",
-                "--model1",
-                "anthropic/claude-haiku-4.5",
-                "--model2",
-                "deepseek/deepseek-chat-v3-0324",
-                "--judge",
-                "openai/gpt-5"
-            ],
             "justMyCode": false,
             "env": {
                 "PYTHONPATH": "${workspaceFolder}"
