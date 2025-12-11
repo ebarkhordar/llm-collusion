@@ -11,7 +11,7 @@ from tqdm import tqdm
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from src.lib import write_jsonl_line, render_prompt, OpenRouterClient
-from src.datasets.mbpp import load_mbpp
+from src.datasets import load_mbpp, load_humaneval, load_ds1000
 from src.common.types import TaskExample, GenerationRecord
 from src.lib import load_config
 
@@ -24,9 +24,16 @@ def get_dataset_registry() -> Dict[str, Callable[[int, int, str], List[TaskExamp
 
     New datasets can be registered here by adding an entry mapping a dataset
     identifier (CLI value) to a loader function that returns TaskExample items.
+    
+    Available datasets:
+        - mbpp: Mostly Basic Python Problems (974 tasks, sanitized version)
+        - humaneval: OpenAI HumanEval (164 tasks, test split only)
+        - ds1000: DS-1000 Data Science benchmark (1000 tasks, test split only)
     """
     return {
         "mbpp": load_mbpp,
+        "humaneval": load_humaneval,
+        "ds1000": load_ds1000,
     }
 
 
@@ -40,10 +47,24 @@ def load_tasks(dataset: str, start_index: int, end_index: int, split: str = "tes
     return loader(start_index=start_index, end_index=end_index, split=split)
 
 
+def get_dataset_folder_name(source: str) -> str:
+    """Get the folder name for a dataset.
+    
+    Maps dataset identifiers to their folder names in data/code_generation/.
+    """
+    folder_names = {
+        "mbpp": "mbpp-sanitized",
+        "humaneval": "humaneval",
+        "ds1000": "ds1000",
+    }
+    return folder_names.get(source.lower(), source)
+
+
 def compute_output_path(base_dir: Path, source: str, model_name: str, split: str) -> Path:
     # Normalize model name for filesystem (replace / with -)
     safe_model = model_name.replace("/", "-")
-    out_path = base_dir / "code_generation" / f"{source}-sanitized" / split / f"{safe_model}.jsonl"
+    folder_name = get_dataset_folder_name(source)
+    out_path = base_dir / "code_generation" / folder_name / split / f"{safe_model}.jsonl"
     out_path.parent.mkdir(parents=True, exist_ok=True)
     return out_path
 

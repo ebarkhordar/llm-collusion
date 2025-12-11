@@ -3,8 +3,33 @@ paths:
   data_dir: data
   output_path: data/code_pairs.jsonl
 
+# Dataset configurations
+# Each dataset specifies which models to use for code generation and evaluation
 datasets:
+  # MBPP - Mostly Basic Python Problems (sanitized version)
+  # 974 tasks across train/test/validation/prompt splits
   mbpp:
+    models:
+      - openai/gpt-5
+      - anthropic/claude-haiku-4.5
+      - google/gemini-2.5-flash
+      - x-ai/grok-4-fast
+      - deepseek/deepseek-chat-v3-0324
+
+  # HumanEval - OpenAI's hand-written evaluation set
+  # 164 Python programming problems (test split only)
+  humaneval:
+    models:
+      - openai/gpt-5
+      - anthropic/claude-haiku-4.5
+      - google/gemini-2.5-flash
+      - x-ai/grok-4-fast
+      - deepseek/deepseek-chat-v3-0324
+
+  # DS-1000 - Data Science benchmark
+  # 1000 problems across NumPy, Pandas, Matplotlib, TensorFlow, PyTorch, SciPy, Scikit-learn
+  # (test split only)
+  ds1000:
     models:
       - openai/gpt-5
       - anthropic/claude-haiku-4.5
