@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Callable, Dict, List, Tuple
+from typing import Callable, Dict, List, Optional, Tuple
 
 import typer
 from rich.console import Console
@@ -45,20 +45,23 @@ def load_tasks(dataset: str, start_index: int, end_index: int, split: str = "tes
     return loader(start_index=start_index, end_index=end_index, split=split)
 
 
-def execute(dataset: str, start_index: int, end_index: int, split: str = "test") -> None:
+def execute(dataset: str, start_index: int, end_index: int, split: str = "test", model: Optional[str] = None) -> None:
     config_path = Path("configs/config.yaml")
     cfg = load_config(config_path)
 
     # Get the dataset-specific generator
     generator = get_generator(dataset)()
 
-    # Read models from per-dataset config
-    ds_cfg = cfg.get("datasets", {}).get(generator.get_dataset_key(), {})
-    all_models: List[str] = list(ds_cfg.get("models", []))
-    if len(all_models) < 1:
-        raise typer.BadParameter(
-            f"Config for dataset '{dataset}' must specify at least one model."
-        )
+    # Use specified model or read from config
+    if model:
+        all_models: List[str] = [model]
+    else:
+        ds_cfg = cfg.get("datasets", {}).get(generator.get_dataset_key(), {})
+        all_models = list(ds_cfg.get("models", []))
+        if len(all_models) < 1:
+            raise typer.BadParameter(
+                f"Config for dataset '{dataset}' must specify at least one model."
+            )
 
     paths = cfg.get("paths", {})
     data_dir = Path(paths.get("data_dir", "data"))
@@ -135,8 +138,9 @@ def run(
     start_index: int = typer.Option(0, help="Start index (inclusive)"),
     end_index: int = typer.Option(10, help="End index (exclusive)"),
     split: str = typer.Option("test", help="Dataset split (train, test, validation, prompt)"),
+    model: Optional[str] = typer.Option(None, help="Model to use (overrides config). E.g., anthropic/claude-haiku-4.5"),
 ):
-    execute(dataset=dataset, start_index=start_index, end_index=end_index, split=split)
+    execute(dataset=dataset, start_index=start_index, end_index=end_index, split=split, model=model)
 
 
 if __name__ == "__main__":
