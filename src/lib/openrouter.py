@@ -39,6 +39,7 @@ class OpenRouterClient:
         max_tokens: Optional[int] = 2000,
         max_retries: int = 5,
         initial_backoff_s: float = 1.0,
+        json_mode: bool = False,
     ) -> str:
         url = f"{self.base_url}/chat/completions"
         headers = {
@@ -60,6 +61,8 @@ class OpenRouterClient:
         }
         if max_tokens is not None:
             body["max_tokens"] = max_tokens
+        if json_mode:
+            body["response_format"] = {"type": "json_object"}
         attempt = 0
         backoff = initial_backoff_s
         while True:

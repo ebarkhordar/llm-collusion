@@ -2,58 +2,36 @@
 
 from __future__ import annotations
 
+import json
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional
 
 from src.common.types import TaskExample, GenerationRecord
 from src.lib import render_prompt
 
 
-def strip_markdown_code_blocks(text: str) -> str:
-    """Extract code from fenced markdown blocks.
-
-    - If one or more fenced code blocks exist, prefer the first with a
-      python/py language tag; otherwise return the longest fenced block.
-    - If no fences are present, return the original text stripped.
+def extract_code_from_response(response: str) -> str:
+    """Extract code from JSON response.
+    
+    Expected format: {"code": "python code here"}
+    Falls back to raw response if JSON parsing fails.
+    
+    Args:
+        response: The LLM response (should be JSON)
+        
+    Returns:
+        The extracted Python code
     """
-    if "```" not in text:
-        return text.strip()
-
-    lines = text.split("\n")
-    in_block = False
-    current_block_lines: List[str] = []
-    current_lang = ""
-    blocks: List[Tuple[str, str]] = []
-
-    for line in lines:
-        stripped = line.strip()
-        if stripped.startswith("```"):
-            if not in_block:
-                in_block = True
-                current_lang = stripped[3:].strip().lower()
-                current_block_lines = []
-            else:
-                in_block = False
-                block_text = "\n".join(current_block_lines).strip()
-                blocks.append((current_lang, block_text))
-                current_lang = ""
-                current_block_lines = []
-            continue
-        if in_block:
-            current_block_lines.append(line)
-
-    # Prefer python code block
-    for lang, code in blocks:
-        if lang in {"python", "py"} and code:
-            return code
-
-    # Fall back to longest non-empty block
-    non_empty_blocks = [code for _, code in blocks if code]
-    if non_empty_blocks:
-        return max(non_empty_blocks, key=len)
-
-    return ""
+    try:
+        data = json.loads(response)
+        if isinstance(data, dict) and "code" in data:
+            return data["code"]
+    except json.JSONDecodeError:
+        pass
+    
+    # Fallback: return as-is (stripped)
+    return response.strip()
 
 
 class BaseGenerator(ABC):

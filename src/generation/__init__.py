@@ -1,13 +1,13 @@
 """Code generation module with dataset-specific adapters."""
 
-from src.generation.base import BaseGenerator, strip_markdown_code_blocks
+from src.generation.base import BaseGenerator, extract_code_from_response
 from src.generation.mbpp import MBPPGenerator
 from src.generation.humaneval import HumanEvalGenerator
 from src.generation.ds1000 import DS1000Generator
 
 __all__ = [
     "BaseGenerator",
-    "strip_markdown_code_blocks",
+    "extract_code_from_response",
     "MBPPGenerator",
     "HumanEvalGenerator",
     "DS1000Generator",

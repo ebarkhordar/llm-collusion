@@ -11,7 +11,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from src.lib import write_jsonl_line, OpenRouterClient, load_config
 from src.datasets import load_mbpp, load_humaneval, load_ds1000
 from src.common.types import TaskExample, GenerationRecord
-from src.generation import get_generator, strip_markdown_code_blocks
+from src.generation import get_generator, extract_code_from_response
 
 app = typer.Typer(add_completion=False)
 console = Console()
@@ -94,13 +94,14 @@ def execute(dataset: str, start_index: int, end_index: int, split: str = "test")
 
     def submit_job(task: TaskExample, model: str) -> Tuple[TaskExample, str, str]:
         messages = generator.build_messages(task)
-        code = client.generate_code(
+        response = client.generate_code(
             model=model,
             messages=messages,
             temperature=0.0,
+            json_mode=True,
         )
-        # Remove markdown code blocks from generated code
-        code = strip_markdown_code_blocks(code)
+        # Extract code from JSON response
+        code = extract_code_from_response(response)
         return task, model, code
 
     jobs: List[Tuple[TaskExample, str]] = [
