@@ -1,19 +1,17 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Callable, Dict, List, Tuple, Optional
-from collections import Counter
-import ast
+from typing import Callable, Dict, List, Tuple
 
 import typer
 from rich.console import Console
 from tqdm import tqdm
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-from src.lib import write_jsonl_line, render_prompt, OpenRouterClient
+from src.lib import write_jsonl_line, OpenRouterClient, load_config
 from src.datasets import load_mbpp, load_humaneval, load_ds1000
 from src.common.types import TaskExample, GenerationRecord
-from src.lib import load_config
+from src.generation import get_generator, strip_markdown_code_blocks
 
 app = typer.Typer(add_completion=False)
 console = Console()
@@ -47,143 +45,19 @@ def load_tasks(dataset: str, start_index: int, end_index: int, split: str = "tes
     return loader(start_index=start_index, end_index=end_index, split=split)
 
 
-def get_dataset_folder_name(source: str) -> str:
-    """Get the folder name for a dataset.
-    
-    Maps dataset identifiers to their folder names in data/code_generation/.
-    """
-    folder_names = {
-        "mbpp": "mbpp-sanitized",
-        "humaneval": "humaneval",
-        "ds1000": "ds1000",
-    }
-    return folder_names.get(source.lower(), source)
-
-
-def compute_output_path(base_dir: Path, source: str, model_name: str, split: str) -> Path:
-    # Normalize model name for filesystem (replace / with -)
-    safe_model = model_name.replace("/", "-")
-    folder_name = get_dataset_folder_name(source)
-    out_path = base_dir / "code_generation" / folder_name / split / f"{safe_model}.jsonl"
-    out_path.parent.mkdir(parents=True, exist_ok=True)
-    return out_path
-
-
-def _extract_function_names_from_test(line: str) -> List[str]:
-    names: List[str] = []
-    try:
-        tree = ast.parse(line)
-    except Exception:
-        return names
-
-    class CallVisitor(ast.NodeVisitor):
-        def visit_Call(self, node: ast.Call) -> None:  # type: ignore[override]
-            func = node.func
-            if isinstance(func, ast.Name):
-                names.append(func.id)
-            self.generic_visit(node)
-
-    CallVisitor().visit(tree)
-    return names
-
-
-def _extract_function_name_from_code(code: str) -> Optional[str]:
-    try:
-        tree = ast.parse(code)
-    except Exception:
-        return None
-    for node in tree.body:
-        if isinstance(node, ast.FunctionDef):
-            # Return the first top-level function definition
-            return node.name
-    return None
-
-
-def extract_function_name(task: TaskExample) -> Optional[str]:
-    # Prefer names referenced in tests
-    counts: Counter[str] = Counter()
-    for line in task.test_list:
-        for name in _extract_function_names_from_test(line):
-            # Filter obvious non-solution calls
-            if name in {"print", "len", "range", "int", "float", "str", "list", "set", "dict", "tuple"}:
-                continue
-            counts[name] += 1
-    if counts:
-        return counts.most_common(1)[0][0]
-
-    # Fallback to the reference code's first function def
-    return _extract_function_name_from_code(task.code)
-
-
-def build_messages(task: TaskExample, gen_prompt_path: Path) -> List[Dict[str, str]]:
-    fn_name = extract_function_name(task) or ""
-    rendered = render_prompt(gen_prompt_path, prompt=task.prompt, function_name=fn_name)
-    return [
-        {"role": "user", "content": str(rendered.get("user", "")).strip()},
-    ]
-
-
-def make_record(task: TaskExample, model_name: str, code: str) -> GenerationRecord:
-    return GenerationRecord(task=task, model_name=model_name, generated_code=code)
-
-
-def strip_markdown_code_blocks(text: str) -> str:
-    """Extract code from fenced markdown blocks.
-
-    - If one or more fenced code blocks exist, prefer the first with a
-      python/py language tag; otherwise return the longest fenced block.
-    - If no fences are present, return the original text stripped.
-    """
-    if "```" not in text:
-        return text.strip()
-
-    lines = text.split("\n")
-    in_block = False
-    current_block_lines: List[str] = []
-    current_lang = ""
-    blocks: List[Tuple[str, str]] = []
-
-    for line in lines:
-        stripped = line.strip()
-        if stripped.startswith("```"):
-            if not in_block:
-                in_block = True
-                current_lang = stripped[3:].strip().lower()
-                current_block_lines = []
-            else:
-                in_block = False
-                block_text = "\n".join(current_block_lines).strip()
-                blocks.append((current_lang, block_text))
-                current_lang = ""
-                current_block_lines = []
-            continue
-        if in_block:
-            current_block_lines.append(line)
-
-    # Prefer python code block
-    for lang, code in blocks:
-        if lang in {"python", "py"} and code:
-            return code
-
-    # Fall back to longest non-empty block
-    non_empty_blocks = [code for _, code in blocks if code]
-    if non_empty_blocks:
-        return max(non_empty_blocks, key=len)
-
-    return ""
-
-
 def execute(dataset: str, start_index: int, end_index: int, split: str = "test") -> None:
     config_path = Path("configs/config.yaml")
     cfg = load_config(config_path)
 
+    # Get the dataset-specific generator
+    generator = get_generator(dataset)()
+
     # Read models from per-dataset config
-    source = dataset
-    ds_cfg = cfg.get("datasets", {}).get(source, {})
+    ds_cfg = cfg.get("datasets", {}).get(generator.get_dataset_key(), {})
     all_models: List[str] = list(ds_cfg.get("models", []))
     if len(all_models) < 1:
         raise typer.BadParameter(
-            f"Config for dataset '{source}' must specify at least one model."
+            f"Config for dataset '{dataset}' must specify at least one model."
         )
 
     paths = cfg.get("paths", {})
@@ -192,7 +66,7 @@ def execute(dataset: str, start_index: int, end_index: int, split: str = "test")
     # Filter out models that already have output files
     models: List[str] = []
     for model in all_models:
-        output_path = compute_output_path(data_dir, source, model, split)
+        output_path = generator.compute_output_path(data_dir, model, split)
         if output_path.exists():
             console.print(f"[yellow]Skipping {model}[/] - output file already exists: {output_path}")
         else:
@@ -205,9 +79,8 @@ def execute(dataset: str, start_index: int, end_index: int, split: str = "test")
     console.print(f"[green]Generating code for models:[/] {models}")
 
     client = OpenRouterClient(api_key=cfg.get("api", {}).get("openrouter_api_key") or None)
-    gen_prompt_path = Path("prompts/generation.md")
 
-    tasks = load_tasks(source, start_index, end_index, split)
+    tasks = load_tasks(dataset, start_index, end_index, split)
     console.print(f"Generating code for {len(tasks)} tasks from {split} split")
 
     # Determine concurrency level
@@ -215,12 +88,12 @@ def execute(dataset: str, start_index: int, end_index: int, split: str = "test")
     
     # Create output paths for each model
     model_outputs = {
-        model: compute_output_path(data_dir, source, model, split)
+        model: generator.compute_output_path(data_dir, model, split)
         for model in models
     }
 
     def submit_job(task: TaskExample, model: str) -> Tuple[TaskExample, str, str]:
-        messages = build_messages(task, gen_prompt_path)
+        messages = generator.build_messages(task)
         code = client.generate_code(
             model=model,
             messages=messages,
@@ -244,7 +117,7 @@ def execute(dataset: str, start_index: int, end_index: int, split: str = "test")
             except Exception as e:  # noqa: BLE001
                 console.print(f"[red]Generation failed[/]: {e}")
                 continue
-            record = make_record(task, model_name, code)
+            record = generator.make_record(task, model_name, code)
             # Write to the appropriate model-specific file
             write_jsonl_line(model_outputs[model_name], record.to_dict())
 
@@ -257,7 +130,7 @@ def execute(dataset: str, start_index: int, end_index: int, split: str = "test")
 
 @app.command()
 def run(
-    dataset: str = typer.Option("mbpp", help="Dataset name (e.g., mbpp)"),
+    dataset: str = typer.Option("mbpp", help="Dataset name (e.g., mbpp, humaneval, ds1000)"),
     start_index: int = typer.Option(0, help="Start index (inclusive)"),
     end_index: int = typer.Option(10, help="End index (exclusive)"),
     split: str = typer.Option("test", help="Dataset split (train, test, validation, prompt)"),
