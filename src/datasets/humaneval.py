@@ -1,9 +1,41 @@
 from __future__ import annotations
 
-from typing import List
+from typing import List, Optional
 from datasets import load_dataset  # type: ignore
 
 from src.common.types import TaskExample
+
+
+def _extract_check_function(test_code: str) -> Optional[str]:
+    """Extract the check function from HumanEval test code, removing METADATA.
+    
+    HumanEval tests typically look like:
+        METADATA = {
+            'author': 'jt',
+            'dataset': 'test'
+        }
+        
+        def check(candidate):
+            assert candidate(...) == ...
+            ...
+    
+    We want just the check function as a single string.
+    """
+    lines = test_code.split("\n")
+    
+    # Find where the check function starts
+    check_start = None
+    for i, line in enumerate(lines):
+        if line.strip().startswith("def check("):
+            check_start = i
+            break
+    
+    if check_start is None:
+        return None
+    
+    # Extract from check function to end
+    check_lines = lines[check_start:]
+    return "\n".join(check_lines).strip()
 
 
 def load_humaneval(start_index: int, end_index: int, split: str = "test") -> List[TaskExample]:
@@ -51,11 +83,12 @@ def load_humaneval(start_index: int, end_index: int, split: str = "test") -> Lis
         entry_point = ex.get("entry_point", "")
         task_id = ex.get("task_id", f"HumanEval/{i}")
 
-        # Parse test code into list of test assertions
-        # HumanEval tests are typically in a check() function
-        test_lines = [line.strip() for line in test_code.split("\n") if line.strip()]
+        # Extract the check function, removing METADATA block
+        # HumanEval tests have a check(candidate) function we want to keep as one unit
+        check_function = _extract_check_function(test_code)
+        test_list = [check_function] if check_function else []
         
-        # Build test imports (HumanEval tests often need the function imported)
+        # Build test imports (HumanEval tests need the function imported)
         test_imports: List[str] = []
         if entry_point:
             test_imports.append(f"from solution import {entry_point}")
@@ -67,7 +100,7 @@ def load_humaneval(start_index: int, end_index: int, split: str = "test") -> Lis
                 prompt=str(prompt),
                 code=str(canonical_solution),
                 test_imports=test_imports,
-                test_list=test_lines,
+                test_list=test_list,
             )
         )
 
