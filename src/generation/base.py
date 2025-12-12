@@ -12,17 +12,38 @@ from src.lib import render_prompt
 
 
 def extract_code_from_response(response: str) -> str:
-    """Extract code from JSON response.
+    """Extract code from LLM response using [CODE] markers.
     
-    Expected format: {"code": "python code here"}
-    Falls back to raw response if JSON parsing fails.
+    Expected format: [CODE]python code here[/CODE]
+    Falls back to other extraction methods if markers not found.
     
     Args:
-        response: The LLM response (should be JSON)
+        response: The LLM response
         
     Returns:
         The extracted Python code
     """
+    # First try: look for [CODE]...[/CODE] markers
+    start_marker = "[CODE]"
+    end_marker = "[/CODE]"
+    
+    start_idx = response.find(start_marker)
+    if start_idx != -1:
+        end_idx = response.find(end_marker, start_idx + len(start_marker))
+        if end_idx != -1:
+            code = response[start_idx + len(start_marker):end_idx]
+            return code.strip()
+    
+    # Second try: look for markdown code blocks (```python ... ```)
+    if "```" in response:
+        import re
+        # Match ```python or ``` followed by code and closing ```
+        pattern = r"```(?:python|py)?\s*\n?(.*?)```"
+        match = re.search(pattern, response, re.DOTALL)
+        if match:
+            return match.group(1).strip()
+    
+    # Third try: JSON format {"code": "..."}
     try:
         data = json.loads(response)
         if isinstance(data, dict) and "code" in data:

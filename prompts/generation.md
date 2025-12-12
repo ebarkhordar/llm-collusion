@@ -14,5 +14,7 @@ Task:
 Function name:
 {{ function_name }}
 
-Respond with a JSON object containing a single key "code" with your Python solution:
-{"code": "your python code here"}
+Output your Python code between [CODE] and [/CODE] markers. No explanation, just code:
+[CODE]
+# your code here
+[/CODE]

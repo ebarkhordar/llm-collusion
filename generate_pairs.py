@@ -101,9 +101,8 @@ def execute(dataset: str, start_index: int, end_index: int, split: str = "test",
             model=model,
             messages=messages,
             temperature=0.0,
-            json_mode=True,
         )
-        # Extract code from JSON response
+        # Extract code from [CODE]...[/CODE] markers
         code = extract_code_from_response(response)
         return task, model, code
 

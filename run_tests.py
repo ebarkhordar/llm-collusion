@@ -11,6 +11,7 @@ from tqdm import tqdm
 from src.common.types import TestOutcome
 
 from src.lib import read_jsonl, write_jsonl_line
+from src.generation import extract_code_from_response
 
 
 app = typer.Typer(add_completion=False)
@@ -21,6 +22,7 @@ def _execute_code_worker(
     test_imports: List[str],
     code: str,
     test_list: List[str],
+    benchmark: str,
     result_queue: Any,
 ) -> None:
     """Worker function that runs in a separate process to execute code."""
@@ -38,13 +40,38 @@ def _execute_code_worker(
         # Load candidate solution
         exec(code, globals_ns, globals_ns)
 
-        # Run assertions
-        for t in test_list:
-            try:
-                exec(t, globals_ns, globals_ns)
-                passed_count += 1
-            except Exception as e:  # noqa: BLE001
-                errors.append(f"{type(e).__name__}: {e}")
+        # Handle different benchmark test formats
+        if benchmark == "humaneval":
+            # HumanEval uses check(candidate) pattern
+            # test_list contains a single check function definition
+            import types
+            for t in test_list:
+                try:
+                    # Execute the check function definition
+                    exec(t, globals_ns, globals_ns)
+                    # Find the candidate function (first user-defined function in code)
+                    # Skip builtins, types, and the check function itself
+                    candidate = None
+                    for name, obj in globals_ns.items():
+                        if (isinstance(obj, types.FunctionType) 
+                            and name != "check" 
+                            and not name.startswith("_")):
+                            candidate = obj
+                            break
+                    if candidate and "check" in globals_ns:
+                        # Call check(candidate) to run the tests
+                        globals_ns["check"](candidate)
+                    passed_count += 1
+                except Exception as e:  # noqa: BLE001
+                    errors.append(f"{type(e).__name__}: {e}")
+        else:
+            # MBPP and others: each test is an assertion
+            for t in test_list:
+                try:
+                    exec(t, globals_ns, globals_ns)
+                    passed_count += 1
+                except Exception as e:  # noqa: BLE001
+                    errors.append(f"{type(e).__name__}: {e}")
     except Exception as e:  # noqa: BLE001
         # Fatal error loading code or imports
         errors.append(f"SetupError {type(e).__name__}: {e}")
@@ -59,7 +86,9 @@ def run_single_record(record: Dict[str, Any], timeout_seconds: int = 5) -> TestO
     model_name = str(record.get("model_name", "")).strip()
     test_imports: List[str] = [str(x) for x in (record.get("test_imports") or [])]
     test_list: List[str] = [str(x) for x in (record.get("test_list") or [])]
-    code = str(record.get("generated_code") or "").strip()
+    raw_code = str(record.get("generated_code") or "").strip()
+    # Extract code from JSON response if needed (handles {"code": "..."} format)
+    code = extract_code_from_response(raw_code)
 
     errors: List[str] = []
     passed_count = 0
@@ -73,7 +102,7 @@ def run_single_record(record: Dict[str, Any], timeout_seconds: int = 5) -> TestO
     # Create and start the worker process
     process = ctx.Process(
         target=_execute_code_worker,
-        args=(test_imports, code, test_list, result_queue),
+        args=(test_imports, code, test_list, benchmark, result_queue),
     )
     process.start()
     
@@ -109,22 +138,36 @@ def compute_output_path(base_dir: Path, source_path: Path, model_name: str) -> P
     # Normalize model name for filesystem (replace / with -)
     safe_model = model_name.replace("/", "-")
     
-    # Check if this is mbpp-sanitized structure
-    if "mbpp-sanitized" in source_path.parts:
-        # Find the index of mbpp-sanitized in the path
-        parts = source_path.parts
-        mbpp_idx = parts.index("mbpp-sanitized")
-        
-        # Get the subfolder (e.g., "prompt", "test", "train", "validation")
-        if mbpp_idx + 1 < len(parts):
-            subfolder = parts[mbpp_idx + 1]
+    # Check for known dataset structures in the path
+    parts = source_path.parts
+    
+    # Handle mbpp-sanitized
+    if "mbpp-sanitized" in parts:
+        idx = parts.index("mbpp-sanitized")
+        if idx + 1 < len(parts):
+            subfolder = parts[idx + 1]
             out_dir = base_dir / "tests" / "mbpp-sanitized" / subfolder
         else:
             out_dir = base_dir / "tests" / "mbpp-sanitized"
+    # Handle humaneval
+    elif "humaneval" in parts:
+        idx = parts.index("humaneval")
+        if idx + 1 < len(parts):
+            subfolder = parts[idx + 1]
+            out_dir = base_dir / "tests" / "humaneval" / subfolder
+        else:
+            out_dir = base_dir / "tests" / "humaneval"
+    # Handle ds1000
+    elif "ds1000" in parts:
+        idx = parts.index("ds1000")
+        if idx + 1 < len(parts):
+            subfolder = parts[idx + 1]
+            out_dir = base_dir / "tests" / "ds1000" / subfolder
+        else:
+            out_dir = base_dir / "tests" / "ds1000"
     else:
-        # Extract timestamp from source directory (e.g., "20251027-170334" from "data/code_generation/20251027-170334")
-        timestamp = source_path.name
-        out_dir = base_dir / "tests" / timestamp
+        # Fallback: use the directory name
+        out_dir = base_dir / "tests" / source_path.name
     
     out_dir.mkdir(parents=True, exist_ok=True)
     return out_dir / f"tests-{safe_model}.jsonl"
