@@ -88,10 +88,8 @@ def load_humaneval(start_index: int, end_index: int, split: str = "test") -> Lis
         check_function = _extract_check_function(test_code)
         test_list = [check_function] if check_function else []
         
-        # Build test imports (HumanEval tests need the function imported)
+        # HumanEval uses check(candidate) pattern - no imports needed
         test_imports: List[str] = []
-        if entry_point:
-            test_imports.append(f"from solution import {entry_point}")
 
         examples.append(
             TaskExample(

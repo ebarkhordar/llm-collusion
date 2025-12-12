@@ -41,15 +41,14 @@ def _extract_entry_point_from_prompt(prompt: str) -> Optional[str]:
 class HumanEvalGenerator(BaseGenerator):
     """Generator for HumanEval dataset.
     
-    HumanEval provides function names directly via 'entry_point' in the dataset.
-    This is stored in test_imports as "from solution import {entry_point}".
+    HumanEval prompts contain function signatures, so we parse them to get
+    the function name (entry_point).
     """
     
     def extract_function_name(self, task: TaskExample) -> Optional[str]:
         """Extract function name from HumanEval task.
         
-        HumanEval stores the entry_point in test_imports (added during loading).
-        Falls back to parsing the prompt's function signature.
+        Parses the prompt's function signature to get the entry_point.
         
         Args:
             task: HumanEval task example
@@ -57,12 +56,6 @@ class HumanEvalGenerator(BaseGenerator):
         Returns:
             The entry_point function name
         """
-        # Entry point is stored in test_imports as "from solution import {name}"
-        for imp in task.test_imports:
-            if imp.startswith("from solution import "):
-                return imp.replace("from solution import ", "").strip()
-        
-        # Fallback: parse the prompt to find the function definition
         return _extract_entry_point_from_prompt(task.prompt)
     
     def get_folder_name(self) -> str:
