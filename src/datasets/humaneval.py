@@ -80,8 +80,11 @@ def load_humaneval(start_index: int, end_index: int, split: str = "test") -> Lis
         prompt = ex.get("prompt", "")
         canonical_solution = ex.get("canonical_solution", "")
         test_code = ex.get("test", "")
-        entry_point = ex.get("entry_point", "")
         task_id = ex.get("task_id", f"HumanEval/{i}")
+
+        # HumanEval's canonical_solution is just the function body.
+        # Combine with prompt (which has the signature) to get runnable code.
+        full_reference_code = prompt + canonical_solution
 
         # Extract the check function, removing METADATA block
         # HumanEval tests have a check(candidate) function we want to keep as one unit
@@ -96,7 +99,7 @@ def load_humaneval(start_index: int, end_index: int, split: str = "test") -> Lis
                 benchmark=dataset_label,
                 task_id=str(task_id),
                 prompt=str(prompt),
-                code=str(canonical_solution),
+                code=full_reference_code,
                 test_imports=test_imports,
                 test_list=test_list,
             )
