@@ -7,6 +7,7 @@ making function name extraction trivial.
 from __future__ import annotations
 
 import ast
+from pathlib import Path
 from typing import Dict, List, Optional
 
 from src.common.types import TaskExample
@@ -65,6 +66,10 @@ class HumanEvalGenerator(BaseGenerator):
     def get_dataset_key(self) -> str:
         """HumanEval config key."""
         return "humaneval"
+    
+    def get_default_prompt_path(self) -> Path:
+        """HumanEval uses the humaneval-specific prompt."""
+        return Path("prompts/generation/humaneval.md")
     
     def build_messages(self, task: TaskExample) -> List[Dict[str, str]]:
         """Build messages for HumanEval.

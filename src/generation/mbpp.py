@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import ast
 from collections import Counter
+from pathlib import Path
 from typing import List, Optional
 
 from src.common.types import TaskExample
@@ -110,4 +111,8 @@ class MBPPGenerator(BaseGenerator):
     def get_dataset_key(self) -> str:
         """MBPP config key."""
         return "mbpp"
+    
+    def get_default_prompt_path(self) -> Path:
+        """MBPP uses the mbpp-specific prompt."""
+        return Path("prompts/generation/mbpp.md")
 

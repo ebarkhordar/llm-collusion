@@ -62,10 +62,20 @@ class BaseGenerator(ABC):
         - extract_function_name: Get the target function name from a task
         - get_folder_name: Return the folder name for output files
         - get_dataset_key: Return the dataset key for config lookup
+        - get_default_prompt_path: Return the default prompt path for this dataset
     """
     
-    def __init__(self, gen_prompt_path: Path = Path("prompts/generation.md")):
-        self.gen_prompt_path = gen_prompt_path
+    def __init__(self, gen_prompt_path: Optional[Path] = None):
+        self.gen_prompt_path = gen_prompt_path or self.get_default_prompt_path()
+    
+    @abstractmethod
+    def get_default_prompt_path(self) -> Path:
+        """Get the default prompt template path for this dataset.
+        
+        Returns:
+            Path to the prompt template file
+        """
+        pass
     
     @abstractmethod
     def extract_function_name(self, task: TaskExample) -> Optional[str]:

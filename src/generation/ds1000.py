@@ -7,6 +7,7 @@ code completion rather than function implementation.
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Dict, List, Optional
 
 from src.common.types import TaskExample
@@ -44,6 +45,10 @@ class DS1000Generator(BaseGenerator):
     def get_dataset_key(self) -> str:
         """DS-1000 config key."""
         return "ds1000"
+    
+    def get_default_prompt_path(self) -> Path:
+        """DS-1000 uses the ds1000-specific prompt."""
+        return Path("prompts/generation/ds1000.md")
     
     def build_messages(self, task: TaskExample) -> List[Dict[str, str]]:
         """Build messages for DS-1000.
