@@ -45,13 +45,12 @@ def load_tasks(dataset: str, start_index: int, end_index: int, split: str = "tes
     return loader(start_index=start_index, end_index=end_index, split=split)
 
 
-def execute(dataset: str, start_index: int, end_index: int, split: str = "test", model: Optional[str] = None, prompt_version: str = "v1") -> None:
+def execute(dataset: str, start_index: int, end_index: int, split: str = "test", model: Optional[str] = None) -> None:
     config_path = Path("configs/config.yaml")
     cfg = load_config(config_path)
 
-    # Get the dataset-specific generator with specified prompt version
-    prompt_path = Path(f"prompts/generation_{prompt_version}.md")
-    generator = get_generator(dataset)(gen_prompt_path=prompt_path)
+    # Get the dataset-specific generator (uses predefined prompt for each dataset)
+    generator = get_generator(dataset)()
 
     # Use specified model or read from config
     if model:
@@ -139,9 +138,8 @@ def run(
     end_index: int = typer.Option(10, help="End index (exclusive)"),
     split: str = typer.Option("test", help="Dataset split (train, test, validation, prompt)"),
     model: Optional[str] = typer.Option(None, help="Model to use (overrides config). E.g., anthropic/claude-haiku-4.5"),
-    prompt_version: str = typer.Option("v1", help="Prompt version to use (v1, v2, etc.). Uses prompts/generation_{version}.md"),
 ):
-    execute(dataset=dataset, start_index=start_index, end_index=end_index, split=split, model=model, prompt_version=prompt_version)
+    execute(dataset=dataset, start_index=start_index, end_index=end_index, split=split, model=model)
 
 
 if __name__ == "__main__":
