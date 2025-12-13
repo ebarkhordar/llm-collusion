@@ -358,8 +358,19 @@ def interactive():
     input_path = None
     
     if input_method == "1":
-        dataset_folder = typer.prompt("Dataset folder name", default="mbpp-sanitized")
-        split = typer.prompt("Split (test/train/validation)", default="test")
+        # Dataset selection
+        console.print("\n[yellow]Available datasets:[/]")
+        console.print("1. mbpp-sanitized (MBPP - train/test/validation/prompt splits)")
+        console.print("2. humaneval (HumanEval - test split only)")
+        dataset_choice = typer.prompt("Choose dataset (1 or 2)", default="1")
+        
+        if dataset_choice == "2":
+            dataset_folder = "humaneval"
+            split = "test"
+            console.print("[blue]Note: HumanEval only has 'test' split.[/]")
+        else:
+            dataset_folder = "mbpp-sanitized"
+            split = typer.prompt("Split (test/train/validation/prompt)", default="test")
     else:
         input_path_str = typer.prompt("Input path (folder containing JSONL files)")
         input_path = Path(input_path_str)
@@ -415,8 +426,8 @@ def interactive():
 
 @app.command()
 def run(
-    dataset_folder: Optional[str] = typer.Option(None, "--dataset-folder", help="Dataset folder name (e.g., mbpp-sanitized)"),
-    split: Optional[str] = typer.Option(None, "--split", help="Dataset split (e.g., test, train, validation)"),
+    dataset_folder: Optional[str] = typer.Option(None, "--dataset-folder", help="Dataset folder name (e.g., mbpp-sanitized, humaneval)"),
+    split: Optional[str] = typer.Option(None, "--split", help="Dataset split (e.g., test, train, validation). Note: humaneval only has 'test'"),
     judge: str = typer.Option(..., "--judge", help="Judge model ID (e.g., openai/gpt-5, anthropic/claude-haiku-4.5)"),
     model1: str = typer.Option(..., "--model1", help="First model to classify (e.g., openai/gpt-5)"),
     model2: str = typer.Option(..., "--model2", help="Second model to classify (e.g., anthropic/claude-haiku-4.5)"),
@@ -431,14 +442,23 @@ def run(
     The judge is asked: "Which code is from model1 and which is from model2?"
     This is a clearer classification task than asking about a specific target model.
     
+    Supported datasets:
+        - mbpp-sanitized: MBPP benchmark (splits: train, test, validation, prompt)
+        - humaneval: HumanEval benchmark (splits: test only)
+    
     Examples:
-        # GPT-5 judge classifying GPT-5 vs Claude code
-        python full_attribution.py --dataset-folder mbpp-sanitized --split test \\
+        # MBPP: GPT-5 judge classifying Claude vs DeepSeek code
+        python full_attribution.py run --dataset-folder mbpp-sanitized --split test \\
                --judge openai/gpt-5 \\
-               --model1 openai/gpt-5 --model2 anthropic/claude-haiku-4.5
+               --model1 anthropic/claude-haiku-4.5 --model2 deepseek/deepseek-chat-v3-0324
+        
+        # HumanEval: GPT-5 judge classifying Claude vs DeepSeek code
+        python full_attribution.py run --dataset-folder humaneval --split test \\
+               --judge openai/gpt-5 \\
+               --model1 anthropic/claude-haiku-4.5 --model2 deepseek/deepseek-chat-v3-0324
         
         # Third-party judge (Gemini) classifying GPT-5 vs Claude code
-        python full_attribution.py --dataset-folder mbpp-sanitized --split test \\
+        python full_attribution.py run --dataset-folder humaneval --split test \\
                --judge google/gemini-2.5-flash \\
                --model1 openai/gpt-5 --model2 anthropic/claude-haiku-4.5
     """
@@ -459,6 +479,8 @@ def run(
 def main(ctx: typer.Context):
     """
     Model attribution: Have a judge classify which code belongs to which model.
+    
+    Supported datasets: mbpp-sanitized (MBPP), humaneval (HumanEval)
     
     Run without arguments for interactive mode, or use 'run' command with arguments.
     """
