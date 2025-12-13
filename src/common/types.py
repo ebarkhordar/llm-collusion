@@ -13,6 +13,8 @@ class TaskExample:
     code: str
     test_imports: List[str]
     test_list: List[str]
+    # DS-1000 specific: contains test_execution() and test_string() functions
+    code_context: Optional[str] = None
 
 
 @dataclass
@@ -24,7 +26,7 @@ class GenerationRecord:
 
     def to_dict(self) -> Dict[str, Any]:
         # Flattened schema with academically clear field names
-        return {
+        result = {
             "benchmark": self.task.benchmark,
             "task_id": self.task.task_id,
             "prompt": self.task.prompt,
@@ -34,6 +36,10 @@ class GenerationRecord:
             "model_name": self.model_name,
             "generated_code": self.generated_code,
         }
+        # Include code_context for DS-1000 (used for testing)
+        if self.task.code_context:
+            result["code_context"] = self.task.code_context
+        return result
 
 
 @dataclass

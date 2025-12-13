@@ -33,6 +33,10 @@ def load_ds1000(
     Note:
         DS-1000 only has a "test" split. Other split values will still load
         the test split but log a warning.
+        
+        DS-1000 uses a special testing format where `code_context` contains
+        test_execution(solution: str) and test_string(solution: str) functions
+        that evaluate generated code by taking it as a string argument.
     """
     # DS-1000 only has test split
     if split != "test":
@@ -46,12 +50,13 @@ def load_ds1000(
     global_idx = 0
     
     for ex in ds:
-        # Optional library filter
-        lib = ex.get("metadata", {}).get("library", "") if isinstance(ex.get("metadata"), dict) else ""
-        if not lib:
-            lib = ex.get("lib", "")
+        # Get library from metadata
+        metadata = ex.get("metadata", {})
+        lib = metadata.get("library", "") if isinstance(metadata, dict) else ""
         
+        # Optional library filter
         if library and lib.lower() != library.lower():
+            global_idx += 1
             continue
             
         if global_idx < start_index:
@@ -61,39 +66,45 @@ def load_ds1000(
         if end_index >= 0 and global_idx >= end_index:
             break
 
-        # DS-1000 schema varies slightly, but generally includes:
-        # - prompt: the problem description/context
-        # - reference_code or code_context: solution or context
-        # - test: test code
-        # - lib: library name (NumPy, Pandas, etc.)
+        # DS-1000 schema:
+        # - prompt: the problem description with setup code (ends with BEGIN SOLUTION)
+        # - reference_code: the reference solution
+        # - code_context: contains test_execution() and test_string() for evaluation
+        # - metadata: contains library, problem_id, etc.
         
         prompt = ex.get("prompt", "")
-        reference_code = ex.get("reference_code", ex.get("code_context", ""))
-        test_code = ex.get("test", "")
+        reference_code = ex.get("reference_code", "")
+        code_context = ex.get("code_context", "")
         
-        # Build task_id from library and index
-        task_id = ex.get("id", f"{lib}/{global_idx}" if lib else str(global_idx))
+        # Build task_id from library and problem_id
+        problem_id = metadata.get("problem_id", global_idx) if isinstance(metadata, dict) else global_idx
+        task_id = f"{lib}/{problem_id}" if lib else str(problem_id)
 
-        # Parse test code into list
-        test_lines = [line for line in str(test_code).split("\n") if line.strip()]
-        
-        # Build test imports based on library
+        # DS-1000 uses code_context for testing, not assertion-based test_list
+        # The test_list is empty; testing is done via test_execution(solution) function
+        # We preserve test_imports based on library for potential use in code execution
         test_imports: List[str] = []
         lib_lower = lib.lower() if lib else ""
         if lib_lower == "numpy":
             test_imports.append("import numpy as np")
         elif lib_lower == "pandas":
             test_imports.append("import pandas as pd")
+            test_imports.append("import numpy as np")
         elif lib_lower == "matplotlib":
             test_imports.append("import matplotlib.pyplot as plt")
+            test_imports.append("import numpy as np")
         elif lib_lower == "tensorflow":
             test_imports.append("import tensorflow as tf")
+            test_imports.append("import numpy as np")
         elif lib_lower == "pytorch":
             test_imports.append("import torch")
+            test_imports.append("import numpy as np")
         elif lib_lower == "scipy":
             test_imports.append("import scipy")
+            test_imports.append("import numpy as np")
         elif lib_lower == "sklearn" or lib_lower == "scikit-learn":
             test_imports.append("import sklearn")
+            test_imports.append("import numpy as np")
 
         examples.append(
             TaskExample(
@@ -102,10 +113,10 @@ def load_ds1000(
                 prompt=str(prompt),
                 code=str(reference_code),
                 test_imports=test_imports,
-                test_list=test_lines,
+                test_list=[],  # DS-1000 uses code_context for testing instead
+                code_context=str(code_context) if code_context else None,
             )
         )
         global_idx += 1
 
     return examples
-
