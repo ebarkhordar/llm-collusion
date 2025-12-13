@@ -18,6 +18,46 @@ app = typer.Typer(add_completion=False)
 console = Console()
 
 
+def _execute_ds1000_worker(
+    code_context: str,
+    solution: str,
+    result_queue: Any,
+) -> None:
+    """Worker function for DS-1000 testing using test_execution() and test_string()."""
+    errors: List[str] = []
+    passed_count = 0
+    total_tests = 0
+    
+    try:
+        # Execute code_context which defines test_execution() and test_string()
+        globals_ns: Dict[str, Any] = {"__name__": "tested_module"}
+        exec(code_context, globals_ns, globals_ns)
+        
+        # Run test_execution(solution) if defined
+        if "test_execution" in globals_ns:
+            total_tests += 1
+            try:
+                globals_ns["test_execution"](solution)
+                passed_count += 1
+            except Exception as e:  # noqa: BLE001
+                errors.append(f"test_execution: {type(e).__name__}: {e}")
+        
+        # Run test_string(solution) if defined
+        if "test_string" in globals_ns:
+            total_tests += 1
+            try:
+                globals_ns["test_string"](solution)
+                passed_count += 1
+            except Exception as e:  # noqa: BLE001
+                errors.append(f"test_string: {type(e).__name__}: {e}")
+                
+    except Exception as e:  # noqa: BLE001
+        errors.append(f"SetupError {type(e).__name__}: {e}")
+    
+    # Send results back: (passed_count, total_tests, errors)
+    result_queue.put((passed_count, total_tests, errors))
+
+
 def _execute_code_worker(
     test_imports: List[str],
     code: str,
@@ -87,11 +127,14 @@ def run_single_record(record: Dict[str, Any], timeout_seconds: int = 5) -> TestO
     test_imports: List[str] = [str(x) for x in (record.get("test_imports") or [])]
     test_list: List[str] = [str(x) for x in (record.get("test_list") or [])]
     raw_code = str(record.get("generated_code") or "").strip()
+    code_context = str(record.get("code_context") or "").strip()
+    
     # Extract code from JSON response if needed (handles {"code": "..."} format)
     code = extract_code_from_response(raw_code)
 
     errors: List[str] = []
     passed_count = 0
+    total_tests = 0
     
     # Use spawn context for better compatibility across platforms
     ctx = multiprocessing.get_context('spawn')
@@ -99,30 +142,49 @@ def run_single_record(record: Dict[str, Any], timeout_seconds: int = 5) -> TestO
     # Create a queue for the worker to send results back
     result_queue = ctx.Queue()
     
-    # Create and start the worker process
-    process = ctx.Process(
-        target=_execute_code_worker,
-        args=(test_imports, code, test_list, benchmark, result_queue),
-    )
-    process.start()
-    
-    # Wait for the process to complete with timeout
-    process.join(timeout=timeout_seconds)
-    
-    if process.is_alive():
-        # Process is still running - timeout occurred
-        process.terminate()
-        process.join(timeout=1)  # Give it 1 second to terminate gracefully
+    # DS-1000 uses code_context with test_execution() and test_string() functions
+    if benchmark == "ds1000" and code_context:
+        process = ctx.Process(
+            target=_execute_ds1000_worker,
+            args=(code_context, code, result_queue),
+        )
+        process.start()
+        process.join(timeout=timeout_seconds)
+        
         if process.is_alive():
-            process.kill()  # Force kill if still alive
-            process.join()
-        errors.append("TimeoutError: Code execution timed out")
+            process.terminate()
+            process.join(timeout=1)
+            if process.is_alive():
+                process.kill()
+                process.join()
+            errors.append("TimeoutError: Code execution timed out")
+            # DS-1000 typically has 1-2 tests (test_execution and optionally test_string)
+            total_tests = 1
+        else:
+            if not result_queue.empty():
+                passed_count, total_tests, errors = result_queue.get()
     else:
-        # Process completed - get results
-        if not result_queue.empty():
-            passed_count, errors = result_queue.get()
+        # MBPP, HumanEval, and others: use assertion-based testing
+        process = ctx.Process(
+            target=_execute_code_worker,
+            args=(test_imports, code, test_list, benchmark, result_queue),
+        )
+        process.start()
+        process.join(timeout=timeout_seconds)
+        
+        if process.is_alive():
+            process.terminate()
+            process.join(timeout=1)
+            if process.is_alive():
+                process.kill()
+                process.join()
+            errors.append("TimeoutError: Code execution timed out")
+        else:
+            if not result_queue.empty():
+                passed_count, errors = result_queue.get()
+        
+        total_tests = len(test_list)
 
-    total_tests = len(test_list)
     return TestOutcome(
         benchmark=benchmark,
         task_id=task_id,
