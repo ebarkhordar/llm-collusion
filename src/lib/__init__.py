@@ -3,6 +3,7 @@ from .jsonl import read_jsonl, write_jsonl_line
 from .openrouter import OpenRouterClient
 from .gemini import GeminiClient, create_gemini_client
 from .claude import ClaudeClient, create_claude_client
+from .llama import LlamaClient, create_llama_client
 from .llm_client import LLMClient, create_llm_client
 from .prompts import render_prompt
 
@@ -15,6 +16,8 @@ __all__ = [
     "create_gemini_client",
     "ClaudeClient",
     "create_claude_client",
+    "LlamaClient",
+    "create_llama_client",
     "LLMClient",
     "create_llm_client",
     "render_prompt",

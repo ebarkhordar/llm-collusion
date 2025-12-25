@@ -9,6 +9,7 @@ from rich.console import Console
 from .openrouter import OpenRouterClient
 from .gemini import GeminiClient
 from .claude import ClaudeClient
+from .llama import LlamaClient
 
 console = Console()
 
@@ -34,6 +35,16 @@ CLAUDE_VERTEX_MODELS = {
     "claude-3-5-haiku@20241022",
     "claude-3-opus",
     "claude-3-opus@20240229",
+}
+
+# Llama 4 models on Vertex AI
+LLAMA_VERTEX_MODELS = {
+    "llama-4-scout",
+    "llama-4-maverick",
+    "llama-4-scout-17b-16e-instruct-maas",
+    "llama-4-maverick-17b-128e-instruct-maas",
+    "meta/llama-4-scout-17b-16e-instruct-maas",
+    "meta/llama-4-maverick-17b-128e-instruct-maas",
 }
 
 
@@ -63,6 +74,7 @@ class LLMClient:
     _openrouter_client: Optional[OpenRouterClient] = None
     _gemini_client: Optional[GeminiClient] = None
     _claude_client: Optional[ClaudeClient] = None
+    _llama_client: Optional[LlamaClient] = None
     
     def _get_openrouter_client(self) -> OpenRouterClient:
         if self._openrouter_client is None:
@@ -86,6 +98,15 @@ class LLMClient:
             )
         return self._claude_client
     
+    def _get_llama_client(self) -> LlamaClient:
+        if self._llama_client is None:
+            self._llama_client = LlamaClient(
+                project_id=self.google_project_id,
+                region="us-east5",  # Llama 4 only in us-east5
+                credentials_path=self.google_credentials_path,
+            )
+        return self._llama_client
+    
     def _is_gemini_model(self, model: str) -> bool:
         """Check if the model should be routed to Gemini."""
         # Check exact match
@@ -103,11 +124,25 @@ class LLMClient:
     def _is_claude_vertex_model(self, model: str) -> bool:
         """Check if the model should be routed to Claude on Vertex AI."""
         model_lower = model.lower()
-        # Check for vertex/ prefix - explicit routing to Vertex AI
-        if model_lower.startswith("vertex/"):
+        # Check for vertex/ prefix with claude - explicit routing to Vertex AI
+        if model_lower.startswith("vertex/claude"):
             return True
         # Check for vertex-claude or claude-vertex prefix
         if "vertex" in model_lower and "claude" in model_lower:
+            return True
+        return False
+    
+    def _is_llama_vertex_model(self, model: str) -> bool:
+        """Check if the model should be routed to Llama on Vertex AI."""
+        model_lower = model.lower()
+        # Check for vertex/llama or vertex/meta prefix
+        if model_lower.startswith("vertex/llama") or model_lower.startswith("vertex/meta"):
+            return True
+        # Check exact match in known models
+        if model in LLAMA_VERTEX_MODELS or model_lower in LLAMA_VERTEX_MODELS:
+            return True
+        # Check for llama-4 pattern
+        if "llama-4" in model_lower or "llama4" in model_lower:
             return True
         return False
     
@@ -118,8 +153,11 @@ class LLMClient:
             return model[7:]  # Remove "google/" prefix
         if model.lower().startswith("vertex/"):
             model = model[7:]  # Remove "vertex/" prefix
+        
+        # Backend-specific normalization
+        if backend == "claude":
             # Add version suffix if not present for Claude
-            if backend == "claude" and "@" not in model:
+            if "@" not in model:
                 if model == "claude-sonnet-4-5":
                     return "claude-sonnet-4-5@20250929"
                 elif model == "claude-3-5-sonnet-v2":
@@ -128,7 +166,17 @@ class LLMClient:
                     return "claude-3-5-haiku@20241022"
                 elif model == "claude-3-opus":
                     return "claude-3-opus@20240229"
-            return model
+        elif backend == "llama":
+            # Normalize Llama model names to full format
+            model_lower = model.lower()
+            if model_lower in ("llama-4-scout", "llama4-scout"):
+                return "meta/llama-4-scout-17b-16e-instruct-maas"
+            elif model_lower in ("llama-4-maverick", "llama4-maverick"):
+                return "meta/llama-4-maverick-17b-128e-instruct-maas"
+            # Add meta/ prefix if not present
+            if not model.startswith("meta/"):
+                return f"meta/{model}"
+        
         return model
     
     def generate_code(
@@ -147,6 +195,7 @@ class LLMClient:
         Args:
             model: Model identifier. Use prefixes to control routing:
                 - "vertex/claude-sonnet-4-5" -> Claude via Vertex AI
+                - "vertex/llama-4-scout" -> Llama 4 via Vertex AI
                 - "google/gemini-2.5-flash" or "gemini-*" -> Gemini via Vertex AI
                 - "anthropic/claude-*" -> Claude via OpenRouter
                 - Other models -> OpenRouter
@@ -165,6 +214,10 @@ class LLMClient:
             client = self._get_claude_client()
             normalized_model = self._normalize_model_name(model, "claude")
             console.print(f"[dim]Using Claude Vertex backend for {normalized_model}[/]")
+        elif self._is_llama_vertex_model(model):
+            client = self._get_llama_client()
+            normalized_model = self._normalize_model_name(model, "llama")
+            console.print(f"[dim]Using Llama Vertex backend for {normalized_model}[/]")
         elif self._is_gemini_model(model):
             client = self._get_gemini_client()
             normalized_model = self._normalize_model_name(model, "gemini")
