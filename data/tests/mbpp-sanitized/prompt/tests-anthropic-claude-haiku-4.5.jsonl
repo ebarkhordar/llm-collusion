@@ -1,7 +1,0 @@
-{"benchmark": "mbpp", "task_id": "8", "model_name": "anthropic/claude-haiku-4.5", "num_tests": 3, "num_passed": 3, "passed": true, "errors": []}
-{"benchmark": "mbpp", "task_id": "7", "model_name": "anthropic/claude-haiku-4.5", "num_tests": 3, "num_passed": 3, "passed": true, "errors": []}
-{"benchmark": "mbpp", "task_id": "4", "model_name": "anthropic/claude-haiku-4.5", "num_tests": 3, "num_passed": 3, "passed": true, "errors": []}
-{"benchmark": "mbpp", "task_id": "2", "model_name": "anthropic/claude-haiku-4.5", "num_tests": 3, "num_passed": 3, "passed": true, "errors": []}
-{"benchmark": "mbpp", "task_id": "3", "model_name": "anthropic/claude-haiku-4.5", "num_tests": 4, "num_passed": 4, "passed": true, "errors": []}
-{"benchmark": "mbpp", "task_id": "9", "model_name": "anthropic/claude-haiku-4.5", "num_tests": 3, "num_passed": 3, "passed": true, "errors": []}
-{"benchmark": "mbpp", "task_id": "6", "model_name": "anthropic/claude-haiku-4.5", "num_tests": 6, "num_passed": 6, "passed": true, "errors": []}
