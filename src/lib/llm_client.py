@@ -8,6 +8,7 @@ from rich.console import Console
 
 from .openrouter import OpenRouterClient
 from .gemini import GeminiClient
+from .claude import ClaudeClient
 
 console = Console()
 
@@ -23,24 +24,37 @@ GEMINI_MODELS = {
     "gemini-1.5-pro",
 }
 
+# Claude models on Vertex AI (use Anthropic Vertex SDK)
+CLAUDE_VERTEX_MODELS = {
+    "claude-sonnet-4-5",
+    "claude-sonnet-4-5@20250929",
+    "claude-3-5-sonnet-v2",
+    "claude-3-5-sonnet-v2@20241022",
+    "claude-3-5-haiku",
+    "claude-3-5-haiku@20241022",
+    "claude-3-opus",
+    "claude-3-opus@20240229",
+}
+
 
 @dataclass
 class LLMClient:
     """
     Unified LLM client that routes requests to the appropriate backend.
     
+    - Claude models with vertex/ prefix -> Anthropic Vertex AI SDK
     - Gemini models (gemini-*) -> Google Vertex AI
     - All other models -> OpenRouter
     
     Configuration:
         OpenRouter: Set OPENROUTER_API_KEY env var
-        Gemini: Set GOOGLE_CLOUD_PROJECT and GOOGLE_APPLICATION_CREDENTIALS env vars
+        Gemini/Claude Vertex: Set GOOGLE_CLOUD_PROJECT and GOOGLE_APPLICATION_CREDENTIALS env vars
     """
     
     # OpenRouter config
     openrouter_api_key: Optional[str] = None
     
-    # Gemini config
+    # Google Cloud config (for Gemini and Claude Vertex)
     google_project_id: Optional[str] = None
     google_location: str = "us-central1"
     google_credentials_path: Optional[str] = None
@@ -48,6 +62,7 @@ class LLMClient:
     # Internal clients (lazy initialized)
     _openrouter_client: Optional[OpenRouterClient] = None
     _gemini_client: Optional[GeminiClient] = None
+    _claude_client: Optional[ClaudeClient] = None
     
     def _get_openrouter_client(self) -> OpenRouterClient:
         if self._openrouter_client is None:
@@ -63,6 +78,14 @@ class LLMClient:
             )
         return self._gemini_client
     
+    def _get_claude_client(self) -> ClaudeClient:
+        if self._claude_client is None:
+            self._claude_client = ClaudeClient(
+                project_id=self.google_project_id,
+                region="global",  # Claude on Vertex uses global region
+            )
+        return self._claude_client
+    
     def _is_gemini_model(self, model: str) -> bool:
         """Check if the model should be routed to Gemini."""
         # Check exact match
@@ -77,11 +100,35 @@ class LLMClient:
             return True
         return False
     
-    def _normalize_model_name(self, model: str) -> str:
+    def _is_claude_vertex_model(self, model: str) -> bool:
+        """Check if the model should be routed to Claude on Vertex AI."""
+        model_lower = model.lower()
+        # Check for vertex/ prefix - explicit routing to Vertex AI
+        if model_lower.startswith("vertex/"):
+            return True
+        # Check for vertex-claude or claude-vertex prefix
+        if "vertex" in model_lower and "claude" in model_lower:
+            return True
+        return False
+    
+    def _normalize_model_name(self, model: str, backend: str) -> str:
         """Normalize model name for the appropriate backend."""
-        # Remove google/ prefix for Gemini
+        # Remove prefixes
         if model.lower().startswith("google/"):
             return model[7:]  # Remove "google/" prefix
+        if model.lower().startswith("vertex/"):
+            model = model[7:]  # Remove "vertex/" prefix
+            # Add version suffix if not present for Claude
+            if backend == "claude" and "@" not in model:
+                if model == "claude-sonnet-4-5":
+                    return "claude-sonnet-4-5@20250929"
+                elif model == "claude-3-5-sonnet-v2":
+                    return "claude-3-5-sonnet-v2@20241022"
+                elif model == "claude-3-5-haiku":
+                    return "claude-3-5-haiku@20241022"
+                elif model == "claude-3-opus":
+                    return "claude-3-opus@20240229"
+            return model
         return model
     
     def generate_code(
@@ -98,7 +145,11 @@ class LLMClient:
         Generate code using the appropriate backend based on the model.
         
         Args:
-            model: Model identifier (e.g., "google/gemini-2.5-flash", "anthropic/claude-3-opus")
+            model: Model identifier. Use prefixes to control routing:
+                - "vertex/claude-sonnet-4-5" -> Claude via Vertex AI
+                - "google/gemini-2.5-flash" or "gemini-*" -> Gemini via Vertex AI
+                - "anthropic/claude-*" -> Claude via OpenRouter
+                - Other models -> OpenRouter
             temperature: Sampling temperature
             messages: List of message dicts with 'role' and 'content' keys
             max_tokens: Maximum tokens to generate
@@ -109,9 +160,14 @@ class LLMClient:
         Returns:
             Generated text content
         """
-        if self._is_gemini_model(model):
+        # Determine routing
+        if self._is_claude_vertex_model(model):
+            client = self._get_claude_client()
+            normalized_model = self._normalize_model_name(model, "claude")
+            console.print(f"[dim]Using Claude Vertex backend for {normalized_model}[/]")
+        elif self._is_gemini_model(model):
             client = self._get_gemini_client()
-            normalized_model = self._normalize_model_name(model)
+            normalized_model = self._normalize_model_name(model, "gemini")
             console.print(f"[dim]Using Gemini backend for {normalized_model}[/]")
         else:
             client = self._get_openrouter_client()
