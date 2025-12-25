@@ -18,6 +18,7 @@ python-dotenv = "^1.2.1"
 matplotlib = "^3.10.8"
 seaborn = "^0.13.2"
 scikit-learn = "^1.8.0"
+google-cloud-aiplatform = "^1.90.0"
 
 [tool.poetry.group.dev.dependencies]
 ipykernel = "^7.1.0"
