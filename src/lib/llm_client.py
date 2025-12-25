@@ -10,6 +10,7 @@ from .openrouter import OpenRouterClient
 from .gemini import GeminiClient
 from .claude import ClaudeClient
 from .llama import LlamaClient
+from .mistral import MistralClient
 
 console = Console()
 
@@ -47,6 +48,14 @@ LLAMA_VERTEX_MODELS = {
     "meta/llama-4-maverick-17b-128e-instruct-maas",
 }
 
+# Mistral models on Vertex AI
+MISTRAL_VERTEX_MODELS = {
+    "codestral-2",
+    "codestral-2501",
+    "mistral-large-2411",
+    "mistral-small-2503",
+}
+
 
 @dataclass
 class LLMClient:
@@ -75,6 +84,7 @@ class LLMClient:
     _gemini_client: Optional[GeminiClient] = None
     _claude_client: Optional[ClaudeClient] = None
     _llama_client: Optional[LlamaClient] = None
+    _mistral_client: Optional[MistralClient] = None
     
     def _get_openrouter_client(self) -> OpenRouterClient:
         if self._openrouter_client is None:
@@ -106,6 +116,15 @@ class LLMClient:
                 credentials_path=self.google_credentials_path,
             )
         return self._llama_client
+    
+    def _get_mistral_client(self) -> MistralClient:
+        if self._mistral_client is None:
+            self._mistral_client = MistralClient(
+                project_id=self.google_project_id,
+                region=self.google_location,  # us-central1 or europe-west4
+                credentials_path=self.google_credentials_path,
+            )
+        return self._mistral_client
     
     def _is_gemini_model(self, model: str) -> bool:
         """Check if the model should be routed to Gemini."""
@@ -146,6 +165,21 @@ class LLMClient:
             return True
         return False
     
+    def _is_mistral_vertex_model(self, model: str) -> bool:
+        """Check if the model should be routed to Mistral on Vertex AI."""
+        model_lower = model.lower()
+        # Check for vertex/mistral or vertex/codestral prefix
+        if model_lower.startswith("vertex/mistral") or model_lower.startswith("vertex/codestral"):
+            return True
+        # Check exact match in known models
+        model_name = model_lower.split("/")[-1] if "/" in model_lower else model_lower
+        if model_name in MISTRAL_VERTEX_MODELS:
+            return True
+        # Check for codestral pattern
+        if "codestral" in model_lower:
+            return True
+        return False
+    
     def _normalize_model_name(self, model: str, backend: str) -> str:
         """Normalize model name for the appropriate backend."""
         # Remove prefixes
@@ -176,6 +210,9 @@ class LLMClient:
             # Add meta/ prefix if not present
             if not model.startswith("meta/"):
                 return f"meta/{model}"
+        elif backend == "mistral":
+            # Just return the model name without any prefix
+            return model
         
         return model
     
@@ -196,6 +233,7 @@ class LLMClient:
             model: Model identifier. Use prefixes to control routing:
                 - "vertex/claude-sonnet-4-5" -> Claude via Vertex AI
                 - "vertex/llama-4-scout" -> Llama 4 via Vertex AI
+                - "vertex/codestral-2" -> Mistral Codestral via Vertex AI
                 - "google/gemini-2.5-flash" or "gemini-*" -> Gemini via Vertex AI
                 - "anthropic/claude-*" -> Claude via OpenRouter
                 - Other models -> OpenRouter
@@ -218,6 +256,10 @@ class LLMClient:
             client = self._get_llama_client()
             normalized_model = self._normalize_model_name(model, "llama")
             console.print(f"[dim]Using Llama Vertex backend for {normalized_model}[/]")
+        elif self._is_mistral_vertex_model(model):
+            client = self._get_mistral_client()
+            normalized_model = self._normalize_model_name(model, "mistral")
+            console.print(f"[dim]Using Mistral Vertex backend for {normalized_model}[/]")
         elif self._is_gemini_model(model):
             client = self._get_gemini_client()
             normalized_model = self._normalize_model_name(model, "gemini")

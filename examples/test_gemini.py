@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Example script to test Vertex AI integrations: Gemini, Claude, and Llama 4.
+Example script to test Vertex AI integrations: Gemini, Claude, Llama 4, and Mistral.
 
 Setup:
 1. Create a service account in GCP Console
@@ -11,15 +11,17 @@ Setup:
    export GOOGLE_APPLICATION_CREDENTIALS="path/to/service-account.json"
 
 Usage:
-    python examples/test_gemini.py           # Test all
-    python examples/test_gemini.py --gemini  # Test Gemini only
-    python examples/test_gemini.py --claude  # Test Claude only
-    python examples/test_gemini.py --llama   # Test Llama 4 only
+    python examples/test_gemini.py            # Test all
+    python examples/test_gemini.py --gemini   # Test Gemini only
+    python examples/test_gemini.py --claude   # Test Claude only
+    python examples/test_gemini.py --llama    # Test Llama 4 only
+    python examples/test_gemini.py --mistral  # Test Mistral Codestral only
 """
 
 from src.lib import GeminiClient, LLMClient
 from src.lib.claude import ClaudeClient
 from src.lib.llama import LlamaClient
+from src.lib.mistral import MistralClient
 
 
 def test_gemini_direct():
@@ -155,6 +157,63 @@ def test_unified_client_llama():
     print(response[:300] + "..." if len(response) > 300 else response)
 
 
+def test_mistral_direct():
+    """Test Mistral Codestral client directly."""
+    print("=" * 60)
+    print("Testing MistralClient directly (Vertex AI)")
+    print("=" * 60)
+    
+    client = MistralClient()
+    
+    # Test chat mode
+    messages = [
+        {"role": "user", "content": "Write a Python function to binary search. Include a docstring."}
+    ]
+    
+    print("\n--- Codestral 2 Chat Mode ---")
+    response = client.generate_code(
+        model="codestral-2",
+        messages=messages,
+        temperature=0.0,
+        max_tokens=400,
+    )
+    print(response[:400] + "..." if len(response) > 400 else response)
+    
+    # Test FIM mode
+    print("\n--- Codestral 2 Fill-in-the-Middle ---")
+    fim_response = client.fill_in_middle(
+        prompt="def fibonacci(n: int) -> int:",
+        suffix="return result",
+        model="codestral-2",
+        max_tokens=150,
+    )
+    print("PROMPT: def fibonacci(n: int) -> int:")
+    print("SUFFIX: return result")
+    print("GENERATED:", fim_response[:200])
+
+
+def test_unified_client_mistral():
+    """Test unified LLM client with Mistral Vertex routing."""
+    print("\n" + "=" * 60)
+    print("Testing LLMClient with Mistral Codestral Vertex")
+    print("=" * 60)
+    
+    client = LLMClient()
+    
+    messages = [
+        {"role": "user", "content": "Write a Python function to find duplicates in a list. Include a docstring."}
+    ]
+    
+    print("\nTesting with vertex/codestral-2 (routes to Mistral Vertex):")
+    response = client.generate_code(
+        model="vertex/codestral-2",
+        messages=messages,
+        temperature=0.0,
+    )
+    print(f"Response length: {len(response)} chars")
+    print(response[:300] + "..." if len(response) > 300 else response)
+
+
 def test_list_models():
     """List available models."""
     print("\n" + "=" * 60)
@@ -177,12 +236,19 @@ def test_list_models():
     llama = LlamaClient()
     for model in llama.list_models():
         print(f"  - {model}")
+    
+    print("\n" + "=" * 60)
+    print("Available Mistral models (Vertex AI)")
+    print("=" * 60)
+    mistral = MistralClient()
+    for model in mistral.list_models():
+        print(f"  - {model}")
 
 
 if __name__ == "__main__":
     import sys
     
-    print("Vertex AI Integration Test (Gemini + Claude + Llama 4)")
+    print("Vertex AI Integration Test (Gemini + Claude + Llama 4 + Mistral)")
     print("Make sure you have set:")
     print("  - GOOGLE_CLOUD_PROJECT")
     print("  - GOOGLE_APPLICATION_CREDENTIALS")
@@ -192,7 +258,8 @@ if __name__ == "__main__":
     test_claude = "--claude" in sys.argv
     test_gemini = "--gemini" in sys.argv
     test_llama = "--llama" in sys.argv
-    test_all = not (test_claude or test_gemini or test_llama)
+    test_mistral = "--mistral" in sys.argv
+    test_all = not (test_claude or test_gemini or test_llama or test_mistral)
     
     try:
         test_list_models()
@@ -208,6 +275,10 @@ if __name__ == "__main__":
         if test_all or test_llama:
             test_llama_direct()
             test_unified_client_llama()
+        
+        if test_all or test_mistral:
+            test_mistral_direct()
+            test_unified_client_mistral()
         
         print("\n" + "=" * 60)
         print("✅ All tests passed!")
