@@ -12,6 +12,7 @@ from .claude import ClaudeClient
 from .llama import LlamaClient
 from .mistral import MistralClient
 from .gpt_oss import GPTOSSClient
+from .qwen import QwenClient
 
 console = Console()
 
@@ -71,6 +72,14 @@ GPT_OSS_VERTEX_MODELS = {
     "openai/gpt-oss-20b-maas",
 }
 
+# Qwen models on Vertex AI
+QWEN_VERTEX_MODELS = {
+    "qwen3-coder",
+    "qwen3-coder-480b",
+    "qwen3-coder-480b-a35b-instruct-maas",
+    "qwen/qwen3-coder-480b-a35b-instruct-maas",
+}
+
 
 @dataclass
 class LLMClient:
@@ -101,6 +110,7 @@ class LLMClient:
     _llama_client: Optional[LlamaClient] = None
     _mistral_client: Optional[MistralClient] = None
     _gpt_oss_client: Optional[GPTOSSClient] = None
+    _qwen_client: Optional[QwenClient] = None
     
     def _get_openrouter_client(self) -> OpenRouterClient:
         if self._openrouter_client is None:
@@ -150,6 +160,15 @@ class LLMClient:
                 credentials_path=self.google_credentials_path,
             )
         return self._gpt_oss_client
+    
+    def _get_qwen_client(self) -> QwenClient:
+        if self._qwen_client is None:
+            self._qwen_client = QwenClient(
+                project_id=self.google_project_id,
+                region="us-south1",  # Qwen3 Coder uses us-south1
+                credentials_path=self.google_credentials_path,
+            )
+        return self._qwen_client
     
     def _is_gemini_model(self, model: str) -> bool:
         """Check if the model should be routed to Gemini."""
@@ -219,6 +238,20 @@ class LLMClient:
             return True
         return False
     
+    def _is_qwen_vertex_model(self, model: str) -> bool:
+        """Check if the model should be routed to Qwen on Vertex AI."""
+        model_lower = model.lower()
+        # Check for vertex/qwen prefix
+        if model_lower.startswith("vertex/qwen"):
+            return True
+        # Check exact match in known models
+        if model in QWEN_VERTEX_MODELS or model_lower in QWEN_VERTEX_MODELS:
+            return True
+        # Check for qwen3-coder pattern
+        if "qwen3-coder" in model_lower or "qwen-coder" in model_lower:
+            return True
+        return False
+    
     def _normalize_model_name(self, model: str, backend: str) -> str:
         """Normalize model name for the appropriate backend."""
         # Remove prefixes
@@ -266,6 +299,14 @@ class LLMClient:
             # Add openai/ prefix if not present
             if not model.startswith("openai/"):
                 return f"openai/{model}"
+        elif backend == "qwen":
+            # Normalize Qwen model names
+            model_lower = model.lower()
+            if "qwen3-coder" in model_lower or "qwen-coder" in model_lower:
+                return "qwen/qwen3-coder-480b-a35b-instruct-maas"
+            # Add qwen/ prefix if not present
+            if not model.startswith("qwen/"):
+                return f"qwen/{model}"
         
         return model
     
@@ -288,6 +329,7 @@ class LLMClient:
                 - "vertex/llama-4-scout" -> Llama 4 via Vertex AI
                 - "vertex/codestral-2" -> Mistral Codestral via Vertex AI
                 - "vertex/gpt-oss-120b" -> OpenAI GPT OSS via Vertex AI
+                - "vertex/qwen3-coder" -> Qwen3 Coder via Vertex AI
                 - "google/gemini-2.5-flash" or "gemini-*" -> Gemini via Vertex AI
                 - "anthropic/claude-*" -> Claude via OpenRouter
                 - Other models -> OpenRouter
@@ -318,6 +360,10 @@ class LLMClient:
             client = self._get_gpt_oss_client()
             normalized_model = self._normalize_model_name(model, "gpt_oss")
             console.print(f"[dim]Using GPT OSS Vertex backend for {normalized_model}[/]")
+        elif self._is_qwen_vertex_model(model):
+            client = self._get_qwen_client()
+            normalized_model = self._normalize_model_name(model, "qwen")
+            console.print(f"[dim]Using Qwen Vertex backend for {normalized_model}[/]")
         elif self._is_gemini_model(model):
             client = self._get_gemini_client()
             normalized_model = self._normalize_model_name(model, "gemini")
