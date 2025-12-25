@@ -154,9 +154,10 @@ class ClaudeClient:
     def list_models(self) -> List[str]:
         """List available Claude models on Vertex AI."""
         return [
-            "claude-sonnet-4-5@20250929",
+            "claude-opus-4-5@20251101",      # Most powerful, best for coding/agents
+            "claude-sonnet-4-5@20250929",    # Balanced performance
             "claude-3-5-sonnet-v2@20241022",
-            "claude-3-5-haiku@20241022",
+            "claude-3-5-haiku@20241022",     # Fast, cost-efficient
             "claude-3-opus@20240229",
         ]
 

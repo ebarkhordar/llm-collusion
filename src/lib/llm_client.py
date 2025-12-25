@@ -28,6 +28,8 @@ GEMINI_MODELS = {
 
 # Claude models on Vertex AI (use Anthropic Vertex SDK)
 CLAUDE_VERTEX_MODELS = {
+    "claude-opus-4-5",
+    "claude-opus-4-5@20251101",
     "claude-sonnet-4-5",
     "claude-sonnet-4-5@20250929",
     "claude-3-5-sonnet-v2",
@@ -192,7 +194,9 @@ class LLMClient:
         if backend == "claude":
             # Add version suffix if not present for Claude
             if "@" not in model:
-                if model == "claude-sonnet-4-5":
+                if model == "claude-opus-4-5":
+                    return "claude-opus-4-5@20251101"
+                elif model == "claude-sonnet-4-5":
                     return "claude-sonnet-4-5@20250929"
                 elif model == "claude-3-5-sonnet-v2":
                     return "claude-3-5-sonnet-v2@20241022"
