@@ -7,6 +7,7 @@ from .llama import LlamaClient, create_llama_client
 from .mistral import MistralClient, create_mistral_client
 from .gpt_oss import GPTOSSClient, create_gpt_oss_client
 from .qwen import QwenClient, create_qwen_client
+from .kimi import KimiClient, create_kimi_client
 from .llm_client import LLMClient, create_llm_client
 from .prompts import render_prompt
 
@@ -27,6 +28,8 @@ __all__ = [
     "create_gpt_oss_client",
     "QwenClient",
     "create_qwen_client",
+    "KimiClient",
+    "create_kimi_client",
     "LLMClient",
     "create_llm_client",
     "render_prompt",

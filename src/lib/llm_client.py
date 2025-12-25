@@ -13,6 +13,7 @@ from .llama import LlamaClient
 from .mistral import MistralClient
 from .gpt_oss import GPTOSSClient
 from .qwen import QwenClient
+from .kimi import KimiClient
 
 console = Console()
 
@@ -80,6 +81,14 @@ QWEN_VERTEX_MODELS = {
     "qwen/qwen3-coder-480b-a35b-instruct-maas",
 }
 
+# Kimi models on Vertex AI (Moonshot AI)
+KIMI_VERTEX_MODELS = {
+    "kimi-k2",
+    "kimi-k2-thinking",
+    "kimi-k2-thinking-maas",
+    "moonshotai/kimi-k2-thinking-maas",
+}
+
 
 @dataclass
 class LLMClient:
@@ -111,6 +120,7 @@ class LLMClient:
     _mistral_client: Optional[MistralClient] = None
     _gpt_oss_client: Optional[GPTOSSClient] = None
     _qwen_client: Optional[QwenClient] = None
+    _kimi_client: Optional[KimiClient] = None
     
     def _get_openrouter_client(self) -> OpenRouterClient:
         if self._openrouter_client is None:
@@ -169,6 +179,15 @@ class LLMClient:
                 credentials_path=self.google_credentials_path,
             )
         return self._qwen_client
+    
+    def _get_kimi_client(self) -> KimiClient:
+        if self._kimi_client is None:
+            self._kimi_client = KimiClient(
+                project_id=self.google_project_id,
+                region="global",  # Kimi K2 uses global region
+                credentials_path=self.google_credentials_path,
+            )
+        return self._kimi_client
     
     def _is_gemini_model(self, model: str) -> bool:
         """Check if the model should be routed to Gemini."""
@@ -252,6 +271,20 @@ class LLMClient:
             return True
         return False
     
+    def _is_kimi_vertex_model(self, model: str) -> bool:
+        """Check if the model should be routed to Kimi on Vertex AI."""
+        model_lower = model.lower()
+        # Check for vertex/kimi or vertex/moonshotai prefix
+        if model_lower.startswith("vertex/kimi") or model_lower.startswith("vertex/moonshotai"):
+            return True
+        # Check exact match in known models
+        if model in KIMI_VERTEX_MODELS or model_lower in KIMI_VERTEX_MODELS:
+            return True
+        # Check for kimi-k2 pattern
+        if "kimi-k2" in model_lower or "kimi_k2" in model_lower:
+            return True
+        return False
+    
     def _normalize_model_name(self, model: str, backend: str) -> str:
         """Normalize model name for the appropriate backend."""
         # Remove prefixes
@@ -307,6 +340,14 @@ class LLMClient:
             # Add qwen/ prefix if not present
             if not model.startswith("qwen/"):
                 return f"qwen/{model}"
+        elif backend == "kimi":
+            # Normalize Kimi model names
+            model_lower = model.lower()
+            if "kimi-k2" in model_lower or "kimi_k2" in model_lower:
+                return "moonshotai/kimi-k2-thinking-maas"
+            # Add moonshotai/ prefix if not present
+            if not model.startswith("moonshotai/"):
+                return f"moonshotai/{model}"
         
         return model
     
@@ -330,6 +371,7 @@ class LLMClient:
                 - "vertex/codestral-2" -> Mistral Codestral via Vertex AI
                 - "vertex/gpt-oss-120b" -> OpenAI GPT OSS via Vertex AI
                 - "vertex/qwen3-coder" -> Qwen3 Coder via Vertex AI
+                - "vertex/kimi-k2" -> Kimi K2 Thinking via Vertex AI
                 - "google/gemini-2.5-flash" or "gemini-*" -> Gemini via Vertex AI
                 - "anthropic/claude-*" -> Claude via OpenRouter
                 - Other models -> OpenRouter
@@ -364,6 +406,10 @@ class LLMClient:
             client = self._get_qwen_client()
             normalized_model = self._normalize_model_name(model, "qwen")
             console.print(f"[dim]Using Qwen Vertex backend for {normalized_model}[/]")
+        elif self._is_kimi_vertex_model(model):
+            client = self._get_kimi_client()
+            normalized_model = self._normalize_model_name(model, "kimi")
+            console.print(f"[dim]Using Kimi Vertex backend for {normalized_model}[/]")
         elif self._is_gemini_model(model):
             client = self._get_gemini_client()
             normalized_model = self._normalize_model_name(model, "gemini")
