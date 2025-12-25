@@ -32,6 +32,8 @@ CLAUDE_VERTEX_MODELS = {
     "claude-opus-4-5@20251101",
     "claude-sonnet-4-5",
     "claude-sonnet-4-5@20250929",
+    "claude-haiku-4-5",
+    "claude-haiku-4-5@20251001",
     "claude-3-5-sonnet-v2",
     "claude-3-5-sonnet-v2@20241022",
     "claude-3-5-haiku",
@@ -198,6 +200,8 @@ class LLMClient:
                     return "claude-opus-4-5@20251101"
                 elif model == "claude-sonnet-4-5":
                     return "claude-sonnet-4-5@20250929"
+                elif model == "claude-haiku-4-5":
+                    return "claude-haiku-4-5@20251001"
                 elif model == "claude-3-5-sonnet-v2":
                     return "claude-3-5-sonnet-v2@20241022"
                 elif model == "claude-3-5-haiku":
