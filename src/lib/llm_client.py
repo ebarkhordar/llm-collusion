@@ -11,6 +11,7 @@ from .gemini import GeminiClient
 from .claude import ClaudeClient
 from .llama import LlamaClient
 from .mistral import MistralClient
+from .gpt_oss import GPTOSSClient
 
 console = Console()
 
@@ -60,6 +61,16 @@ MISTRAL_VERTEX_MODELS = {
     "mistral-small-2503",
 }
 
+# OpenAI GPT OSS models on Vertex AI
+GPT_OSS_VERTEX_MODELS = {
+    "gpt-oss-120b",
+    "gpt-oss-20b",
+    "gpt-oss-120b-maas",
+    "gpt-oss-20b-maas",
+    "openai/gpt-oss-120b-maas",
+    "openai/gpt-oss-20b-maas",
+}
+
 
 @dataclass
 class LLMClient:
@@ -89,6 +100,7 @@ class LLMClient:
     _claude_client: Optional[ClaudeClient] = None
     _llama_client: Optional[LlamaClient] = None
     _mistral_client: Optional[MistralClient] = None
+    _gpt_oss_client: Optional[GPTOSSClient] = None
     
     def _get_openrouter_client(self) -> OpenRouterClient:
         if self._openrouter_client is None:
@@ -129,6 +141,15 @@ class LLMClient:
                 credentials_path=self.google_credentials_path,
             )
         return self._mistral_client
+    
+    def _get_gpt_oss_client(self) -> GPTOSSClient:
+        if self._gpt_oss_client is None:
+            self._gpt_oss_client = GPTOSSClient(
+                project_id=self.google_project_id,
+                region="global",  # GPT OSS uses global region
+                credentials_path=self.google_credentials_path,
+            )
+        return self._gpt_oss_client
     
     def _is_gemini_model(self, model: str) -> bool:
         """Check if the model should be routed to Gemini."""
@@ -184,6 +205,20 @@ class LLMClient:
             return True
         return False
     
+    def _is_gpt_oss_vertex_model(self, model: str) -> bool:
+        """Check if the model should be routed to GPT OSS on Vertex AI."""
+        model_lower = model.lower()
+        # Check for vertex/gpt-oss or vertex/openai prefix
+        if model_lower.startswith("vertex/gpt-oss") or model_lower.startswith("vertex/openai"):
+            return True
+        # Check exact match in known models
+        if model in GPT_OSS_VERTEX_MODELS or model_lower in GPT_OSS_VERTEX_MODELS:
+            return True
+        # Check for gpt-oss pattern
+        if "gpt-oss" in model_lower:
+            return True
+        return False
+    
     def _normalize_model_name(self, model: str, backend: str) -> str:
         """Normalize model name for the appropriate backend."""
         # Remove prefixes
@@ -221,6 +256,16 @@ class LLMClient:
         elif backend == "mistral":
             # Just return the model name without any prefix
             return model
+        elif backend == "gpt_oss":
+            # Normalize GPT OSS model names
+            model_lower = model.lower()
+            if model_lower in ("gpt-oss-120b", "gpt-oss-120b-maas"):
+                return "openai/gpt-oss-120b-maas"
+            elif model_lower in ("gpt-oss-20b", "gpt-oss-20b-maas"):
+                return "openai/gpt-oss-20b-maas"
+            # Add openai/ prefix if not present
+            if not model.startswith("openai/"):
+                return f"openai/{model}"
         
         return model
     
@@ -242,6 +287,7 @@ class LLMClient:
                 - "vertex/claude-sonnet-4-5" -> Claude via Vertex AI
                 - "vertex/llama-4-scout" -> Llama 4 via Vertex AI
                 - "vertex/codestral-2" -> Mistral Codestral via Vertex AI
+                - "vertex/gpt-oss-120b" -> OpenAI GPT OSS via Vertex AI
                 - "google/gemini-2.5-flash" or "gemini-*" -> Gemini via Vertex AI
                 - "anthropic/claude-*" -> Claude via OpenRouter
                 - Other models -> OpenRouter
@@ -268,6 +314,10 @@ class LLMClient:
             client = self._get_mistral_client()
             normalized_model = self._normalize_model_name(model, "mistral")
             console.print(f"[dim]Using Mistral Vertex backend for {normalized_model}[/]")
+        elif self._is_gpt_oss_vertex_model(model):
+            client = self._get_gpt_oss_client()
+            normalized_model = self._normalize_model_name(model, "gpt_oss")
+            console.print(f"[dim]Using GPT OSS Vertex backend for {normalized_model}[/]")
         elif self._is_gemini_model(model):
             client = self._get_gemini_client()
             normalized_model = self._normalize_model_name(model, "gemini")
