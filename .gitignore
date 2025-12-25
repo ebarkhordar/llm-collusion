@@ -209,3 +209,5 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+gen-lang-client-0384432464-b7ba03543584.json
