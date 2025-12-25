@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "llm-collusion"
-version = "0.1.0"
+version = "0.3.0"
 description = "Minimal scaffold to generate code pairs via OpenRouter and benchmarks"
 readme = "README.md"
 packages = [
@@ -8,17 +8,16 @@ packages = [
 ]
 
 [tool.poetry.dependencies]
-python = "^3.12"
-typer = "^0.20.0"
+python = "^3.14"
 pyyaml = "^6.0.3"
 tqdm = "^4.67.1"
 rich = "^14.2.0"
 requests = "^2.32.5"
-datasets = "^4.3.0"
-python-dotenv = "^1.1.1"
-matplotlib = "^3.10.7"
+datasets = "^4.4.2"
+python-dotenv = "^1.2.1"
+matplotlib = "^3.10.8"
 seaborn = "^0.13.2"
-scikit-learn = "^1.7.2"
+scikit-learn = "^1.8.0"
 
 [tool.poetry.group.dev.dependencies]
 ipykernel = "^7.1.0"
