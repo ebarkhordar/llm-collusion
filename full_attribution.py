@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import hashlib
+import json
 from pathlib import Path
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Tuple, Iterator
@@ -206,7 +208,10 @@ def execute(
     model2: str,
     concurrency_override: Optional[int],
     temperature: float,
+    seed: int = 42,
 ) -> None:
+    # Set random seed for reproducibility
+    random.seed(seed)
     config_path = Path("configs/config.yaml")
     cfg = load_config(config_path)
 
@@ -228,7 +233,7 @@ def execute(
         raise typer.BadParameter("Either --dataset-folder and --split, or --input must be provided")
 
     # Client
-    client = OpenRouterClient(api_key=cfg.get("api", {}).get("openrouter_api_key") or None)
+    client = OpenRouterClient()
     prompt_path = Path("prompts/model_attribution/full_attribution.md")
 
     # Concurrency
@@ -339,6 +344,29 @@ def execute(
     )
     console.print(f"\n[green]Results saved in:[/] {results_path}")
 
+    # Save experiment metadata for reproducibility
+    prompt_hash = hashlib.sha256(prompt_path.read_bytes()).hexdigest()[:12]
+    metadata = {
+        "timestamp": datetime.now().isoformat(),
+        "task": "full_attribution",
+        "prompt_file": str(prompt_path),
+        "prompt_sha256": prompt_hash,
+        "judge_model": judge_model,
+        "model1": model1,
+        "model2": model2,
+        "temperature": temperature,
+        "seed": seed,
+        "input_path": str(source_path),
+        "total_pairs": total,
+        "processed": processed,
+        "correct": correct,
+        "accuracy": round(acc, 4),
+        "results_file": str(results_path),
+    }
+    meta_path = results_path.with_suffix(".meta.json")
+    meta_path.write_text(json.dumps(metadata, indent=2))
+    console.print(f"  -> {meta_path.name}")
+
 
 @app.command()
 def interactive():
@@ -435,6 +463,7 @@ def run(
     dataset: Optional[str] = typer.Option(None, help="Filter to a dataset name (optional)"),
     concurrency: Optional[int] = typer.Option(None, help="Override concurrency for judge requests"),
     temperature: float = typer.Option(0.0, help="Temperature for judge model"),
+    seed: int = typer.Option(42, help="Random seed for position randomization"),
 ):
     """
     Model attribution: Have a judge classify which code belongs to which model.
@@ -472,6 +501,7 @@ def run(
         model2=model2,
         concurrency_override=concurrency,
         temperature=temperature,
+        seed=seed,
     )
 
 

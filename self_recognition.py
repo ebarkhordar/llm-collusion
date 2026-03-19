@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import hashlib
+import json
 from pathlib import Path
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Tuple, Iterator
@@ -43,7 +45,7 @@ def iter_records(source_path: Path, dataset_filter: Optional[str]) -> Iterator[D
             yield rec
 
 
-def build_pairs(records: Iterator[Dict[str, Any]], cfg: dict) -> List[Pair]:
+def build_pairs(records: Iterator[Dict[str, Any]], cfg: dict, model1: Optional[str] = None, model2: Optional[str] = None) -> List[Pair]:
     # group by (benchmark, task_id)
     from collections import defaultdict
 
@@ -54,29 +56,44 @@ def build_pairs(records: Iterator[Dict[str, Any]], cfg: dict) -> List[Pair]:
 
     pairs: List[Pair] = []
     for (benchmark, task_id), items in grouped.items():
-        # Prefer order of models as configured for this dataset if present
-        ds_cfg = cfg.get("datasets", {}).get(str(benchmark).strip().lower(), {})
-        preferred_order: List[str] = list(ds_cfg.get("models", []))
-
-        # dedupe by model, keep first occurrence
-        seen_models: set[str] = set()
-        unique_items: List[Dict[str, Any]] = []
-        for it in items:
-            m = str(it.get("model_name"))
-            if m in seen_models:
+        # If explicit model1/model2 are given, use those
+        if model1 and model2:
+            m1_item = None
+            m2_item = None
+            for it in items:
+                m = str(it.get("model_name"))
+                if m == model1:
+                    m1_item = it
+                elif m == model2:
+                    m2_item = it
+            if m1_item is None or m2_item is None:
                 continue
-            seen_models.add(m)
-            unique_items.append(it)
+            a, b = m1_item, m2_item
+        else:
+            # Prefer order of models as configured for this dataset if present
+            ds_cfg = cfg.get("datasets", {}).get(str(benchmark).strip().lower(), {})
+            preferred_order: List[str] = list(ds_cfg.get("models", []))
 
-        # Sort unique_items by preferred order when available
-        if preferred_order:
-            idx = {m: i for i, m in enumerate(preferred_order)}
-            unique_items.sort(key=lambda it: idx.get(str(it.get("model_name")), 1_000_000))
+            # dedupe by model, keep first occurrence
+            seen_models: set[str] = set()
+            unique_items: List[Dict[str, Any]] = []
+            for it in items:
+                m = str(it.get("model_name"))
+                if m in seen_models:
+                    continue
+                seen_models.add(m)
+                unique_items.append(it)
 
-        if len(unique_items) < 2:
-            continue
+            # Sort unique_items by preferred order when available
+            if preferred_order:
+                idx = {m: i for i, m in enumerate(preferred_order)}
+                unique_items.sort(key=lambda it: idx.get(str(it.get("model_name")), 1_000_000))
 
-        a, b = unique_items[0], unique_items[1]
+            if len(unique_items) < 2:
+                continue
+
+            a, b = unique_items[0], unique_items[1]
+
         # Randomize order to avoid systematically placing the preferred model first,
         # which would otherwise make gold_candidate always 1 when the judge is models[0]
         if random.random() < 0.5:
@@ -104,11 +121,11 @@ def build_messages(prompt: str, code1: str, code2: str, model1: str, model2: str
 
 
 def parse_choice(text: str) -> Optional[int]:
-    s = (text or "").strip()
+    s = (text or "").strip().upper()
     for ch in s:
-        if ch == "1":
+        if ch == "1" or ch == "A":
             return 1
-        if ch == "2":
+        if ch == "2" or ch == "B":
             return 2
     return None
 
@@ -141,7 +158,12 @@ def execute(
     judge_model_override: Optional[str],
     concurrency_override: Optional[int],
     temperature: float,
+    model1_override: Optional[str] = None,
+    model2_override: Optional[str] = None,
+    seed: int = 42,
 ) -> None:
+    # Set random seed for reproducibility
+    random.seed(seed)
     config_path = Path("configs/config.yaml")
     cfg = load_config(config_path)
 
@@ -175,15 +197,15 @@ def execute(
             raise typer.BadParameter(f"Code generation directory not found: {code_generation_dir}")
 
     # Client
-    client = OpenRouterClient(api_key=cfg.get("api", {}).get("openrouter_api_key") or None)
-    prompt_path = Path("prompts/model_attribution/self_recognition.md")
+    client = OpenRouterClient()
+    prompt_path = Path("prompts/model_attribution/self_recognition_pair.md")
 
     # Concurrency
     max_workers = int(concurrency_override or int(cfg.get("api", {}).get("concurrency", 4)))
 
     # Build pairs
     records = iter_records(source_path, dataset)
-    pairs = build_pairs(records, cfg)
+    pairs = build_pairs(records, cfg, model1=model1_override, model2=model2_override)
     if not pairs:
         console.print("[yellow]No pairs found to evaluate.[/]")
         return
@@ -338,16 +360,42 @@ def execute(
     console.print(f"\n[green]Results saved in:[/] {results_subdir}")
     console.print(f"  -> {results_path.name}")
 
+    # Save experiment metadata for reproducibility
+    prompt_hash = hashlib.sha256(prompt_path.read_bytes()).hexdigest()[:12]
+    metadata = {
+        "timestamp": datetime.now().isoformat(),
+        "task": "self_recognition",
+        "prompt_file": str(prompt_path),
+        "prompt_sha256": prompt_hash,
+        "evaluator_model": unique_judges[0] if unique_judges else None,
+        "model1": model1_override,
+        "model2": model2_override,
+        "temperature": temperature,
+        "seed": seed,
+        "input_path": str(source_path),
+        "total_pairs": total,
+        "processed": processed,
+        "correct": correct,
+        "accuracy": round(acc, 4),
+        "results_file": str(results_path),
+    }
+    meta_path = results_path.with_suffix(".meta.json")
+    meta_path.write_text(json.dumps(metadata, indent=2))
+    console.print(f"  -> {meta_path.name}")
+
 
 @app.command()
 def run(
     dataset_folder: Optional[str] = typer.Option(None, "--dataset-folder", help="Dataset folder name (e.g., mbpp-sanitized)"),
     split: Optional[str] = typer.Option(None, "--split", help="Dataset split (e.g., test, train, validation)"),
     evaluator: Optional[str] = typer.Option(None, "--evaluator", help="Evaluator model ID (e.g., anthropic/claude-haiku-4.5)"),
+    model1: Optional[str] = typer.Option(None, "--model1", help="First model in the pair (default: first model in config)"),
+    model2: Optional[str] = typer.Option(None, "--model2", help="Second model in the pair (default: second model in config)"),
     input_path: Optional[Path] = typer.Option(None, "--input", "-i", help="Path to folder containing JSONL files (e.g., data/code_generation/mbpp-sanitized/train)"),
     dataset: Optional[str] = typer.Option(None, help="Filter to a dataset name (optional)"),
     concurrency: Optional[int] = typer.Option(None, help="Override concurrency for judge requests"),
     temperature: float = typer.Option(0.0, help="Temperature for judge model"),
+    seed: int = typer.Option(42, help="Random seed for position randomization"),
 ):
     execute(
         input_path=input_path,
@@ -357,6 +405,9 @@ def run(
         judge_model_override=evaluator,
         concurrency_override=concurrency,
         temperature=temperature,
+        model1_override=model1,
+        model2_override=model2,
+        seed=seed,
     )
 
 
