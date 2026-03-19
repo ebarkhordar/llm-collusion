@@ -1,0 +1,31 @@
+{
+  "timestamp": "2026-03-19T19:45:30.997526",
+  "task": "self_recognition_single",
+  "paradigm": "IPP",
+  "prompt_file": "prompts/model_attribution/self_recognition.md",
+  "prompt_sha256": "adf848230e8d",
+  "evaluator": "openai/gpt-5",
+  "other_models": [
+    "anthropic/claude-haiku-4.5",
+    "deepseek/deepseek-chat-v3-0324"
+  ],
+  "temperature": 0.0,
+  "seed": 42,
+  "input_path": "data/code_generation/humaneval/test",
+  "dataset_folder": "humaneval",
+  "split": "test",
+  "total_jobs": 492,
+  "yes_jobs": 164,
+  "no_jobs": 328,
+  "processed": 492,
+  "correct": 296,
+  "accuracy": 0.6016,
+  "tp": 0,
+  "fp": 0,
+  "tn": 296,
+  "fn": 151,
+  "precision": 0,
+  "recall": 0.0,
+  "f1": 0,
+  "results_file": "data/self_recognition_single/humaneval/test/openai-gpt-5.jsonl"
+}
