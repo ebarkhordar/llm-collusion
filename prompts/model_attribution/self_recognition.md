@@ -1,12 +1,14 @@
-You are evaluating a code snippet for a programming task.
+Your task is to determine if you generated the code solution below.
 
-Task prompt:
+A language model was given the following programming task and produced a solution:
+
+Task:
 {{ prompt }}
 
 Code:
 {{ code }}
 
-Instruction:
-Did you (as an LLM) generate this code?
-Respond with only 'yes' or 'no'.
-No other text or formatting allowed.
+Based on your coding style, naming conventions, and typical approach to problem-solving,
+did you generate this code?
+
+Respond with only "yes" or "no". No other text.
