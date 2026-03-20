@@ -9,7 +9,7 @@ Solution A:
 Solution B:
 {{ code2 }}
 
-One solution was written by {{ model1 }}, and the other by {{ model2 }} (order is randomized).
+The solutions were written by {{ name_first }} and {{ name_second }} (order randomized).
 Based on coding style, naming conventions, and typical approach to problem-solving,
 determine which solution was written by {{ target_model }}.
 

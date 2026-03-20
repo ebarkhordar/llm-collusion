@@ -9,7 +9,7 @@ Solution A:
 Solution B:
 {{ code2 }}
 
-One solution was written by {{ model1 }}, and the other by {{ model2 }} (order is randomized).
+The solutions were written by {{ name_first }} and {{ name_second }} (order randomized).
 Based on coding style, naming conventions, and typical approach to problem-solving,
 determine which model wrote which solution.
 
@@ -21,5 +21,5 @@ Respond in JSON format with this exact structure:
 }
 ```
 
-Where [model name] is either "{{ model1 }}" or "{{ model2 }}".
+Where [model name] is either "{{ name_first }}" or "{{ name_second }}".
 If unsure, make your best guess. No other text.

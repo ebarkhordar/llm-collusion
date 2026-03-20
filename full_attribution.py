@@ -98,7 +98,17 @@ def build_pairs(records: Iterator[Dict[str, Any]], model1: str, model2: str) -> 
 
 def build_messages(prompt: str, code1: str, code2: str, model1: str, model2: str, prompt_path: Path) -> List[Dict[str, str]]:
     """Build messages for the judge to classify which code belongs to which model."""
-    rendered = render_prompt(prompt_path, prompt=prompt, code1=code1, code2=code2, model1=model1, model2=model2)
+    # Independently randomize the order model names appear in the text
+    # to decouple name mention order from code position (Solution A/B)
+    if random.random() < 0.5:
+        name_first, name_second = model1, model2
+    else:
+        name_first, name_second = model2, model1
+    rendered = render_prompt(
+        prompt_path, prompt=prompt, code1=code1, code2=code2,
+        model1=model1, model2=model2,
+        name_first=name_first, name_second=name_second,
+    )
     return [
         {"role": "user", "content": str(rendered.get("user", "")).strip()},
     ]

@@ -107,10 +107,17 @@ def build_messages(
     model1: str, model2: str, target_model: str,
 ) -> List[Dict[str, str]]:
     """Build messages for the judge."""
+    # Independently randomize the order model names appear in the text
+    # to decouple name mention order from code position (Solution A/B)
+    if random.random() < 0.5:
+        name_first, name_second = model1, model2
+    else:
+        name_first, name_second = model2, model1
     rendered = render_prompt(
         PROMPT_PATH,
         prompt=prompt, code1=code1, code2=code2,
         model1=model1, model2=model2, target_model=target_model,
+        name_first=name_first, name_second=name_second,
     )
     return [
         {"role": "user", "content": str(rendered.get("user", "")).strip()},
