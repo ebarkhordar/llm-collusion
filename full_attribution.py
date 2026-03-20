@@ -109,12 +109,14 @@ def parse_attribution(text: str) -> Optional[Dict[str, str]]:
     Parse the model attribution response.
     Expected format (JSON):
         {
-          "Code1": "model_name",
-          "Code2": "model_name"
+          "A": "model_name",
+          "B": "model_name"
         }
     
+    Also accepts legacy format with "Code1"/"Code2" keys.
+    
     Returns:
-        Dictionary with Code1 and Code2 attributions, or None if parsing fails
+        Dictionary with A and B attributions, or None if parsing fails
     """
     import json
     import re
@@ -140,39 +142,39 @@ def parse_attribution(text: str) -> Optional[Dict[str, str]]:
     try:
         # Parse JSON
         data = json.loads(json_str)
-        code1_model = data.get("Code1", "")
-        code2_model = data.get("Code2", "")
+        # Try new A/B keys first, then fall back to legacy Code1/Code2
+        a_model = data.get("A", "") or data.get("Code1", "")
+        b_model = data.get("B", "") or data.get("Code2", "")
         
-        if code1_model and code2_model:
+        if a_model and b_model:
             return {
-                "Code1": code1_model,
-                "Code2": code2_model
+                "A": a_model,
+                "B": b_model
             }
     except json.JSONDecodeError:
         pass
     
-    # Fallback: try to parse non-JSON format (Code1: model_name)
+    # Fallback: try to parse non-JSON format (A: model_name or Code1: model_name)
     lines = text.split('\n')
-    code1_model = None
-    code2_model = None
+    a_model = None
+    b_model = None
     
     for line in lines:
         line = line.strip()
-        if line.lower().startswith('code1'):
-            # Extract model name after "Code1:" or "Code1"
+        low = line.lower()
+        if low.startswith('a:') or low.startswith('"a"') or low.startswith('code1'):
             if ':' in line:
                 model_part = line.split(':', 1)[1].strip().strip('"').strip("'")
-                code1_model = model_part
-        elif line.lower().startswith('code2'):
-            # Extract model name after "Code2:" or "Code2"
+                a_model = model_part
+        elif low.startswith('b:') or low.startswith('"b"') or low.startswith('code2'):
             if ':' in line:
                 model_part = line.split(':', 1)[1].strip().strip('"').strip("'")
-                code2_model = model_part
+                b_model = model_part
     
-    if code1_model and code2_model:
+    if a_model and b_model:
         return {
-            "Code1": code1_model,
-            "Code2": code2_model
+            "A": a_model,
+            "B": b_model
         }
     
     return None
@@ -305,8 +307,8 @@ def execute(
             
             # Build gold attribution (ground truth)
             gold_attr: Dict[str, str] = {
-                "Code1": pair.model1,
-                "Code2": pair.model2
+                "A": pair.model1,
+                "B": pair.model2
             }
             
             # Determine correctness
@@ -314,8 +316,8 @@ def execute(
             if predicted_attr is not None:
                 # Check if predicted attribution matches gold attribution
                 is_correct = (
-                    predicted_attr.get("Code1") == gold_attr["Code1"] and
-                    predicted_attr.get("Code2") == gold_attr["Code2"]
+                    predicted_attr.get("A") == gold_attr["A"] and
+                    predicted_attr.get("B") == gold_attr["B"]
                 )
                 if is_correct:
                     correct += 1
