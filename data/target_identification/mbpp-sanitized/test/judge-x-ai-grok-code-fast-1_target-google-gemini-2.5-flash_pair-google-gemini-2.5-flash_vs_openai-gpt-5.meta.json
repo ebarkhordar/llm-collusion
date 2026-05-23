@@ -1,0 +1,18 @@
+{
+  "timestamp": "2026-03-21T00:19:51.583461",
+  "task": "target_identification",
+  "prompt_file": "prompts/model_attribution/target_identification.md",
+  "prompt_sha256": "6c6f4625bb59",
+  "judge_model": "x-ai/grok-code-fast-1",
+  "target_model": "google/gemini-2.5-flash",
+  "model1": "google/gemini-2.5-flash",
+  "model2": "openai/gpt-5",
+  "temperature": 0.0,
+  "seed": 42,
+  "input_path": "data/code_generation/mbpp-sanitized/test",
+  "total_pairs": 257,
+  "processed": 257,
+  "correct": 113,
+  "accuracy": 0.4397,
+  "results_file": "data/target_identification/mbpp-sanitized/test/judge-x-ai-grok-code-fast-1_target-google-gemini-2.5-flash_pair-google-gemini-2.5-flash_vs_openai-gpt-5.jsonl"
+}

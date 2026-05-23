@@ -1,0 +1,18 @@
+{
+  "timestamp": "2026-03-20T17:58:11.487415",
+  "task": "target_identification",
+  "prompt_file": "prompts/model_attribution/target_identification.md",
+  "prompt_sha256": "6c6f4625bb59",
+  "judge_model": "openai/gpt-5.3-codex",
+  "target_model": "anthropic/claude-haiku-4.5",
+  "model1": "anthropic/claude-haiku-4.5",
+  "model2": "openai/gpt-5",
+  "temperature": 0.0,
+  "seed": 42,
+  "input_path": "data/code_generation/mbpp-sanitized/test",
+  "total_pairs": 257,
+  "processed": 257,
+  "correct": 178,
+  "accuracy": 0.6926,
+  "results_file": "data/target_identification/mbpp-sanitized/test/judge-openai-gpt-5.3-codex_target-anthropic-claude-haiku-4.5_pair-anthropic-claude-haiku-4.5_vs_openai-gpt-5.jsonl"
+}

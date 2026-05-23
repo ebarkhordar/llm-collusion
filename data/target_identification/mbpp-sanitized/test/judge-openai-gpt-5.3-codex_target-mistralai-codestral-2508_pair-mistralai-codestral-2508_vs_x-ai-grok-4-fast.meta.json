@@ -1,0 +1,18 @@
+{
+  "timestamp": "2026-03-21T00:13:05.585513",
+  "task": "target_identification",
+  "prompt_file": "prompts/model_attribution/target_identification.md",
+  "prompt_sha256": "6c6f4625bb59",
+  "judge_model": "openai/gpt-5.3-codex",
+  "target_model": "mistralai/codestral-2508",
+  "model1": "mistralai/codestral-2508",
+  "model2": "x-ai/grok-4-fast",
+  "temperature": 0.0,
+  "seed": 42,
+  "input_path": "data/code_generation/mbpp-sanitized/test",
+  "total_pairs": 257,
+  "processed": 257,
+  "correct": 126,
+  "accuracy": 0.4903,
+  "results_file": "data/target_identification/mbpp-sanitized/test/judge-openai-gpt-5.3-codex_target-mistralai-codestral-2508_pair-mistralai-codestral-2508_vs_x-ai-grok-4-fast.jsonl"
+}

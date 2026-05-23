@@ -1,0 +1,18 @@
+{
+  "timestamp": "2026-03-21T00:21:05.113157",
+  "task": "target_identification",
+  "prompt_file": "prompts/model_attribution/target_identification.md",
+  "prompt_sha256": "6c6f4625bb59",
+  "judge_model": "x-ai/grok-code-fast-1",
+  "target_model": "anthropic/claude-haiku-4.5",
+  "model1": "anthropic/claude-haiku-4.5",
+  "model2": "deepseek/deepseek-chat-v3-0324",
+  "temperature": 0.0,
+  "seed": 42,
+  "input_path": "data/code_generation/mbpp-sanitized/test",
+  "total_pairs": 257,
+  "processed": 257,
+  "correct": 208,
+  "accuracy": 0.8093,
+  "results_file": "data/target_identification/mbpp-sanitized/test/judge-x-ai-grok-code-fast-1_target-anthropic-claude-haiku-4.5_pair-anthropic-claude-haiku-4.5_vs_deepseek-deepseek-chat-v3-0324.jsonl"
+}
