@@ -66,6 +66,22 @@ python full_attribution.py run \
   --judge openai/gpt-5
 ```
 
+
+### 3. Regenerate the paper's tables and figure
+
+```bash
+# unit tests on the obfuscated code (writes data/tests/mbpp-sanitized-obfuscated/)
+mkdir -p /tmp/mbpp-sanitized-obfuscated && cp data/code_generation_obfuscated/mbpp-sanitized/test/*.jsonl /tmp/mbpp-sanitized-obfuscated/
+python run_tests.py --input /tmp/mbpp-sanitized-obfuscated
+
+# LaTeX tables (+ summary.json) and the IPP figure, written into the paper repo
+python analysis/make_tables.py --out ../llm-collusion-paper/latex/tables
+python analysis/make_figures.py --out ../llm-collusion-paper/latex/figures
+```
+
+`result.md` is the Markdown output of `make_tables.py`. Target-identification runs are filtered by
+prompt hash so that only post-fix runs (name order randomized independently of solution order) are used.
+
 ## Project Structure
 
 ```
@@ -96,6 +112,9 @@ llm-collusion/
 │   │   ├── humaneval.py     # HumanEval loader
 │   │   └── ds1000.py        # DS-1000 loader
 │   └── lib/                 # Utilities
+├── analysis/
+│   ├── make_tables.py       # Regenerates all paper tables from data/
+│   └── make_figures.py      # Regenerates the IPP figure
 ├── generate_pairs.py        # Code generation script
 ├── self_recognition.py      # Self-recognition evaluation
 ├── target_identification.py # Target identification evaluation
