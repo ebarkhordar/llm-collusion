@@ -10,6 +10,7 @@ This project investigates whether LLMs can recognize code written by themselves 
 | **Self-Recognition** | Can an LLM identify which code snippet it wrote? |
 | **Target Identification** | Can an LLM identify code written by a specific named model? |
 | **Full Attribution** | Can an LLM correctly classify both code snippets to their respective authors? |
+| **Self-Preference** | Does an LLM prefer its own code when judging quality blind? (`self_preference.py`) |
 
 ## Supported Datasets
 
@@ -115,6 +116,7 @@ llm-collusion/
 ├── analysis/
 │   ├── make_tables.py       # Regenerates all paper tables from data/
 │   └── make_figures.py      # Regenerates the IPP figure
+├── self_preference.py       # Blind self-preference (Task 3)
 ├── generate_pairs.py        # Code generation script
 ├── self_recognition.py      # Self-recognition evaluation
 ├── target_identification.py # Target identification evaluation
