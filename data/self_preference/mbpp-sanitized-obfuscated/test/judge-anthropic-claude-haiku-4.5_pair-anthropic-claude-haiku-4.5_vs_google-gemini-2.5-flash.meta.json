@@ -1,0 +1,13 @@
+{
+  "timestamp": "2026-09-04T16:04:14.059339",
+  "task": "self_preference",
+  "prompt_file": "prompts/model_attribution/self_preference.md",
+  "prompt_sha256": "84bb28ef8b49",
+  "judge_model": "anthropic/claude-haiku-4.5",
+  "model1": "anthropic/claude-haiku-4.5",
+  "model2": "google/gemini-2.5-flash",
+  "temperature": 0.0,
+  "seed": 42,
+  "processed": 257,
+  "results_file": "data/self_preference/mbpp-sanitized-obfuscated/test/judge-anthropic-claude-haiku-4.5_pair-anthropic-claude-haiku-4.5_vs_google-gemini-2.5-flash.jsonl"
+}

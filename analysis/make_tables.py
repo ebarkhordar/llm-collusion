@@ -585,6 +585,55 @@ def table_pair_matrix(out: Path) -> str:
     return "\n".join(md)
 
 
+# ── Table: self-preference ────────────────────────────────────────────────
+
+
+def table_self_preference(out: Path) -> str:
+    """For each (pair, dataset): P(choose model X) when X judges vs. when the other model judges.
+    Self-preference = difference between the two, on the same pairs. Also conditioned on test ties."""
+    md = ["| Dataset | Pair (X vs Y) | P(X chosen \\| X judges) | P(X chosen \\| Y judges) | Δ (self-pref.) | Δ on test-tied pairs | n tied |", "|---|---|---|---|---|---|---|"]
+    tex = [
+        r"\begin{tabular}{@{}llccccc@{}}",
+        r"\toprule",
+        r"\textbf{Code} & \textbf{Pair ($X$ vs.\ $Y$)} & $P(X\mid X\text{ judges})$ & $P(X\mid Y\text{ judges})$ & $\Delta$ & $\Delta$ (test-tied) & $N_{\text{tied}}$ \\",
+        r"\midrule",
+    ]
+    rows = 0
+    for ds, dsname in [("mbpp-sanitized", "original"), ("mbpp-sanitized-obfuscated", "normalized")]:
+        d = DATA / "self_preference" / ds / "test"
+        if not d.exists():
+            continue
+        runs: Dict[Tuple[str, str, str], List[dict]] = {}
+        for p in sorted(d.glob("*.jsonl")):
+            recs = [r for r in read_jsonl(p) if r["predicted_candidate"] is not None]
+            if recs:
+                runs[(recs[0]["judge_model"], recs[0]["model1"], recs[0]["model2"])] = recs
+        pairs = sorted({(m1, m2) for (_, m1, m2) in runs})
+        for m1, m2 in pairs:
+            rx, ry = runs.get((m1, m1, m2)), runs.get((m2, m1, m2))
+            if not rx or not ry:
+                continue
+            def rate(recs, model, tied_only=False):
+                sel = [r for r in recs if not tied_only or (r["candidate_1_passed"] == r["candidate_2_passed"])]
+                return (sum(1 for r in sel if r["chosen_model"] == model) / len(sel) if sel else float("nan")), len(sel)
+            px, _ = rate(rx, m1)
+            py, _ = rate(ry, m1)
+            pxt, nt = rate(rx, m1, True)
+            pyt, _ = rate(ry, m1, True)
+            # two-proportion z-test on the difference
+            n1, n2 = len(rx), len(ry)
+            pp = (px * n1 + py * n2) / (n1 + n2)
+            z = (px - py) / math.sqrt(pp * (1 - pp) * (1 / n1 + 1 / n2)) if 0 < pp < 1 else 0.0
+            pv = 2 * (1 - 0.5 * (1 + math.erf(abs(z) / math.sqrt(2))))
+            rows += 1
+            md.append(f"| {dsname} | {short(m1)} vs {short(m2)} | {pct(px)} | {pct(py)} | {100*(px-py):+.1f} (p={pv:.2g}) | {100*(pxt-pyt):+.1f} | {nt} |")
+            tex.append(f"{dsname} & {short(m1)} vs.\\ {short(m2)} & {pct(px)} & {pct(py)} & {100*(px-py):+.1f}{stars(pv)} & {100*(pxt-pyt):+.1f} & {nt} \\\\")
+    tex += [r"\bottomrule", r"\end{tabular}"]
+    if rows:
+        (out / "self_preference.tex").write_text("\n".join(tex) + "\n")
+    return "\n".join(md)
+
+
 # ── main ──────────────────────────────────────────────────────────────────
 
 
@@ -616,6 +665,8 @@ def main() -> None:
     print(table_normalized(out, runs))
     print("\n## All-pairs pairwise self-recognition (original code)\n")
     print(table_pair_matrix(out))
+    print("\n## Self-preference (blind quality judgment)\n")
+    print(table_self_preference(out))
     json.dump(
         {"ipp": {f"{ds}|{m}": {k: v for k, v in s.items()} for (ds, m), s in ipp.items()},
          "pair": {m: {k: v for k, v in s.items() if k != "hacc"} for m, s in pair_summary.items()},
