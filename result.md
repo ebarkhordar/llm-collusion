@@ -7,7 +7,8 @@ Notes:
 - Target identification includes only runs made with the fixed prompt (sha256 prefix 6c6f4625bb59, commit c8dbb1b). Earlier runs aligned model-name order with solution order and are excluded (see the paper appendix on the leakage confound).
 - Full attribution results are excluded entirely: every run used the pre-fix prompt.
 - IPP uses a 1:2 own:other ratio, so always answering "no" scores 66.7% raw accuracy; use balanced accuracy.
-- Obfuscated-code test results live in data/tests/mbpp-sanitized-obfuscated/.
+- Normalized-code reruns (Sept 2026) live under data/*/mbpp-sanitized-obfuscated/. Grok 4 Fast, Grok-Code-Fast-1 and MiMo-V2-Pro were withdrawn from OpenRouter before the reruns.
+- All-pairs pairwise self-recognition files are named <evaluator>_vs_<opponent>.jsonl; the unsuffixed files are the original March 2026 runs (opponent GPT-5, or Grok for GPT-5).
 
 ## Code generation (Pass@1)
 
@@ -102,5 +103,42 @@ Notes:
 | DeepSeek-V3 vs GPT-5 | Shorter code | 88.5 | Shorter code | 77.0 |
 | Claude-Haiku-4.5 vs DeepSeek-V3 | Longer code | 88.7 | Shorter code | 51.0 |
 | DeepSeek-V3 vs Claude-Haiku-4.5 | Shorter code | 88.7 | Longer code | 51.0 |
+| Codestral-2508 vs GPT-5.3-Codex | No docstring | 51.0 | Longer code | 52.7 |
+| DeepSeek-V3.2 vs MiMo-V2-Pro | Has docstring | 56.0 | Longer code | 53.5 |
+| Codestral-2508 vs Grok-4-Fast | Longer code | 60.5 | Longer code | 62.5 |
+| Qwen3-Coder-Next vs MiMo-V2-Pro | No type hints | 56.8 | Shorter code | 53.9 |
+| MiMo-V2-Pro vs Qwen3-Coder-Next | Has type hints | 56.8 | Longer code | 53.9 |
+| Claude-Opus-4.6 vs Gemini-3.1-Flash-Lite | No docstring | 98.4 | Shorter code | 66.1 |
+| Gemini-3.1-Flash-Lite vs Claude-Opus-4.6 | Has docstring | 98.4 | Longer code | 66.1 |
+
+## Original vs. normalized code (LLM judges)
+
+| Evaluator | Other | Acc orig | Acc norm | Heur orig | Heur norm |
+|---|---|---|---|---|---|
+| GPT-5 | Grok-4-Fast | 75.9 (n=257) | 42.2 (n=256) | Longer code 91.4 | Longer code 76.4 |
+| Claude-Haiku-4.5 | GPT-5 | 35.8 (n=257) | 43.6 (n=257) | No type hints 73.2 | Shorter code 75.3 |
+| Gemini-2.5-Flash | GPT-5 | 52.9 (n=257) | 51.0 (n=257) | Longer code 55.6 | Shorter code 62.6 |
+| DeepSeek-V3 | GPT-5 | 33.9 (n=257) | 57.2 (n=257) | Shorter code 88.5 | Shorter code 77.0 |
+
+| Pair | Judge | Target | Acc orig | Acc norm | Heur orig | Heur norm |
+|---|---|---|---|---|---|---|
+| Claude-Haiku-4.5 vs.\ GPT-5 | GPT-5.3-Codex | Claude-Haiku-4.5 | 69.3 | 49.8 (n=257) | 73.2 | 75.3 |
+| Claude-Opus-4.6 vs.\ Gemini-3.1-Flash-Lite | GPT-5.3-Codex | Claude-Opus-4.6 | 7.8 | 43.2 (n=257) | 98.4 | 66.1 |
+| Gemini-2.5-Flash vs.\ GPT-5 | GPT-5.3-Codex | Gemini-2.5-Flash | 77.8 | 55.3 (n=257) | 55.6 | 62.6 |
+| Claude-Opus-4.6 vs.\ Gemini-3.1-Flash-Lite | GPT-5.3-Codex | Gemini-3.1-Flash-Lite | 31.1 | 44.7 (n=257) | 98.4 | 66.1 |
+| Qwen3-Coder-Next vs.\ MiMo-V2-Pro | GPT-5 | Qwen3-Coder-Next | 40.5 | 43.6 (n=257) | 56.8 | 53.9 |
+| Qwen3-Coder-Next vs.\ MiMo-V2-Pro | GPT-5 | MiMo-V2-Pro | 41.6 | 48.2 (n=257) | 56.8 | 53.9 |
+
+## All-pairs pairwise self-recognition (original code)
+
+| Evaluator \ Other | GPT-5 | Claude-Haiku-4.5 | Gemini-2.5-Flash | Grok-4-Fast | DeepSeek-V3 |
+|---|---|---|---|---|---|
+| GPT-5 | -- | 45.1 (heur 73.2) | 43.2 (heur 55.6) | 75.9 (heur 91.4) | 74.6 (heur 88.9) |
+| Claude-Haiku-4.5 | 35.8 (heur 73.2) | -- | 39.7 (heur 74.5) | -- | 84.0 (heur 88.7) |
+| Gemini-2.5-Flash | 52.9 (heur 55.6) | 63.8 (heur 74.5) | -- | -- | 80.9 (heur 94.6) |
+| Grok-4-Fast | 44.7 (heur 91.4) | -- | -- | -- | -- |
+| DeepSeek-V3 | 33.9 (heur 88.5) | 31.5 (heur 88.7) | 29.6 (heur 94.6) | -- | -- |
+
+Pearson r between evaluator accuracy and P(own code longer) over 14 cells: 0.926
 
 Wrote tables to /Users/ehsan/LatexProjects/llm-collusion-paper/latex/tables

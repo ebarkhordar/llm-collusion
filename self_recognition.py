@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+from datetime import datetime
 from pathlib import Path
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Tuple, Iterator
@@ -285,7 +286,7 @@ def execute(
             results_path = results_subdir / f"self_recognition-{ds_tag}.jsonl"
     else:
         # Fallback to timestamp-based structure
-        from datetime import datetime
+        pass  # datetime imported at module level
         ts = datetime.now().strftime("%Y%m%d-%H%M%S")
         results_subdir = self_recognition_dir / ts
         results_subdir.mkdir(parents=True, exist_ok=True)

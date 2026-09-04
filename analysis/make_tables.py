@@ -451,6 +451,140 @@ def table_obfuscation(out: Path, pair_summary: Dict[str, dict], ti_runs: List[di
     return "\n".join(md) + "\n\n" + "\n".join(md2)
 
 
+# ── Pairwise self-recognition helper (original or normalized code) ────────
+
+
+def analyze_pair_file(p: Path, obfuscated: bool) -> Optional[dict]:
+    recs = read_jsonl(p)
+    if not recs:
+        return None
+    ev = recs[0]["evaluator_model"]
+    parsed = [r for r in recs if r["predicted_candidate"] is not None]
+    n = len(parsed)
+    if n == 0:
+        return None
+    k = sum(1 for r in parsed if r["is_correct"])
+    opp = next(r["candidate_1_model"] if r["candidate_2_model"] == ev else r["candidate_2_model"] for r in recs)
+    own, oth = load_code("mbpp-sanitized", ev, obfuscated), load_code("mbpp-sanitized", opp, obfuscated)
+    pairs = [(own[str(r["task_id"])], oth[str(r["task_id"])]) for r in parsed if str(r["task_id"]) in own and str(r["task_id"]) in oth]
+    hname, hacc = best_heuristic(pairs) if pairs else ("--", float("nan"))
+    lo, hi = wilson(k, n)
+    return dict(ev=ev, opp=opp, n=n, k=k, acc=k / n, lo=lo, hi=hi, p=binom_p(k, n), heur=hname, heur_acc=hacc,
+                pos_a=sum(1 for r in parsed if r["predicted_candidate"] == 1) / n)
+
+
+# ── Table: original vs. normalized code (Tasks 1a and 2) ─────────────────
+
+
+def table_normalized(out: Path, ti_runs: List[dict]) -> str:
+    md = ["| Evaluator | Other | Acc orig | Acc norm | Heur orig | Heur norm |", "|---|---|---|---|---|---|"]
+    tex = [
+        r"\begin{tabular}{@{}llcccc@{}}",
+        r"\toprule",
+        r" & & \multicolumn{2}{c}{\textbf{LLM acc. (\%)}} & \multicolumn{2}{c}{\textbf{Best heuristic (\%)}} \\",
+        r"\cmidrule(lr){3-4}\cmidrule(lr){5-6}",
+        r"\textbf{Evaluator} & \textbf{Other model} & orig. & normalized & orig. & normalized \\",
+        r"\midrule",
+    ]
+    d_o = DATA / "self_recognition" / "mbpp-sanitized" / "test"
+    d_n = DATA / "self_recognition" / "mbpp-sanitized-obfuscated" / "test"
+    rows = 0
+    for m in CORE_MODELS:
+        po, pn = d_o / f"{safe(m)}.jsonl", d_n / f"{safe(m)}.jsonl"
+        if not (po.exists() and pn.exists()):
+            continue
+        o, nrm = analyze_pair_file(po, False), analyze_pair_file(pn, True)
+        if not o or not nrm:
+            continue
+        rows += 1
+        md.append(f"| {short(m)} | {short(o['opp'])} | {pct(o['acc'])} (n={o['n']}) | {pct(nrm['acc'])} (n={nrm['n']}) | {o['heur']} {pct(o['heur_acc'])} | {nrm['heur']} {pct(nrm['heur_acc'])} |")
+        tex.append(f"{short(m)} & {short(o['opp'])} & {pct(o['acc'])}{stars(o['p'])} & {pct(nrm['acc'])}{stars(nrm['p'])} & {pct(o['heur_acc'])} & {pct(nrm['heur_acc'])} \\\\")
+    tex += [r"\bottomrule", r"\end{tabular}"]
+    if rows:
+        (out / "pair_sr_normalized.tex").write_text("\n".join(tex) + "\n")
+
+    # Target identification: match normalized runs to the original post-fix runs
+    md2 = ["| Pair | Judge | Target | Acc orig | Acc norm | Heur orig | Heur norm |", "|---|---|---|---|---|---|---|"]
+    tex2 = [
+        r"\begin{tabular}{@{}lllcccc@{}}",
+        r"\toprule",
+        r" & & & \multicolumn{2}{c}{\textbf{Judge acc. (\%)}} & \multicolumn{2}{c}{\textbf{Best heuristic (\%)}} \\",
+        r"\cmidrule(lr){4-5}\cmidrule(lr){6-7}",
+        r"\textbf{Pair} & \textbf{Judge} & \textbf{Target} & orig. & norm. & orig. & norm. \\",
+        r"\midrule",
+    ]
+    d = DATA / "target_identification" / "mbpp-sanitized-obfuscated" / "test"
+    orig = {(r["judge"], r["target"], r["pair"]): r for r in ti_runs}
+    rows2 = 0
+    for meta_p in sorted(d.glob("*.meta.json")) if d.exists() else []:
+        meta = json.loads(meta_p.read_text())
+        recs = read_jsonl(meta_p.with_suffix("").with_suffix(".jsonl"))
+        parsed = [r for r in recs if r["predicted_target_code_id"] is not None]
+        n = len(parsed)
+        if n == 0:
+            continue
+        k = sum(1 for r in parsed if r["is_correct"])
+        judge, target, m1, m2 = meta["judge_model"], meta["target_model"], meta["model1"], meta["model2"]
+        other = m2 if target == m1 else m1
+        tcode, ocode = load_code("mbpp-sanitized", target, True), load_code("mbpp-sanitized", other, True)
+        hname, hacc = best_heuristic((tcode[str(r["task_id"])], ocode[str(r["task_id"])]) for r in parsed)
+        pv = binom_p(k, n)
+        o = orig.get((judge, target, tuple(sorted([m1, m2]))))
+        pair_s = f"{short(m1)} vs.\\ {short(m2)}" if m1 <= m2 else f"{short(m2)} vs.\\ {short(m1)}"
+        oa = f"{pct(o['acc'])}{stars(o['p'])}" if o else "--"
+        oh = pct(o["heur_acc"]) if o else "--"
+        rows2 += 1
+        md2.append(f"| {pair_s} | {short(judge)} | {short(target)} | {pct(o['acc']) if o else '--'} | {pct(k/n)} (n={n}) | {oh} | {pct(hacc)} |")
+        tex2.append(f"{pair_s} & {short(judge)} & {short(target)} & {oa} & {pct(k/n)}{stars(pv)} & {oh} & {pct(hacc)} \\\\")
+    tex2 += [r"\bottomrule", r"\end{tabular}"]
+    if rows2:
+        (out / "target_id_normalized.tex").write_text("\n".join(tex2) + "\n")
+    return "\n".join(md) + "\n\n" + "\n".join(md2)
+
+
+# ── Table: all-pairs pairwise self-recognition matrix ─────────────────────
+
+
+def table_pair_matrix(out: Path) -> str:
+    d = DATA / "self_recognition" / "mbpp-sanitized" / "test"
+    cells: Dict[Tuple[str, str], dict] = {}
+    for p in sorted(d.glob("*.jsonl")):
+        r = analyze_pair_file(p, False)
+        if r:
+            cells[(r["ev"], r["opp"])] = r
+    models = [m for m in CORE_MODELS if any(k[0] == m for k in cells)]
+    opps = [m for m in CORE_MODELS if any(k[1] == m for k in cells)]
+    md = ["| Evaluator \\ Other | " + " | ".join(short(o) for o in opps) + " |", "|---|" + "---|" * len(opps)]
+    tex = [r"\begin{tabular}{@{}l" + "c" * len(opps) + "@{}}", r"\toprule",
+           r"\textbf{Evaluator} $\backslash$ \textbf{Other} & " + " & ".join(rf"\textbf{{{short(o)}}}" for o in opps) + r" \\", r"\midrule"]
+    for m in models:
+        row_md, row_tex = [], []
+        for o in opps:
+            c = cells.get((m, o))
+            if c is None:
+                row_md.append("--"); row_tex.append("--")
+            else:
+                row_md.append(f"{pct(c['acc'])} (heur {pct(c['heur_acc'])})")
+                row_tex.append(f"{pct(c['acc'])}{stars(c['p'])} ({pct(c['heur_acc'], 0)})")
+        md.append(f"| {short(m)} | " + " | ".join(row_md) + " |")
+        tex.append(f"{short(m)} & " + " & ".join(row_tex) + r" \\")
+    tex += [r"\bottomrule", r"\end{tabular}"]
+    if len(cells) > len(CORE_MODELS):
+        (out / "pair_sr_matrix.tex").write_text("\n".join(tex) + "\n")
+    # Correlation between evaluator accuracy and P(own solution is the longer one)
+    xs, ys = [], []
+    for (ev, opp), c in cells.items():
+        own, oth = load_code("mbpp-sanitized", ev), load_code("mbpp-sanitized", opp)
+        ids = [t for t in own if t in oth]
+        xs.append(heuristic_accuracy((own[t], oth[t]) for t in ids)["Longer code"])
+        ys.append(c["acc"])
+    if len(xs) > 2:
+        mx, my = sum(xs) / len(xs), sum(ys) / len(ys)
+        r = sum((a - mx) * (b - my) for a, b in zip(xs, ys)) / math.sqrt(sum((a - mx) ** 2 for a in xs) * sum((b - my) ** 2 for b in ys))
+        md.append(f"\nPearson r between evaluator accuracy and P(own code longer) over {len(xs)} cells: {r:.3f}")
+    return "\n".join(md)
+
+
 # ── main ──────────────────────────────────────────────────────────────────
 
 
@@ -478,6 +612,10 @@ def main() -> None:
     print(consistency_analysis(runs))
     print("\n## Obfuscation\n")
     print(table_obfuscation(out, pair_summary, runs))
+    print("\n## Original vs. normalized code (LLM judges)\n")
+    print(table_normalized(out, runs))
+    print("\n## All-pairs pairwise self-recognition (original code)\n")
+    print(table_pair_matrix(out))
     json.dump(
         {"ipp": {f"{ds}|{m}": {k: v for k, v in s.items()} for (ds, m), s in ipp.items()},
          "pair": {m: {k: v for k, v in s.items() if k != "hacc"} for m, s in pair_summary.items()},
