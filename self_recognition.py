@@ -162,6 +162,7 @@ def execute(
     model1_override: Optional[str] = None,
     model2_override: Optional[str] = None,
     seed: int = 42,
+    prompt_file: Optional[str] = None,
 ) -> None:
     # Set random seed for reproducibility
     random.seed(seed)
@@ -199,7 +200,7 @@ def execute(
 
     # Client
     client = OpenRouterClient()
-    prompt_path = Path("prompts/model_attribution/self_recognition_pair.md")
+    prompt_path = Path(prompt_file) if prompt_file else Path("prompts/model_attribution/self_recognition_pair.md")
 
     # Concurrency
     max_workers = int(concurrency_override or int(cfg.get("api", {}).get("concurrency", 4)))
@@ -397,6 +398,7 @@ def run(
     concurrency: Optional[int] = typer.Option(None, help="Override concurrency for judge requests"),
     temperature: float = typer.Option(0.0, help="Temperature for judge model"),
     seed: int = typer.Option(42, help="Random seed for position randomization"),
+    prompt_file: Optional[str] = typer.Option(None, "--prompt-file", help="Override the pairwise prompt template"),
 ):
     execute(
         input_path=input_path,
@@ -409,6 +411,7 @@ def run(
         model1_override=model1,
         model2_override=model2,
         seed=seed,
+        prompt_file=prompt_file,
     )
 
 

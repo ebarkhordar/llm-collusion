@@ -94,6 +94,18 @@ def binom_p(k: int, n: int, p0: float = 0.5) -> float:
     return min(1.0, sum(v for v in pmf if v <= obs + 1e-15))
 
 
+def holm(pvals: List[float]) -> List[float]:
+    """Holm step-down adjusted p-values."""
+    m = len(pvals)
+    order = sorted(range(m), key=lambda i: pvals[i])
+    adj = [0.0] * m
+    running = 0.0
+    for rank, i in enumerate(order):
+        running = max(running, (m - rank) * pvals[i])
+        adj[i] = min(1.0, running)
+    return adj
+
+
 def stars(p: float) -> str:
     return "$^{***}$" if p < 0.001 else "$^{**}$" if p < 0.01 else "$^{*}$" if p < 0.05 else ""
 
@@ -167,8 +179,10 @@ def load_code(dataset_folder: str, model: str, obfuscated: bool = False) -> Dict
     return {str(r["task_id"]): r["generated_code"] for r in read_jsonl(p)}
 
 
-def pass_at_1(dataset_folder: str, model: str, obfuscated: bool = False) -> Optional[Tuple[int, int]]:
-    d = "mbpp-sanitized-obfuscated" if obfuscated else f"{dataset_folder}/test"
+def pass_at_1(dataset_folder: str, model: str, obfuscated: bool = False, v1: bool = False) -> Optional[Tuple[int, int]]:
+    """obfuscated=True reads the tests of the corrected normalizer (mbpp-sanitized-normalized);
+    v1=True reads the tests of the normalizer version used in the September LLM reruns."""
+    d = ("mbpp-sanitized-obfuscated" if v1 else "mbpp-sanitized-normalized") if obfuscated else f"{dataset_folder}/test"
     p = DATA / "tests" / d / f"tests-{safe(model)}.jsonl"
     if not p.exists():
         return None
@@ -308,7 +322,7 @@ def table_ipp(out: Path) -> Tuple[str, Dict[Tuple[str, str], dict]]:
             if not s:
                 cells += ["--", "--", "--"]
                 continue
-            cells += [pct(s["tpr"], 0), pct(s["fpr"], 0), pct(s["bal"])]
+            cells += [pct(s["tpr"], 0), pct(s["fpr"], 0), f"{pct(s['bal'])}$\\pm${100 * 1.96 * s['bal_se']:.1f}"]
         tex.append(f"{short(m)} & " + " & ".join(cells) + r" \\")
     tex += [r"\bottomrule", r"\end{tabular}"]
     (out / "ipp.tex").write_text("\n".join(tex) + "\n")
@@ -412,13 +426,15 @@ def table_obfuscation(out: Path, pair_summary: Dict[str, dict], ti_runs: List[di
         if not o or not b:
             continue
         po, pb = pass_at_1("mbpp-sanitized", m), pass_at_1("mbpp-sanitized", m, obfuscated=True)
+        pv1 = pass_at_1("mbpp-sanitized", m, obfuscated=True, v1=True)
         f = lambda codes, fn: sum(fn(c) for c in codes.values()) / len(codes)
         doc_o, doc_b = f(o, has_docstring), f(b, has_docstring)
         com_o, com_b = f(o, n_comments), f(b, n_comments)
         lin_o, lin_b = f(o, n_lines), f(b, n_lines)
         p1o = pct(po[0] / po[1]) if po else "--"
         p1b = pct(pb[0] / pb[1]) if pb else "--"
-        md.append(f"| {short(m)} | {p1o} | {p1b} | {pct(doc_o,0)} | {pct(doc_b,0)} | {com_o:.2f} | {com_b:.2f} | {lin_o:.1f} | {lin_b:.1f} |")
+        p1v1 = pct(pv1[0] / pv1[1]) if pv1 else "--"
+        md.append(f"| {short(m)} | {p1o} | {p1b} (v1: {p1v1}) | {pct(doc_o,0)} | {pct(doc_b,0)} | {com_o:.2f} | {com_b:.2f} | {lin_o:.1f} | {lin_b:.1f} |")
         tex.append(f"{short(m)} & {p1o} & {p1b} & {pct(doc_o,0)} & {pct(doc_b,0)} & {com_o:.2f} & {com_b:.2f} \\\\")
     tex += [r"\bottomrule", r"\end{tabular}"]
     (out / "obfuscation.tex").write_text("\n".join(tex) + "\n")
@@ -483,12 +499,13 @@ def table_normalized(out: Path, ti_runs: List[dict]) -> str:
         r"\toprule",
         r" & & \multicolumn{2}{c}{\textbf{LLM acc. (\%)}} & \multicolumn{2}{c}{\textbf{Best heuristic (\%)}} \\",
         r"\cmidrule(lr){3-4}\cmidrule(lr){5-6}",
-        r"\textbf{Evaluator} & \textbf{Other model} & orig. & normalized & orig. & normalized \\",
+        r"\textbf{Evaluator} & \textbf{Other model} & orig. & norm. & orig. & norm. \\",
         r"\midrule",
     ]
     d_o = DATA / "self_recognition" / "mbpp-sanitized" / "test"
     d_n = DATA / "self_recognition" / "mbpp-sanitized-obfuscated" / "test"
     rows = 0
+    norm_pvals: List[Tuple[str, float]] = []
     for m in CORE_MODELS:
         po, pn = d_o / f"{safe(m)}.jsonl", d_n / f"{safe(m)}.jsonl"
         if not (po.exists() and pn.exists()):
@@ -497,6 +514,7 @@ def table_normalized(out: Path, ti_runs: List[dict]) -> str:
         if not o or not nrm:
             continue
         rows += 1
+        norm_pvals.append((f"SR {short(m)}", nrm["p"]))
         md.append(f"| {short(m)} | {short(o['opp'])} | {pct(o['acc'])} (n={o['n']}) | {pct(nrm['acc'])} (n={nrm['n']}) | {o['heur']} {pct(o['heur_acc'])} | {nrm['heur']} {pct(nrm['heur_acc'])} |")
         tex.append(f"{short(m)} & {short(o['opp'])} & {pct(o['acc'])}{stars(o['p'])} & {pct(nrm['acc'])}{stars(nrm['p'])} & {pct(o['heur_acc'])} & {pct(nrm['heur_acc'])} \\\\")
     tex += [r"\bottomrule", r"\end{tabular}"]
@@ -534,11 +552,15 @@ def table_normalized(out: Path, ti_runs: List[dict]) -> str:
         oa = f"{pct(o['acc'])}{stars(o['p'])}" if o else "--"
         oh = pct(o["heur_acc"]) if o else "--"
         rows2 += 1
+        norm_pvals.append((f"TI {short(judge)}->{short(target)}", pv))
         md2.append(f"| {pair_s} | {short(judge)} | {short(target)} | {pct(o['acc']) if o else '--'} | {pct(k/n)} (n={n}) | {oh} | {pct(hacc)} |")
         tex2.append(f"{pair_s} & {short(judge)} & {short(target)} & {oa} & {pct(k/n)}{stars(pv)} & {oh} & {pct(hacc)} \\\\")
     tex2 += [r"\bottomrule", r"\end{tabular}"]
     if rows2:
         (out / "target_id_normalized.tex").write_text("\n".join(tex2) + "\n")
+    if norm_pvals:
+        adj = holm([p for _, p in norm_pvals])
+        md2.append("\nHolm-adjusted p (all normalized-code LLM results together): " + ", ".join(f"{n}: {p:.3g} -> {a:.3g}{' (sig)' if a < 0.05 else ''}" for (n, p), a in zip(norm_pvals, adj)))
     return "\n".join(md) + "\n\n" + "\n".join(md2)
 
 
@@ -549,6 +571,8 @@ def table_pair_matrix(out: Path) -> str:
     d = DATA / "self_recognition" / "mbpp-sanitized" / "test"
     cells: Dict[Tuple[str, str], dict] = {}
     for p in sorted(d.glob("*.jsonl")):
+        if "__" in p.name:  # robustness variants (prompt paraphrase, repeat runs)
+            continue
         r = analyze_pair_file(p, False)
         if r:
             cells[(r["ev"], r["opp"])] = r
@@ -578,10 +602,30 @@ def table_pair_matrix(out: Path) -> str:
         ids = [t for t in own if t in oth]
         xs.append(heuristic_accuracy((own[t], oth[t]) for t in ids)["Longer code"])
         ys.append(c["acc"])
+    def pearson(a, b):
+        ma, mb = sum(a) / len(a), sum(b) / len(b)
+        den = math.sqrt(sum((x - ma) ** 2 for x in a) * sum((y - mb) ** 2 for y in b))
+        return sum((x - ma) * (y - mb) for x, y in zip(a, b)) / den if den else 0.0
     if len(xs) > 2:
-        mx, my = sum(xs) / len(xs), sum(ys) / len(ys)
-        r = sum((a - mx) * (b - my) for a, b in zip(xs, ys)) / math.sqrt(sum((a - mx) ** 2 for a in xs) * sum((b - my) ** 2 for b in ys))
-        md.append(f"\nPearson r between evaluator accuracy and P(own code longer) over {len(xs)} cells: {r:.3f}")
+        import random as _rnd
+        r = pearson(xs, ys)
+        rng = _rnd.Random(0)
+        perm = list(ys)
+        n_perm, hits = 20000, 0
+        for _ in range(n_perm):
+            rng.shuffle(perm)
+            if abs(pearson(xs, perm)) >= abs(r):
+                hits += 1
+        md.append(f"\nPearson r between evaluator accuracy and P(own code longer) over {len(xs)} cells: {r:.3f} (permutation p = {hits / n_perm:.4f}, {n_perm} shuffles)")
+        keys = list(cells.keys())
+        loo = []
+        for ev in {k[0] for k in keys}:
+            idx = [i for i, k in enumerate(keys) if k[0] != ev]
+            loo.append((short(ev), pearson([xs[i] for i in idx], [ys[i] for i in idx])))
+        md.append("Leave-one-evaluator-out r: " + ", ".join(f"without {e}: {v:.3f}" for e, v in loo))
+        ps = [cells[k]["p"] for k in keys]
+        adj = holm(ps)
+        md.append("Holm-adjusted within the matrix: " + ", ".join(f"{short(k[0])} vs {short(k[1])}: p={cells[k]['p']:.2g} -> {a:.2g}{' (sig)' if a < 0.05 else ''}" for k, a in zip(keys, adj)))
     return "\n".join(md)
 
 
@@ -620,17 +664,52 @@ def table_self_preference(out: Path) -> str:
             py, _ = rate(ry, m1)
             pxt, nt = rate(rx, m1, True)
             pyt, _ = rate(ry, m1, True)
-            # two-proportion z-test on the difference
-            n1, n2 = len(rx), len(ry)
-            pp = (px * n1 + py * n2) / (n1 + n2)
-            z = (px - py) / math.sqrt(pp * (1 - pp) * (1 / n1 + 1 / n2)) if 0 < pp < 1 else 0.0
-            pv = 2 * (1 - 0.5 * (1 + math.erf(abs(z) / math.sqrt(2))))
+            # paired test: items judged by both X and Y; exact McNemar on discordant items
+            ax = {r["task_id"]: (r["chosen_model"] == m1) for r in rx}
+            by = {r["task_id"]: (r["chosen_model"] == m1) for r in ry}
+            common = [t for t in ax if t in by]
+            n10 = sum(1 for t in common if ax[t] and not by[t])
+            n01 = sum(1 for t in common if by[t] and not ax[t])
+            pv = binom_p(n10, n10 + n01) if (n10 + n01) else 1.0
             rows += 1
-            md.append(f"| {dsname} | {short(m1)} vs {short(m2)} | {pct(px)} | {pct(py)} | {100*(px-py):+.1f} (p={pv:.2g}) | {100*(pxt-pyt):+.1f} | {nt} |")
+            md.append(f"| {dsname} | {short(m1)} vs {short(m2)} | {pct(px)} | {pct(py)} | {100*(px-py):+.1f} (McNemar p={pv:.2g}; discordant {n10}/{n01}) | {100*(pxt-pyt):+.1f} | {nt} |")
             tex.append(f"{dsname} & {short(m1)} vs.\\ {short(m2)} & {pct(px)} & {pct(py)} & {100*(px-py):+.1f}{stars(pv)} & {100*(pxt-pyt):+.1f} & {nt} \\\\")
     tex += [r"\bottomrule", r"\end{tabular}"]
     if rows:
         (out / "self_preference.tex").write_text("\n".join(tex) + "\n")
+    return "\n".join(md)
+
+
+# ── Table: robustness of Task 1a to prompt paraphrase and repeated runs ───
+
+
+def table_robustness(out: Path) -> str:
+    d = DATA / "self_recognition" / "mbpp-sanitized" / "test"
+    md = ["| Evaluator | Other | Variant | Acc base | Acc variant | Item agreement |", "|---|---|---|---|---|---|"]
+    tex = [r"\begin{tabular}{@{}lllccc@{}}", r"\toprule",
+           r"\textbf{Evaluator} & \textbf{Other model} & \textbf{Variant} & \textbf{Acc.\ base (\%)} & \textbf{Acc.\ variant (\%)} & \textbf{Item agreement (\%)} \\", r"\midrule"]
+    rows = 0
+    for p in sorted(d.glob("*__*.jsonl")):
+        base_name, tag = p.name[:-6].split("__", 1)
+        base_p = d / f"{base_name}.jsonl"
+        if not base_p.exists():  # the original March runs are stored as <evaluator>.jsonl
+            base_p = d / f"{base_name.split('_vs_')[0]}.jsonl"
+        if not base_p.exists():
+            continue
+        v, b = analyze_pair_file(p, False), analyze_pair_file(base_p, False)
+        if not v or not b:
+            continue
+        bv = {r["task_id"]: r["predicted_candidate"] for r in read_jsonl(p) if r["predicted_candidate"] is not None}
+        bb = {r["task_id"]: r["predicted_candidate"] for r in read_jsonl(base_p) if r["predicted_candidate"] is not None}
+        common = [t for t in bv if t in bb]
+        agree = sum(1 for t in common if bv[t] == bb[t]) / max(1, len(common))
+        label = {"promptv2": "paraphrased prompt", "rerun": "repeat, same prompt"}.get(tag, tag)
+        rows += 1
+        md.append(f"| {short(v['ev'])} | {short(v['opp'])} | {label} | {pct(b['acc'])} | {pct(v['acc'])} | {pct(agree)} ({len(common)}) |")
+        tex.append(f"{short(v['ev'])} & {short(v['opp'])} & {label} & {pct(b['acc'])} & {pct(v['acc'])} & {pct(agree)} \\\\")
+    tex += [r"\bottomrule", r"\end{tabular}"]
+    if rows:
+        (out / "robustness.tex").write_text("\n".join(tex) + "\n")
     return "\n".join(md)
 
 
@@ -667,6 +746,8 @@ def main() -> None:
     print(table_pair_matrix(out))
     print("\n## Self-preference (blind quality judgment)\n")
     print(table_self_preference(out))
+    print("\n## Robustness of Task 1a (prompt paraphrase, repeat run)\n")
+    print(table_robustness(out))
     json.dump(
         {"ipp": {f"{ds}|{m}": {k: v for k, v in s.items()} for (ds, m), s in ipp.items()},
          "pair": {m: {k: v for k, v in s.items() if k != "hacc"} for m, s in pair_summary.items()},
