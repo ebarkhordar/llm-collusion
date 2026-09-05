@@ -9,6 +9,7 @@ Notes:
 - IPP uses a 1:2 own:other ratio, so always answering "no" scores 66.7% raw accuracy; use balanced accuracy.
 - Normalized-code reruns (Sept 2026) live under data/*/mbpp-sanitized-obfuscated/. Grok 4 Fast, Grok-Code-Fast-1 and MiMo-V2-Pro were withdrawn from OpenRouter before the reruns.
 - All-pairs pairwise self-recognition files are named <evaluator>_vs_<opponent>.jsonl; the unsuffixed files are the original March 2026 runs (opponent GPT-5, or Grok for GPT-5).
+- Self-preference runs (blind quality judgment) live in data/self_preference/; Δ is the combined self-preference of the two judges on identical pairs.
 
 ## Code generation (Pass@1)
 

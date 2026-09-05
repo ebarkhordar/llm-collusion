@@ -1,0 +1,13 @@
+{
+  "timestamp": "2026-09-04T16:08:44.910171",
+  "task": "self_preference",
+  "prompt_file": "prompts/model_attribution/self_preference.md",
+  "prompt_sha256": "84bb28ef8b49",
+  "judge_model": "google/gemini-2.5-flash",
+  "model1": "google/gemini-2.5-flash",
+  "model2": "deepseek/deepseek-chat-v3-0324",
+  "temperature": 0.0,
+  "seed": 42,
+  "processed": 257,
+  "results_file": "data/self_preference/mbpp-sanitized-obfuscated/test/judge-google-gemini-2.5-flash_pair-google-gemini-2.5-flash_vs_deepseek-deepseek-chat-v3-0324.jsonl"
+}
