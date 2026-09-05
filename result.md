@@ -10,6 +10,8 @@ Notes:
 - Normalized-code reruns (Sept 2026) live under data/*/mbpp-sanitized-obfuscated/. Grok 4 Fast, Grok-Code-Fast-1 and MiMo-V2-Pro were withdrawn from OpenRouter before the reruns.
 - All-pairs pairwise self-recognition files are named <evaluator>_vs_<opponent>.jsonl; the unsuffixed files are the original March 2026 runs (opponent GPT-5, or Grok for GPT-5).
 - Self-preference runs (blind quality judgment) live in data/self_preference/; Δ is the combined self-preference of the two judges on identical pairs.
+- data/code_generation_normalized/ is the output of the corrected normalizer (lambda parameters and nested function names now renamed consistently); data/code_generation_obfuscated/ is the earlier version the LLM reruns saw (37 solutions raise NameError). Tests for both: data/tests/mbpp-sanitized-normalized/ and data/tests/mbpp-sanitized-obfuscated/.
+- Task 1a robustness runs: <evaluator>_vs_<opponent>__promptv2.jsonl (paraphrased prompt) and __rerun.jsonl (same prompt, repeated).
 
 ## Code generation (Pass@1)
 
@@ -89,11 +91,11 @@ Notes:
 
 | Model | pass@1 orig | pass@1 obf | docstring% orig | docstring% obf | comments/snippet orig | obf | lines orig | obf |
 |---|---|---|---|---|---|---|---|---|
-| GPT-5 | 74.3 | 70.4 | 94 | 0 | 0.94 | 0.00 | 17.1 | 9.7 |
-| Claude-Haiku-4.5 | 69.6 | 65.8 | 98 | 0 | 1.30 | 0.00 | 15.2 | 6.4 |
-| Gemini-2.5-Flash | 70.8 | 67.7 | 99 | 0 | 2.54 | 0.00 | 19.5 | 8.3 |
-| Grok-4-Fast | 69.6 | 68.5 | 17 | 0 | 0.08 | 0.00 | 7.3 | 6.1 |
-| DeepSeek-V3 | 72.8 | 70.4 | 26 | 0 | 0.33 | 0.00 | 8.5 | 6.7 |
+| GPT-5 | 74.3 | 74.3 (v1: 70.4) | 94 | 0 | 0.94 | 0.00 | 17.1 | 9.7 |
+| Claude-Haiku-4.5 | 69.6 | 68.9 (v1: 65.8) | 98 | 0 | 1.30 | 0.00 | 15.2 | 6.4 |
+| Gemini-2.5-Flash | 70.8 | 70.8 (v1: 67.7) | 99 | 0 | 2.54 | 0.00 | 19.5 | 8.3 |
+| Grok-4-Fast | 69.6 | 69.6 (v1: 68.5) | 17 | 0 | 0.08 | 0.00 | 7.3 | 6.1 |
+| DeepSeek-V3 | 72.8 | 72.8 (v1: 70.4) | 26 | 0 | 0.33 | 0.00 | 8.5 | 6.7 |
 
 | Pair (target vs other) | Best heuristic orig | acc orig | Best heuristic obf | acc obf |
 |---|---|---|---|---|
@@ -130,6 +132,8 @@ Notes:
 | Qwen3-Coder-Next vs.\ MiMo-V2-Pro | GPT-5 | Qwen3-Coder-Next | 40.5 | 43.6 (n=257) | 56.8 | 53.9 |
 | Qwen3-Coder-Next vs.\ MiMo-V2-Pro | GPT-5 | MiMo-V2-Pro | 41.6 | 48.2 (n=257) | 56.8 | 53.9 |
 
+Holm-adjusted p (all normalized-code LLM results together): SR GPT-5: 0.0146 -> 0.146, SR Claude-Haiku-4.5: 0.0457 -> 0.32, SR Gemini-2.5-Flash: 0.803 -> 1, SR DeepSeek-V3: 0.0245 -> 0.221, TI GPT-5.3-Codex->Claude-Haiku-4.5: 1 -> 1, TI GPT-5.3-Codex->Claude-Opus-4.6: 0.0337 -> 0.27, TI GPT-5.3-Codex->Gemini-2.5-Flash: 0.105 -> 0.523, TI GPT-5.3-Codex->Gemini-3.1-Flash-Lite: 0.105 -> 0.523, TI GPT-5->Qwen3-Coder-Next: 0.0457 -> 0.32, TI GPT-5->MiMo-V2-Pro: 0.618 -> 1
+
 ## All-pairs pairwise self-recognition (original code)
 
 | Evaluator \ Other | GPT-5 | Claude-Haiku-4.5 | Gemini-2.5-Flash | Grok-4-Fast | DeepSeek-V3 |
@@ -140,6 +144,29 @@ Notes:
 | Grok-4-Fast | 44.7 (heur 91.4) | -- | -- | -- | -- |
 | DeepSeek-V3 | 33.9 (heur 88.5) | 31.5 (heur 88.7) | 29.6 (heur 94.6) | -- | -- |
 
-Pearson r between evaluator accuracy and P(own code longer) over 14 cells: 0.926
+Pearson r between evaluator accuracy and P(own code longer) over 14 cells: 0.926 (permutation p = 0.0000, 20000 shuffles)
+Leave-one-evaluator-out r: without GPT-5: 0.941, without Grok-4-Fast: 0.952, without Gemini-2.5-Flash: 0.909, without DeepSeek-V3: 0.886, without Claude-Haiku-4.5: 0.931
+Holm-adjusted within the matrix: Claude-Haiku-4.5 vs GPT-5: p=6.2e-06 -> 4.3e-05 (sig), Claude-Haiku-4.5 vs DeepSeek-V3: p=2.9e-15 -> 4e-14 (sig), Claude-Haiku-4.5 vs Gemini-2.5-Flash: p=0.0011 -> 0.0057 (sig), DeepSeek-V3 vs GPT-5: p=2.5e-07 -> 2e-06 (sig), DeepSeek-V3 vs Claude-Haiku-4.5: p=3e-09 -> 2.7e-08 (sig), DeepSeek-V3 vs Gemini-2.5-Flash: p=4.7e-11 -> 4.7e-10 (sig), Gemini-2.5-Flash vs GPT-5: p=0.38 -> 0.38, Gemini-2.5-Flash vs Claude-Haiku-4.5: p=1.1e-05 -> 6.7e-05 (sig), Gemini-2.5-Flash vs DeepSeek-V3: p=2.9e-15 -> 4e-14 (sig), GPT-5 vs Grok-4-Fast: p=2.9e-15 -> 4e-14 (sig), GPT-5 vs Claude-Haiku-4.5: p=0.13 -> 0.31, GPT-5 vs DeepSeek-V3: p=4.3e-15 -> 4.7e-14 (sig), GPT-5 vs Gemini-2.5-Flash: p=0.034 -> 0.13, Grok-4-Fast vs GPT-5: p=0.1 -> 0.31
+
+## Self-preference (blind quality judgment)
+
+| Dataset | Pair (X vs Y) | P(X chosen \| X judges) | P(X chosen \| Y judges) | Δ (self-pref.) | Δ on test-tied pairs | n tied |
+|---|---|---|---|---|---|---|
+| original | Claude-Haiku-4.5 vs DeepSeek-V3 | 75.5 | 64.2 | +11.3 (McNemar p=2.5e-05; discordant 38/9) | +11.7 | 231 |
+| original | Claude-Haiku-4.5 vs Gemini-2.5-Flash | 45.9 | 45.9 | +0.0 (McNemar p=1; discordant 37/37) | -0.4 | 236 |
+| original | Gemini-2.5-Flash vs DeepSeek-V3 | 66.1 | 61.5 | +4.7 (McNemar p=0.19; discordant 42/30) | +4.1 | 222 |
+| original | GPT-5 vs DeepSeek-V3 | 66.4 | 67.3 | -0.9 (McNemar p=0.82; discordant 37/40) | -1.8 | 215 |
+| normalized | Claude-Haiku-4.5 vs DeepSeek-V3 | 46.7 | 46.7 | +0.0 (McNemar p=1; discordant 32/32) | -0.9 | 227 |
+| normalized | Claude-Haiku-4.5 vs Gemini-2.5-Flash | 53.3 | 55.3 | -1.9 (McNemar p=0.62; discordant 30/35) | -1.7 | 230 |
+| normalized | Gemini-2.5-Flash vs DeepSeek-V3 | 44.7 | 44.0 | +0.8 (McNemar p=0.92; discordant 49/47) | -2.8 | 218 |
+
+## Robustness of Task 1a (prompt paraphrase, repeat run)
+
+| Evaluator | Other | Variant | Acc base | Acc variant | Item agreement |
+|---|---|---|---|---|---|
+| Claude-Haiku-4.5 | GPT-5 | paraphrased prompt | 35.8 | 42.8 | 58.8 (257) |
+| Claude-Haiku-4.5 | GPT-5 | repeat, same prompt | 35.8 | 35.8 | 61.1 (257) |
+| DeepSeek-V3 | GPT-5 | paraphrased prompt | 33.9 | 43.2 | 63.0 (257) |
+| Gemini-2.5-Flash | GPT-5 | paraphrased prompt | 52.9 | 51.4 | 66.1 (257) |
 
 Wrote tables to /Users/ehsan/LatexProjects/llm-collusion-paper/latex/tables

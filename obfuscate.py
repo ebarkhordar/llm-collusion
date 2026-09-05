@@ -75,7 +75,7 @@ class VariableRenamer(ast.NodeTransformer):
     - Module-level constants
     """
 
-    BUILTINS: Set[str] = set(dir(__builtins__)) if isinstance(__builtins__, dict) else set(dir(__builtins__))
+    BUILTINS: Set[str] = set(dir(__import__("builtins")))
 
     # Common standard library names to preserve
     STDLIB_NAMES: Set[str] = {
@@ -135,7 +135,51 @@ class VariableRenamer(ast.NodeTransformer):
         self.generic_visit(node)
         return node
 
+    def _rename_arguments(self, args: ast.arguments) -> None:
+        for arg in args.posonlyargs + args.args + args.kwonlyargs:
+            if self._should_rename(arg.arg):
+                arg.arg = self._get_new_name(arg.arg)
+        if args.vararg and self._should_rename(args.vararg.arg):
+            args.vararg.arg = self._get_new_name(args.vararg.arg)
+        if args.kwarg and self._should_rename(args.kwarg.arg):
+            args.kwarg.arg = self._get_new_name(args.kwarg.arg)
+
+    def visit_Lambda(self, node: ast.Lambda) -> ast.Lambda:
+        # Lambda parameters must be renamed consistently with their uses in the body
+        self._rename_arguments(node.args)
+        self.generic_visit(node)
+        return node
+
+    def visit_ClassDef(self, node: ast.ClassDef) -> ast.ClassDef:
+        # Nested class names are renamed like any other local name
+        if self._should_rename(node.name):
+            node.name = self._get_new_name(node.name)
+        self.generic_visit(node)
+        return node
+
+    def visit_Global(self, node: ast.Global) -> ast.Global:
+        node.names = [self._get_new_name(n) if self._should_rename(n) else n for n in node.names]
+        return node
+
+    visit_Nonlocal = visit_Global
+
+    def visit_ExceptHandler(self, node: ast.ExceptHandler) -> ast.ExceptHandler:
+        if node.name and self._should_rename(node.name):
+            node.name = self._get_new_name(node.name)
+        self.generic_visit(node)
+        return node
+
+    def visit_keyword(self, node: ast.keyword) -> ast.keyword:
+        # Keyword arguments at call sites of renamed (nested) functions
+        if node.arg and node.arg in self._mapping:
+            node.arg = self._mapping[node.arg]
+        self.generic_visit(node)
+        return node
+
     def visit_FunctionDef(self, node: ast.FunctionDef) -> ast.FunctionDef:
+        # Nested function names are renamed (top-level names are preserved)
+        if self._should_rename(node.name):
+            node.name = self._get_new_name(node.name)
         # Rename parameters
         for arg in node.args.args:
             if self._should_rename(arg.arg):
