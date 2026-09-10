@@ -1,0 +1,18 @@
+{
+  "timestamp": "2026-03-21T00:19:04.300778",
+  "task": "target_identification",
+  "prompt_file": "prompts/model_attribution/target_identification.md",
+  "prompt_sha256": "6c6f4625bb59",
+  "judge_model": "x-ai/grok-code-fast-1",
+  "target_model": "qwen/qwen3-coder-next",
+  "model1": "qwen/qwen3-coder-next",
+  "model2": "xiaomi/mimo-v2-pro",
+  "temperature": 0.0,
+  "seed": 42,
+  "input_path": "data/code_generation/mbpp-sanitized/test",
+  "total_pairs": 257,
+  "processed": 257,
+  "correct": 102,
+  "accuracy": 0.3969,
+  "results_file": "data/target_identification/mbpp-sanitized/test/judge-x-ai-grok-code-fast-1_target-qwen-qwen3-coder-next_pair-qwen-qwen3-coder-next_vs_xiaomi-mimo-v2-pro.jsonl"
+}

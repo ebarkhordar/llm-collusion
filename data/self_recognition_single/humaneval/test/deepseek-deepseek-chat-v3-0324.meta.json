@@ -1,0 +1,31 @@
+{
+  "timestamp": "2026-03-19T19:57:17.697989",
+  "task": "self_recognition_single",
+  "paradigm": "IPP",
+  "prompt_file": "prompts/model_attribution/self_recognition.md",
+  "prompt_sha256": "adf848230e8d",
+  "evaluator": "deepseek/deepseek-chat-v3-0324",
+  "other_models": [
+    "anthropic/claude-haiku-4.5",
+    "google/gemini-2.5-flash"
+  ],
+  "temperature": 0.0,
+  "seed": 42,
+  "input_path": "data/code_generation/humaneval/test",
+  "dataset_folder": "humaneval",
+  "split": "test",
+  "total_jobs": 492,
+  "yes_jobs": 164,
+  "no_jobs": 328,
+  "processed": 492,
+  "correct": 291,
+  "accuracy": 0.5915,
+  "tp": 50,
+  "fp": 77,
+  "tn": 241,
+  "fn": 112,
+  "precision": 0.3937,
+  "recall": 0.3086,
+  "f1": 0.346,
+  "results_file": "data/self_recognition_single/humaneval/test/deepseek-deepseek-chat-v3-0324.jsonl"
+}

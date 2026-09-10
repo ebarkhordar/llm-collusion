@@ -1,0 +1,18 @@
+{
+  "timestamp": "2026-03-20T15:09:12.115166",
+  "task": "target_identification",
+  "prompt_file": "prompts/model_attribution/target_identification.md",
+  "prompt_sha256": "7f78d1367417",
+  "judge_model": "anthropic/claude-haiku-4.5",
+  "target_model": "openai/gpt-5",
+  "model1": "openai/gpt-5",
+  "model2": "deepseek/deepseek-chat-v3-0324",
+  "temperature": 0.0,
+  "seed": 42,
+  "input_path": "data/code_generation/mbpp-sanitized/test",
+  "total_pairs": 257,
+  "processed": 257,
+  "correct": 222,
+  "accuracy": 0.8638,
+  "results_file": "data/target_identification/mbpp-sanitized/test/judge-anthropic-claude-haiku-4.5_target-openai-gpt-5_pair-openai-gpt-5_vs_deepseek-deepseek-chat-v3-0324.jsonl"
+}

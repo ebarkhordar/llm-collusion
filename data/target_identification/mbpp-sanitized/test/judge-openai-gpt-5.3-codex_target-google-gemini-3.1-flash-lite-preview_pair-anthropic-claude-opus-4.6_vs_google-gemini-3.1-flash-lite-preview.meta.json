@@ -1,0 +1,18 @@
+{
+  "timestamp": "2026-03-20T18:11:01.717643",
+  "task": "target_identification",
+  "prompt_file": "prompts/model_attribution/target_identification.md",
+  "prompt_sha256": "6c6f4625bb59",
+  "judge_model": "openai/gpt-5.3-codex",
+  "target_model": "google/gemini-3.1-flash-lite-preview",
+  "model1": "anthropic/claude-opus-4.6",
+  "model2": "google/gemini-3.1-flash-lite-preview",
+  "temperature": 0.0,
+  "seed": 42,
+  "input_path": "data/code_generation/mbpp-sanitized/test",
+  "total_pairs": 257,
+  "processed": 257,
+  "correct": 80,
+  "accuracy": 0.3113,
+  "results_file": "data/target_identification/mbpp-sanitized/test/judge-openai-gpt-5.3-codex_target-google-gemini-3.1-flash-lite-preview_pair-anthropic-claude-opus-4.6_vs_google-gemini-3.1-flash-lite-preview.jsonl"
+}

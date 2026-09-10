@@ -1,0 +1,31 @@
+{
+  "timestamp": "2026-03-19T19:25:19.301129",
+  "task": "self_recognition_single",
+  "paradigm": "IPP",
+  "prompt_file": "prompts/model_attribution/self_recognition.md",
+  "prompt_sha256": "adf848230e8d",
+  "evaluator": "x-ai/grok-4-fast",
+  "other_models": [
+    "anthropic/claude-haiku-4.5",
+    "deepseek/deepseek-chat-v3-0324"
+  ],
+  "temperature": 0.0,
+  "seed": 42,
+  "input_path": "data/code_generation/mbpp-sanitized/test",
+  "dataset_folder": "mbpp-sanitized",
+  "split": "test",
+  "total_jobs": 771,
+  "yes_jobs": 257,
+  "no_jobs": 514,
+  "processed": 771,
+  "correct": 338,
+  "accuracy": 0.4384,
+  "tp": 196,
+  "fp": 372,
+  "tn": 142,
+  "fn": 61,
+  "precision": 0.3451,
+  "recall": 0.7626,
+  "f1": 0.4752,
+  "results_file": "data/self_recognition_single/mbpp-sanitized/test/x-ai-grok-4-fast.jsonl"
+}
