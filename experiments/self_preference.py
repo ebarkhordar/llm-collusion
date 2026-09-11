@@ -45,8 +45,16 @@ def load_codes(folder: Path, model: str) -> Dict[str, dict]:
     return {str(r["task_id"]): r for r in read_jsonl(p)} if p.exists() else {}
 
 
+def code_dir(dataset_folder: str, split: str) -> Path:
+    """mbpp-sanitized-normalized / -obfuscated live in their own code_generation_* trees."""
+    for suffix, folder in (("-normalized", "code_generation_normalized"), ("-obfuscated", "code_generation_obfuscated")):
+        if dataset_folder.endswith(suffix):
+            return DATA / folder / dataset_folder[: -len(suffix)] / split
+    return DATA / "code_generation" / dataset_folder / split
+
+
 def load_tests(dataset_folder: str, model: str) -> Dict[str, Optional[bool]]:
-    d = "mbpp-sanitized-obfuscated" if dataset_folder.endswith("obfuscated") else f"{dataset_folder}/test"
+    d = dataset_folder if dataset_folder.endswith(("-normalized", "-obfuscated")) else f"{dataset_folder}/test"
     p = DATA / "tests" / d / f"tests-{safe(model)}.jsonl"
     return {str(r["task_id"]): bool(r["passed"]) for r in read_jsonl(p)} if p.exists() else {}
 
@@ -72,7 +80,7 @@ def run(
     seed: int = typer.Option(42),
 ) -> None:
     random.seed(seed)
-    src = DATA / "code_generation" / dataset_folder / split
+    src = code_dir(dataset_folder, split)
     c1, c2 = load_codes(src, model1), load_codes(src, model2)
     t1, t2 = load_tests(dataset_folder, model1), load_tests(dataset_folder, model2)
     ids = sorted(set(c1) & set(c2), key=lambda x: (len(x), x))

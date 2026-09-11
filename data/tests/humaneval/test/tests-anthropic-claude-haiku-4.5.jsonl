@@ -6,7 +6,7 @@
 {"benchmark": "humaneval", "task_id": "HumanEval/4", "model_name": "anthropic/claude-haiku-4.5", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/9", "model_name": "anthropic/claude-haiku-4.5", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/8", "model_name": "anthropic/claude-haiku-4.5", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
-{"benchmark": "humaneval", "task_id": "HumanEval/10", "model_name": "anthropic/claude-haiku-4.5", "num_tests": 1, "num_passed": 0, "passed": false, "errors": ["AssertionError: "]}
+{"benchmark": "humaneval", "task_id": "HumanEval/10", "model_name": "anthropic/claude-haiku-4.5", "num_tests": 1, "num_passed": 0, "passed": false, "errors": ["SetupError NameError: entry point 'make_palindrome' not defined by the solution"]}
 {"benchmark": "humaneval", "task_id": "HumanEval/6", "model_name": "anthropic/claude-haiku-4.5", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/1", "model_name": "anthropic/claude-haiku-4.5", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/12", "model_name": "anthropic/claude-haiku-4.5", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
@@ -35,7 +35,7 @@
 {"benchmark": "humaneval", "task_id": "HumanEval/33", "model_name": "anthropic/claude-haiku-4.5", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/37", "model_name": "anthropic/claude-haiku-4.5", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/39", "model_name": "anthropic/claude-haiku-4.5", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
-{"benchmark": "humaneval", "task_id": "HumanEval/38", "model_name": "anthropic/claude-haiku-4.5", "num_tests": 1, "num_passed": 0, "passed": false, "errors": ["NameError: name 'encode_cyclic' is not defined"]}
+{"benchmark": "humaneval", "task_id": "HumanEval/38", "model_name": "anthropic/claude-haiku-4.5", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/36", "model_name": "anthropic/claude-haiku-4.5", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/42", "model_name": "anthropic/claude-haiku-4.5", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/40", "model_name": "anthropic/claude-haiku-4.5", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
@@ -48,9 +48,9 @@
 {"benchmark": "humaneval", "task_id": "HumanEval/47", "model_name": "anthropic/claude-haiku-4.5", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/49", "model_name": "anthropic/claude-haiku-4.5", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/52", "model_name": "anthropic/claude-haiku-4.5", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
-{"benchmark": "humaneval", "task_id": "HumanEval/32", "model_name": "anthropic/claude-haiku-4.5", "num_tests": 1, "num_passed": 0, "passed": false, "errors": ["TypeError: poly() missing 1 required positional argument: 'x'"]}
+{"benchmark": "humaneval", "task_id": "HumanEval/32", "model_name": "anthropic/claude-haiku-4.5", "num_tests": 1, "num_passed": 0, "passed": false, "errors": ["SetupError NameError: entry point 'find_zero' not defined by the solution"]}
 {"benchmark": "humaneval", "task_id": "HumanEval/51", "model_name": "anthropic/claude-haiku-4.5", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
-{"benchmark": "humaneval", "task_id": "HumanEval/50", "model_name": "anthropic/claude-haiku-4.5", "num_tests": 1, "num_passed": 0, "passed": false, "errors": ["AssertionError: "]}
+{"benchmark": "humaneval", "task_id": "HumanEval/50", "model_name": "anthropic/claude-haiku-4.5", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/53", "model_name": "anthropic/claude-haiku-4.5", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/54", "model_name": "anthropic/claude-haiku-4.5", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/57", "model_name": "anthropic/claude-haiku-4.5", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
@@ -92,7 +92,7 @@
 {"benchmark": "humaneval", "task_id": "HumanEval/91", "model_name": "anthropic/claude-haiku-4.5", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/92", "model_name": "anthropic/claude-haiku-4.5", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/93", "model_name": "anthropic/claude-haiku-4.5", "num_tests": 1, "num_passed": 0, "passed": false, "errors": ["AssertionError: This prints if this assert fails 1 (good for debugging!)"]}
-{"benchmark": "humaneval", "task_id": "HumanEval/94", "model_name": "anthropic/claude-haiku-4.5", "num_tests": 1, "num_passed": 0, "passed": false, "errors": ["SetupError SyntaxError: invalid character '✓' (U+2713) (<string>, line 10)"]}
+{"benchmark": "humaneval", "task_id": "HumanEval/94", "model_name": "anthropic/claude-haiku-4.5", "num_tests": 1, "num_passed": 0, "passed": false, "errors": ["SetupError SyntaxError: invalid character '✓' (U+2713) (<string>, line 24)"]}
 {"benchmark": "humaneval", "task_id": "HumanEval/95", "model_name": "anthropic/claude-haiku-4.5", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/97", "model_name": "anthropic/claude-haiku-4.5", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/96", "model_name": "anthropic/claude-haiku-4.5", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
@@ -149,11 +149,11 @@
 {"benchmark": "humaneval", "task_id": "HumanEval/150", "model_name": "anthropic/claude-haiku-4.5", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/149", "model_name": "anthropic/claude-haiku-4.5", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/147", "model_name": "anthropic/claude-haiku-4.5", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
-{"benchmark": "humaneval", "task_id": "HumanEval/152", "model_name": "anthropic/claude-haiku-4.5", "num_tests": 1, "num_passed": 0, "passed": false, "errors": ["SetupError SyntaxError: invalid syntax (<string>, line 14)"]}
+{"benchmark": "humaneval", "task_id": "HumanEval/152", "model_name": "anthropic/claude-haiku-4.5", "num_tests": 1, "num_passed": 0, "passed": false, "errors": ["SetupError SyntaxError: invalid syntax (<string>, line 30)"]}
 {"benchmark": "humaneval", "task_id": "HumanEval/151", "model_name": "anthropic/claude-haiku-4.5", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/153", "model_name": "anthropic/claude-haiku-4.5", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/155", "model_name": "anthropic/claude-haiku-4.5", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
-{"benchmark": "humaneval", "task_id": "HumanEval/154", "model_name": "anthropic/claude-haiku-4.5", "num_tests": 1, "num_passed": 0, "passed": false, "errors": ["SetupError SyntaxError: invalid character '✓' (U+2713) (<string>, line 9)"]}
+{"benchmark": "humaneval", "task_id": "HumanEval/154", "model_name": "anthropic/claude-haiku-4.5", "num_tests": 1, "num_passed": 0, "passed": false, "errors": ["SetupError SyntaxError: invalid character '✓' (U+2713) (<string>, line 20)"]}
 {"benchmark": "humaneval", "task_id": "HumanEval/156", "model_name": "anthropic/claude-haiku-4.5", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/157", "model_name": "anthropic/claude-haiku-4.5", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/158", "model_name": "anthropic/claude-haiku-4.5", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}

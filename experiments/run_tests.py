@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 from glob import glob
+import ast
 import multiprocessing
 
 import typer
@@ -60,49 +61,65 @@ def _execute_ds1000_worker(
     result_queue.put((passed_count, total_tests, errors))
 
 
+def humaneval_entry_point(prompt: str) -> Optional[str]:
+    """The function HumanEval's check() is called on: the last function the prompt defines.
+    Some prompts define helpers first (e.g. encode_cyclic before decode_cyclic)."""
+    try:
+        tree = ast.parse(prompt + "\n    pass")
+    except SyntaxError:
+        return None
+    defs = [n.name for n in tree.body if isinstance(n, ast.FunctionDef)]
+    return defs[-1] if defs else None
+
+
 def _execute_code_worker(
     test_imports: List[str],
     code: str,
     test_list: List[str],
     benchmark: str,
     result_queue: Any,
+    prompt: str = "",
 ) -> None:
     """Worker function that runs in a separate process to execute code."""
     errors: List[str] = []
     passed_count = 0
-    
+
     try:
         # Isolated namespace for executing candidate code and tests
         globals_ns: Dict[str, Any] = {"__name__": "tested_module"}
-        
+
         # Execute required imports first
         for imp in test_imports:
             exec(imp, globals_ns, globals_ns)
 
-        # Load candidate solution
-        exec(code, globals_ns, globals_ns)
+        if benchmark == "humaneval":
+            entry = humaneval_entry_point(prompt)
+            if not code.strip():
+                raise ValueError("empty solution")
+            # The prompt supplies imports and helper functions the tests rely on;
+            # its entry-point stub is replaced by the candidate below.
+            exec(prompt + "\n    pass\n", globals_ns, globals_ns)
+            stub = globals_ns.get(entry)
+            try:
+                exec(code, globals_ns, globals_ns)
+            except SyntaxError:
+                # Body-only answer: score it as a completion of the prompt, as in the
+                # official HumanEval protocol (the first line lost its indent when stripped).
+                exec(prompt.rstrip() + "\n    " + code + "\n", globals_ns, globals_ns)
+            candidate = globals_ns.get(entry)
+            if candidate is None or candidate is stub:
+                raise NameError(f"entry point {entry!r} not defined by the solution")
+        else:
+            # Load candidate solution
+            exec(code, globals_ns, globals_ns)
 
         # Handle different benchmark test formats
         if benchmark == "humaneval":
-            # HumanEval uses check(candidate) pattern
-            # test_list contains a single check function definition
-            import types
+            # test_list contains a single check(candidate) definition
             for t in test_list:
                 try:
-                    # Execute the check function definition
                     exec(t, globals_ns, globals_ns)
-                    # Find the candidate function (first user-defined function in code)
-                    # Skip builtins, types, and the check function itself
-                    candidate = None
-                    for name, obj in globals_ns.items():
-                        if (isinstance(obj, types.FunctionType) 
-                            and name != "check" 
-                            and not name.startswith("_")):
-                            candidate = obj
-                            break
-                    if candidate and "check" in globals_ns:
-                        # Call check(candidate) to run the tests
-                        globals_ns["check"](candidate)
+                    globals_ns["check"](candidate)
                     passed_count += 1
                 except Exception as e:  # noqa: BLE001
                     errors.append(f"{type(e).__name__}: {e}")
@@ -169,7 +186,7 @@ def run_single_record(record: Dict[str, Any], timeout_seconds: int = 5) -> TestO
         # MBPP, HumanEval, and others: use assertion-based testing
         process = ctx.Process(
             target=_execute_code_worker,
-            args=(test_imports, code, test_list, benchmark, result_queue),
+            args=(test_imports, code, test_list, benchmark, result_queue, str(record.get("prompt") or "")),
         )
         process.start()
         process.join(timeout=timeout_seconds)
@@ -288,7 +305,8 @@ def run(
             source_path = jsonl_file.parent
             out_path = compute_output_path(base_dir=DATA, source_path=source_path, model_name=model_name)
             all_model_outputs[model_name] = out_path
-            
+            out_path.unlink(missing_ok=True)  # results are appended line by line
+
             # Aggregate stats
             model_total = 0
             model_passed = 0

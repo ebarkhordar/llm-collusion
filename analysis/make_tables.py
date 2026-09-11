@@ -4,7 +4,7 @@
 Reads:
   data/tests/                      pass@1 for the 5 core models (+ obfuscated variant if present)
   data/code_generation/            original code (for heuristic baselines)
-  data/code_generation_obfuscated/ R&P-obfuscated code (feature statistics)
+  data/code_generation_normalized/ normalized code (corrected normalizer)
   data/self_recognition/           pairwise self-recognition (Task 1a)
   data/self_recognition_single/    individual-presentation self-recognition (Task 1b)
   data/target_identification/      target identification (Task 2), post-fix prompt only
@@ -23,6 +23,7 @@ import os
 import math
 import re
 from collections import defaultdict
+from functools import lru_cache
 from pathlib import Path
 from typing import Callable, Dict, Iterable, List, Optional, Tuple
 
@@ -35,6 +36,9 @@ DEFAULT_OUT = (Path(PAPER_DIR) / "latex" / "tables") if PAPER_DIR else (ROOT / "
 # Prompt hash of target_identification.md after the name-order/position decoupling fix
 # (commit c8dbb1b). Runs with any other hash are excluded.
 FIXED_TI_PROMPT_HASH = "6c6f4625bb59"
+# Judgments on normalized code, carried over to the corrected normalizer by
+# experiments/rejudge_normalized.py (plus runs made directly on it).
+NORM_RUNS = "mbpp-sanitized-normalized"
 
 SHORT = {
     "openai/gpt-5": "GPT-5",
@@ -109,6 +113,16 @@ def holm(pvals: List[float]) -> List[float]:
     return adj
 
 
+def normal_p(z: float) -> float:
+    """Two-sided p-value of a standard normal statistic."""
+    return math.erfc(abs(z) / math.sqrt(2))
+
+
+def signed(x: float) -> str:
+    """Percentage-point difference with an explicit sign and no negative zero."""
+    return f"{x:+.1f}".replace("-0.0", "+0.0")
+
+
 def stars(p: float) -> str:
     return "$^{***}$" if p < 0.001 else "$^{**}$" if p < 0.01 else "$^{*}$" if p < 0.05 else ""
 
@@ -174,12 +188,40 @@ def best_heuristic(pairs: Iterable[Tuple[str, str]]) -> Tuple[str, float]:
 # ── loaders ───────────────────────────────────────────────────────────────
 
 
+@lru_cache(maxsize=None)
 def load_code(dataset_folder: str, model: str, obfuscated: bool = False) -> Dict[str, str]:
-    base = DATA / ("code_generation_obfuscated" if obfuscated else "code_generation")
+    """obfuscated=True reads the normalized code (corrected normalizer). Callers must not mutate."""
+    base = DATA / ("code_generation_normalized" if obfuscated else "code_generation")
     p = base / dataset_folder / "test" / f"{safe(model)}.jsonl"
     if not p.exists():
         return {}
     return {str(r["task_id"]): r["generated_code"] for r in read_jsonl(p)}
+
+
+@lru_cache(maxsize=None)
+def empty_ids(dataset_folder: str, model: str, obfuscated: bool = False) -> frozenset:
+    """Tasks on which the model returned no code (GPT-5 exhausted its 2,000-token budget on 45)."""
+    return frozenset(t for t, c in load_code(dataset_folder, model, obfuscated).items() if not c.strip())
+
+
+def drop_empty(recs: List[dict], obfuscated: bool = False, dataset_folder: str = "mbpp-sanitized") -> List[dict]:
+    """Drop pairwise items in which either solution is empty."""
+    return [r for r in recs if not any(str(r["task_id"]) in empty_ids(dataset_folder, r[k], obfuscated)
+                                       for k in ("candidate_1_model", "candidate_2_model"))]
+
+
+def nonempty_ids(dataset_folder: str, models: Iterable[str], obfuscated: bool = False) -> List[str]:
+    codes = [load_code(dataset_folder, m, obfuscated) for m in models]
+    common = set.intersection(*(set(c) for c in codes))
+    return sorted(t for t in common if all(c[t].strip() for c in codes))
+
+
+def position_balanced(recs: List[dict], ev: str, key: str = "evaluator_model") -> float:
+    """Mean of the accuracies with the evaluator's own solution in position A and in position B."""
+    a = [r for r in recs if r["candidate_1_model"] == ev]
+    b = [r for r in recs if r["candidate_2_model"] == ev]
+    acc = lambda rs: sum(1 for r in rs if r["is_correct"]) / len(rs) if rs else float("nan")
+    return (acc(a) + acc(b)) / 2
 
 
 def pass_at_1(dataset_folder: str, model: str, obfuscated: bool = False, v1: bool = False) -> Optional[Tuple[int, int]]:
@@ -232,11 +274,11 @@ def table_codegen(out: Path) -> str:
 
 def table_pair_sr(out: Path) -> Tuple[str, Dict[str, dict]]:
     d = DATA / "self_recognition" / "mbpp-sanitized" / "test"
-    md = ["| Evaluator | Opponent | N | Acc | 95% CI | p | P(A) | Best heuristic | Agree w/ docstring |", "|---|---|---|---|---|---|---|---|---|"]
+    md = ["| Evaluator | Opponent | N | Acc | 95% CI | p | Pos-bal | P(A) | Best heuristic | Agree w/ docstring |", "|---|---|---|---|---|---|---|---|---|---|"]
     tex = [
-        r"\begin{tabular}{@{}llccccc@{}}",
+        r"\begin{tabular}{@{}llcccccc@{}}",
         r"\toprule",
-        r"\textbf{Evaluator} & \textbf{Other model} & \textbf{Acc. (\%)} & \textbf{95\% CI} & \textbf{P(A)} & \textbf{Best heuristic} & \textbf{Heur. acc. (\%)} \\",
+        r"\textbf{Evaluator} & \textbf{Other model} & \textbf{Acc. (\%)} & \textbf{95\% CI} & \textbf{Pos.-bal. (\%)} & \textbf{P(A)} & \textbf{Best heuristic} & \textbf{Heur. acc. (\%)} \\",
         r"\midrule",
     ]
     summary: Dict[str, dict] = {}
@@ -247,7 +289,7 @@ def table_pair_sr(out: Path) -> Tuple[str, Dict[str, dict]]:
             continue
         recs = read_jsonl(p)
         ev = m
-        parsed = [r for r in recs if r["predicted_candidate"] is not None]
+        parsed = drop_empty([r for r in recs if r["predicted_candidate"] is not None])
         n = len(parsed)
         k = sum(1 for r in parsed if r["is_correct"])
         pos_a = sum(1 for r in parsed if r["predicted_candidate"] == 1) / n
@@ -271,13 +313,14 @@ def table_pair_sr(out: Path) -> Tuple[str, Dict[str, dict]]:
         agree_rate = agree / cnt if cnt else float("nan")
         lo, hi = wilson(k, n)
         pv = binom_p(k, n)
-        results.append((ev, opp, n, k, k / n, lo, hi, pv, pos_a, hname, hacc[hname], agree_rate, cnt))
-        summary[ev] = dict(opp=opp, n=n, acc=k / n, lo=lo, hi=hi, p=pv, pos_a=pos_a, heur=hname, heur_acc=hacc[hname], agree=agree_rate, agree_n=cnt, hacc=hacc)
+        pb = position_balanced(parsed, ev)
+        results.append((ev, opp, n, k, k / n, lo, hi, pv, pos_a, hname, hacc[hname], agree_rate, cnt, pb))
+        summary[ev] = dict(opp=opp, n=n, acc=k / n, lo=lo, hi=hi, p=pv, pos_a=pos_a, pos_bal=pb, heur=hname, heur_acc=hacc[hname], agree=agree_rate, agree_n=cnt, hacc=hacc)
     results.sort(key=lambda r: -r[4])
-    for ev, opp, n, k, acc, lo, hi, pv, pos_a, hname, ha, ag, cnt in results:
-        md.append(f"| {short(ev)} | {short(opp)} | {n} | {pct(acc)} | [{pct(lo)}, {pct(hi)}] | {pv:.2g} | {pct(pos_a)} | {hname} | {pct(ag)} ({cnt}) |")
+    for ev, opp, n, k, acc, lo, hi, pv, pos_a, hname, ha, ag, cnt, pb in results:
+        md.append(f"| {short(ev)} | {short(opp)} | {n} | {pct(acc)} | [{pct(lo)}, {pct(hi)}] | {pv:.2g} | {pct(pb)} | {pct(pos_a)} | {hname} | {pct(ag)} ({cnt}) |")
         tex.append(
-            f"{short(ev)} & {short(opp)} & {pct(acc)}{stars(pv)} & [{pct(lo)}, {pct(hi)}] & {pct(pos_a, 0)} & {hname} & {pct(ha)} \\\\"
+            f"{short(ev)} & {short(opp)} & {pct(acc)}{stars(pv)} & [{pct(lo)}, {pct(hi)}] & {pct(pb)} & {pct(pos_a, 0)} & {hname} & {pct(ha)} \\\\"
         )
     tex += [r"\bottomrule", r"\end{tabular}"]
     (out / "pair_sr.tex").write_text("\n".join(tex) + "\n")
@@ -295,7 +338,7 @@ def table_ipp(out: Path) -> Tuple[str, Dict[Tuple[str, str], dict]]:
             p = DATA / "self_recognition_single" / ds / "test" / f"{safe(m)}.jsonl"
             if not p.exists():
                 continue
-            recs = read_jsonl(p)
+            recs = [r for r in read_jsonl(p) if str(r["task_id"]) not in empty_ids(ds, r["code_model"])]
             n_all = len(recs)
             abst = sum(1 for r in recs if r["predicted"] is None)
             own = [r for r in recs if r["expected"] == "yes" and r["predicted"] is not None]
@@ -307,7 +350,8 @@ def table_ipp(out: Path) -> Tuple[str, Dict[Tuple[str, str], dict]]:
             raw = sum(1 for r in recs if r["is_correct"]) / n_all
             # balanced accuracy CI via a simple normal approximation on TPR and TNR
             se = math.sqrt(tpr * (1 - tpr) / max(1, len(own)) + tnr * (1 - tnr) / max(1, len(oth))) / 2
-            stats[(ds, m)] = dict(n=n_all, abstain=abst, n_own=len(own), n_oth=len(oth), tpr=tpr, fpr=fpr, tnr=tnr, bal=bal, bal_se=se, raw=raw)
+            bal_p = normal_p((bal - 0.5) / se) if se > 0 else 1.0
+            stats[(ds, m)] = dict(n=n_all, abstain=abst, n_own=len(own), n_oth=len(oth), tpr=tpr, fpr=fpr, tnr=tnr, bal=bal, bal_se=se, bal_p=bal_p, raw=raw)
             md.append(f"| {short(m)} | {dsname} | {n_all} | {abst} | {pct(tpr)} | {pct(fpr)} | {pct(bal)} ± {pct(1.96*se)} | {pct(raw)} |")
     # LaTeX: one row per model, three dataset column groups (P(yes|own), P(yes|other), BA)
     tex = [
@@ -329,6 +373,10 @@ def table_ipp(out: Path) -> Tuple[str, Dict[Tuple[str, str], dict]]:
         tex.append(f"{short(m)} & " + " & ".join(cells) + r" \\")
     tex += [r"\bottomrule", r"\end{tabular}"]
     (out / "ipp.tex").write_text("\n".join(tex) + "\n")
+    keys = sorted(stats)
+    adj = holm([stats[k]["bal_p"] for k in keys])
+    md.append("\nBalanced accuracy vs. 50% (normal approx.), Holm over all cells: " + ", ".join(
+        f"{short(m)}/{ds}: p={stats[(ds, m)]['bal_p']:.2g} -> {a:.2g}{' (sig)' if a < 0.05 else ''}" for (ds, m), a in zip(keys, adj) if stats[(ds, m)]["bal_p"] < 0.05))
     return "\n".join(md), stats
 
 
@@ -343,7 +391,7 @@ def table_target_id(out: Path) -> Tuple[str, List[dict]]:
         if meta.get("prompt_sha256") != FIXED_TI_PROMPT_HASH:
             continue
         recs = read_jsonl(meta_p.with_suffix("").with_suffix(".jsonl"))
-        parsed = [r for r in recs if r["predicted_target_code_id"] is not None]
+        parsed = drop_empty([r for r in recs if r["predicted_target_code_id"] is not None])
         n = len(parsed)
         k = sum(1 for r in parsed if r["is_correct"])
         judge, target, m1, m2 = meta["judge_model"], meta["target_model"], meta["model1"], meta["model2"]
@@ -380,6 +428,9 @@ def table_target_id(out: Path) -> Tuple[str, List[dict]]:
         )
     tex += [r"\bottomrule", r"\end{tabular}"]
     (out / "target_id.tex").write_text("\n".join(tex) + "\n")
+    adj = holm([r["p"] for r in runs])
+    md.append("\nHolm within the table: " + ", ".join(
+        f"{short(r['judge'])}->{short(r['target'])} ({short(r['other'])}): p={r['p']:.2g} -> {a:.2g}{' (sig)' if a < 0.05 else ''}" for r, a in zip(runs, adj)))
     return "\n".join(md), runs
 
 
@@ -421,7 +472,7 @@ def table_obfuscation(out: Path, pair_summary: Dict[str, dict], ti_runs: List[di
         r"\toprule",
         r" & \multicolumn{2}{c}{\textbf{Pass@1 (\%)}} & \multicolumn{2}{c}{\textbf{Docstring (\%)}} & \multicolumn{2}{c}{\textbf{Comments / snippet}} \\",
         r"\cmidrule(lr){2-3}\cmidrule(lr){4-5}\cmidrule(lr){6-7}",
-        r"\textbf{Model} & orig. & R\&P & orig. & R\&P & orig. & R\&P \\",
+        r"\textbf{Model} & orig. & norm. & orig. & norm. & orig. & norm. \\",
         r"\midrule",
     ]
     for m in CORE_MODELS:
@@ -430,7 +481,8 @@ def table_obfuscation(out: Path, pair_summary: Dict[str, dict], ti_runs: List[di
             continue
         po, pb = pass_at_1("mbpp-sanitized", m), pass_at_1("mbpp-sanitized", m, obfuscated=True)
         pv1 = pass_at_1("mbpp-sanitized", m, obfuscated=True, v1=True)
-        f = lambda codes, fn: sum(fn(c) for c in codes.values()) / len(codes)
+        # feature statistics over non-empty solutions
+        f = lambda codes, fn: (lambda cs: sum(fn(c) for c in cs) / len(cs))([c for c in codes.values() if c.strip()])
         doc_o, doc_b = f(o, has_docstring), f(b, has_docstring)
         com_o, com_b = f(o, n_comments), f(b, n_comments)
         lin_o, lin_b = f(o, n_lines), f(b, n_lines)
@@ -447,7 +499,7 @@ def table_obfuscation(out: Path, pair_summary: Dict[str, dict], ti_runs: List[di
     tex2 = [
         r"\begin{tabular}{@{}llclc@{}}",
         r"\toprule",
-        r"\textbf{Target vs.\ other} & \textbf{Best heuristic (orig.)} & \textbf{Acc. (\%)} & \textbf{Best heuristic (R\&P)} & \textbf{Acc. (\%)} \\",
+        r"\textbf{Target vs.\ other} & \textbf{Best heuristic (orig.)} & \textbf{Acc. (\%)} & \textbf{Best heuristic (norm.)} & \textbf{Acc. (\%)} \\",
         r"\midrule",
     ]
     seen = set()
@@ -460,7 +512,7 @@ def table_obfuscation(out: Path, pair_summary: Dict[str, dict], ti_runs: List[di
         tb, ob = load_code("mbpp-sanitized", target, True), load_code("mbpp-sanitized", other, True)
         if not (to and oo and tb and ob):
             continue
-        ids = [t for t in to if t in oo]
+        ids = [t for t in nonempty_ids("mbpp-sanitized", [target, other]) if t in tb and t in ob]
         h_o = best_heuristic((to[t], oo[t]) for t in ids)
         h_b = best_heuristic((tb[t], ob[t]) for t in ids)
         md2.append(f"| {short(target)} vs {short(other)} | {h_o[0]} | {pct(h_o[1])} | {h_b[0]} | {pct(h_b[1])} |")
@@ -478,7 +530,7 @@ def analyze_pair_file(p: Path, obfuscated: bool) -> Optional[dict]:
     if not recs:
         return None
     ev = recs[0]["evaluator_model"]
-    parsed = [r for r in recs if r["predicted_candidate"] is not None]
+    parsed = drop_empty([r for r in recs if r["predicted_candidate"] is not None], obfuscated)
     n = len(parsed)
     if n == 0:
         return None
@@ -488,8 +540,10 @@ def analyze_pair_file(p: Path, obfuscated: bool) -> Optional[dict]:
     pairs = [(own[str(r["task_id"])], oth[str(r["task_id"])]) for r in parsed if str(r["task_id"]) in own and str(r["task_id"]) in oth]
     hname, hacc = best_heuristic(pairs) if pairs else ("--", float("nan"))
     lo, hi = wilson(k, n)
-    return dict(ev=ev, opp=opp, n=n, k=k, acc=k / n, lo=lo, hi=hi, p=binom_p(k, n), heur=hname, heur_acc=hacc,
-                pos_a=sum(1 for r in parsed if r["predicted_candidate"] == 1) / n)
+    longer = heuristic_accuracy(pairs)["Longer code"] if pairs else float("nan")
+    return dict(ev=ev, opp=opp, n=n, k=k, acc=k / n, lo=lo, hi=hi, p=binom_p(k, n), heur=hname, heur_acc=hacc, longer=longer,
+                pos_a=sum(1 for r in parsed if r["predicted_candidate"] == 1) / n, pos_bal=position_balanced(parsed, ev),
+                recs=parsed)
 
 
 # ── Table: original vs. normalized code (Tasks 1a and 2) ─────────────────
@@ -506,7 +560,7 @@ def table_normalized(out: Path, ti_runs: List[dict]) -> str:
         r"\midrule",
     ]
     d_o = DATA / "self_recognition" / "mbpp-sanitized" / "test"
-    d_n = DATA / "self_recognition" / "mbpp-sanitized-obfuscated" / "test"
+    d_n = DATA / "self_recognition" / NORM_RUNS / "test"
     rows = 0
     norm_pvals: List[Tuple[str, float]] = []
     for m in CORE_MODELS:
@@ -517,7 +571,7 @@ def table_normalized(out: Path, ti_runs: List[dict]) -> str:
         if not o or not nrm:
             continue
         rows += 1
-        norm_pvals.append((f"SR {short(m)}", nrm["p"]))
+        norm_pvals.append((f"SR {short(m)} {pct(nrm['acc'])} [{pct(nrm['lo'])}, {pct(nrm['hi'])}] n={nrm['n']} pos-bal {pct(nrm['pos_bal'])} (orig pos-bal {pct(o['pos_bal'])})", nrm["p"]))
         md.append(f"| {short(m)} | {short(o['opp'])} | {pct(o['acc'])} (n={o['n']}) | {pct(nrm['acc'])} (n={nrm['n']}) | {o['heur']} {pct(o['heur_acc'])} | {nrm['heur']} {pct(nrm['heur_acc'])} |")
         tex.append(f"{short(m)} & {short(o['opp'])} & {pct(o['acc'])}{stars(o['p'])} & {pct(nrm['acc'])}{stars(nrm['p'])} & {pct(o['heur_acc'])} & {pct(nrm['heur_acc'])} \\\\")
     tex += [r"\bottomrule", r"\end{tabular}"]
@@ -534,13 +588,13 @@ def table_normalized(out: Path, ti_runs: List[dict]) -> str:
         r"\textbf{Pair} & \textbf{Judge} & \textbf{Target} & orig. & norm. & orig. & norm. \\",
         r"\midrule",
     ]
-    d = DATA / "target_identification" / "mbpp-sanitized-obfuscated" / "test"
+    d = DATA / "target_identification" / NORM_RUNS / "test"
     orig = {(r["judge"], r["target"], r["pair"]): r for r in ti_runs}
     rows2 = 0
     for meta_p in sorted(d.glob("*.meta.json")) if d.exists() else []:
         meta = json.loads(meta_p.read_text())
         recs = read_jsonl(meta_p.with_suffix("").with_suffix(".jsonl"))
-        parsed = [r for r in recs if r["predicted_target_code_id"] is not None]
+        parsed = drop_empty([r for r in recs if r["predicted_target_code_id"] is not None], obfuscated=True)
         n = len(parsed)
         if n == 0:
             continue
@@ -555,7 +609,8 @@ def table_normalized(out: Path, ti_runs: List[dict]) -> str:
         oa = f"{pct(o['acc'])}{stars(o['p'])}" if o else "--"
         oh = pct(o["heur_acc"]) if o else "--"
         rows2 += 1
-        norm_pvals.append((f"TI {short(judge)}->{short(target)}", pv))
+        lo, hi = wilson(k, n)
+        norm_pvals.append((f"TI {short(judge)}->{short(target)} {pct(k / n)} [{pct(lo)}, {pct(hi)}] n={n}", pv))
         md2.append(f"| {pair_s} | {short(judge)} | {short(target)} | {pct(o['acc']) if o else '--'} | {pct(k/n)} (n={n}) | {oh} | {pct(hacc)} |")
         tex2.append(f"{pair_s} & {short(judge)} & {short(target)} & {oa} & {pct(k/n)}{stars(pv)} & {oh} & {pct(hacc)} \\\\")
     tex2 += [r"\bottomrule", r"\end{tabular}"]
@@ -563,7 +618,10 @@ def table_normalized(out: Path, ti_runs: List[dict]) -> str:
         (out / "target_id_normalized.tex").write_text("\n".join(tex2) + "\n")
     if norm_pvals:
         adj = holm([p for _, p in norm_pvals])
-        md2.append("\nHolm-adjusted p (all normalized-code LLM results together): " + ", ".join(f"{n}: {p:.3g} -> {a:.3g}{' (sig)' if a < 0.05 else ''}" for (n, p), a in zip(norm_pvals, adj)))
+        md2.append("\nHolm-adjusted p (all normalized-code LLM results together):\n" + "\n".join(f"  {n}: p={p:.3g} -> {a:.3g}{' (sig)' if a < 0.05 else ''}" for (n, p), a in zip(norm_pvals, adj)))
+        for tag in ("SR", "TI"):
+            sub = [(n, p) for n, p in norm_pvals if n.startswith(tag)]
+            md2.append(f"Holm within the {tag} table: " + ", ".join(f"{a:.3g}" for a in holm([p for _, p in sub])))
     return "\n".join(md) + "\n\n" + "\n".join(md2)
 
 
@@ -591,8 +649,8 @@ def table_pair_matrix(out: Path) -> str:
             if c is None:
                 row_md.append("--"); row_tex.append("--")
             else:
-                row_md.append(f"{pct(c['acc'])} (heur {pct(c['heur_acc'])})")
-                row_tex.append(f"{pct(c['acc'])}{stars(c['p'])} ({pct(c['heur_acc'], 0)})")
+                row_md.append(f"{pct(c['acc'])} (longer {pct(c['longer'])}, pos-bal {pct(c['pos_bal'])})")
+                row_tex.append(f"{pct(c['acc'])}{stars(c['p'])} ({pct(c['longer'], 0)})")
         md.append(f"| {short(m)} | " + " | ".join(row_md) + " |")
         tex.append(f"{short(m)} & " + " & ".join(row_tex) + r" \\")
     tex += [r"\bottomrule", r"\end{tabular}"]
@@ -601,9 +659,7 @@ def table_pair_matrix(out: Path) -> str:
     # Correlation between evaluator accuracy and P(own solution is the longer one)
     xs, ys = [], []
     for (ev, opp), c in cells.items():
-        own, oth = load_code("mbpp-sanitized", ev), load_code("mbpp-sanitized", opp)
-        ids = [t for t in own if t in oth]
-        xs.append(heuristic_accuracy((own[t], oth[t]) for t in ids)["Longer code"])
+        xs.append(c["longer"])
         ys.append(c["acc"])
     def pearson(a, b):
         ma, mb = sum(a) / len(a), sum(b) / len(b)
@@ -625,6 +681,9 @@ def table_pair_matrix(out: Path) -> str:
         for ev in sorted({k[0] for k in keys}):
             idx = [i for i, k in enumerate(keys) if k[0] != ev]
             loo.append((short(ev), pearson([xs[i] for i in idx], [ys[i] for i in idx])))
+        mx, my = sum(xs) / len(xs), sum(ys) / len(ys)
+        slope = sum((x - mx) * (y - my) for x, y in zip(xs, ys)) / sum((x - mx) ** 2 for x in xs)
+        md.append(f"OLS slope of accuracy on P(own code longer): {slope:.2f}; intercept {my - slope * mx:.2f}")
         md.append("Leave-one-evaluator-out r: " + ", ".join(f"without {e}: {v:.3f}" for e, v in loo))
         ps = [cells[k]["p"] for k in keys]
         adj = holm(ps)
@@ -636,51 +695,90 @@ def table_pair_matrix(out: Path) -> str:
 
 
 def table_self_preference(out: Path) -> str:
-    """For each (pair, dataset): P(choose model X) when X judges vs. when the other model judges.
-    Self-preference = difference between the two, on the same pairs. Also conditioned on test ties."""
-    md = ["| Dataset | Pair (X vs Y) | P(X chosen \\| X judges) | P(X chosen \\| Y judges) | Δ (self-pref.) | Δ on test-tied pairs | n tied |", "|---|---|---|---|---|---|---|"]
+    """For each (pair X vs Y, code version): P(X chosen) when X judges, when a neutral model Z judges, and when
+    Y judges, on the same items in the same order. Delta = P(X|X) - P(X|Y) is the combined self-preference;
+    with Z it splits into Delta_X = P(X|X) - P(X|Z) and Delta_Y = P(X|Z) - P(X|Y). Exact McNemar tests."""
+    md = ["| Code | Pair (X vs Y) | Z | P(X\\|X) | P(X\\|Z) | P(X\\|Y) | Δ_X | Δ_Y | Δ | Δ test-tied | n tied | detail |", "|---|---|---|---|---|---|---|---|---|---|---|---|"]
     tex = [
-        r"\begin{tabular}{@{}llccccc@{}}",
+        r"\begin{tabular}{@{}lllcccccc@{}}",
         r"\toprule",
-        r"\textbf{Code} & \textbf{Pair ($X$ vs.\ $Y$)} & $P(X\mid X\text{ judges})$ & $P(X\mid Y\text{ judges})$ & $\Delta$ & $\Delta$ (test-tied) & $N_{\text{tied}}$ \\",
+        r"\textbf{Code} & \textbf{Pair ($X$ vs.\ $Y$)} & \textbf{Neutral $Z$} & $P(X\mid X)$ & $P(X\mid Z)$ & $P(X\mid Y)$ & $\Delta_X$ & $\Delta_Y$ & $\Delta$ \\",
         r"\midrule",
     ]
+
+    def mcnemar(ra, rb, model):
+        a = {r["task_id"]: r["chosen_model"] == model for r in ra}
+        b = {r["task_id"]: r["chosen_model"] == model for r in rb}
+        common = [t for t in a if t in b]
+        n10 = sum(1 for t in common if a[t] and not b[t])
+        n01 = sum(1 for t in common if b[t] and not a[t])
+        return (binom_p(n10, n10 + n01) if n10 + n01 else 1.0), n10, n01
+
+    def rate(recs, model, tied_only=False):
+        sel = [r for r in recs if not tied_only or (r["candidate_1_passed"] == r["candidate_2_passed"])]
+        return (sum(1 for r in sel if r["chosen_model"] == model) / len(sel) if sel else float("nan")), len(sel)
+
     rows = 0
-    for ds, dsname in [("mbpp-sanitized", "original"), ("mbpp-sanitized-obfuscated", "normalized")]:
+    for ds, dsname, obf in [("mbpp-sanitized", "original", False), (NORM_RUNS, "normalized", True)]:
         d = DATA / "self_preference" / ds / "test"
         if not d.exists():
             continue
         runs: Dict[Tuple[str, str, str], List[dict]] = {}
         for p in sorted(d.glob("*.jsonl")):
-            recs = [r for r in read_jsonl(p) if r["predicted_candidate"] is not None]
+            recs = drop_empty([r for r in read_jsonl(p) if r["predicted_candidate"] is not None], obf)
             if recs:
                 runs[(recs[0]["judge_model"], recs[0]["model1"], recs[0]["model2"])] = recs
-        pairs = sorted({(m1, m2) for (_, m1, m2) in runs})
-        for m1, m2 in pairs:
+        for m1, m2 in sorted({(a, b) for (_, a, b) in runs}):
             rx, ry = runs.get((m1, m1, m2)), runs.get((m2, m1, m2))
             if not rx or not ry:
                 continue
-            def rate(recs, model, tied_only=False):
-                sel = [r for r in recs if not tied_only or (r["candidate_1_passed"] == r["candidate_2_passed"])]
-                return (sum(1 for r in sel if r["chosen_model"] == model) / len(sel) if sel else float("nan")), len(sel)
-            px, _ = rate(rx, m1)
-            py, _ = rate(ry, m1)
+            neutral = [j for (j, a, b) in runs if (a, b) == (m1, m2) and j not in (m1, m2)]
+            rz = runs[(neutral[0], m1, m2)] if neutral else None
+            px, py = rate(rx, m1)[0], rate(ry, m1)[0]
             pxt, nt = rate(rx, m1, True)
-            pyt, _ = rate(ry, m1, True)
-            # paired test: items judged by both X and Y; exact McNemar on discordant items
-            ax = {r["task_id"]: (r["chosen_model"] == m1) for r in rx}
-            by = {r["task_id"]: (r["chosen_model"] == m1) for r in ry}
-            common = [t for t in ax if t in by]
-            n10 = sum(1 for t in common if ax[t] and not by[t])
-            n01 = sum(1 for t in common if by[t] and not ax[t])
-            pv = binom_p(n10, n10 + n01) if (n10 + n01) else 1.0
+            pyt = rate(ry, m1, True)[0]
+            pv, n10, n01 = mcnemar(rx, ry, m1)
+            cells = [f"{pct(px)}", "--", f"{pct(py)}", "--", "--"]
+            extra = ""
+            if rz:
+                pz = rate(rz, m1)[0]
+                pvx, *_ = mcnemar(rx, rz, m1)
+                pvy, *_ = mcnemar(rz, ry, m1)
+                cells = [f"{pct(px)}", f"{pct(pz)}", f"{pct(py)}", f"{signed(100*(px-pz))}{stars(pvx)}", f"{signed(100*(pz-py))}{stars(pvy)}"]
+                extra = f"Z={short(neutral[0])} P(X|Z)={pct(pz)} Δ_X={100*(px-pz):+.1f} (p={pvx:.2g}) Δ_Y={100*(pz-py):+.1f} (p={pvy:.2g})"
             rows += 1
-            md.append(f"| {dsname} | {short(m1)} vs {short(m2)} | {pct(px)} | {pct(py)} | {100*(px-py):+.1f} (McNemar p={pv:.2g}; discordant {n10}/{n01}) | {100*(pxt-pyt):+.1f} | {nt} |")
-            tex.append(f"{dsname} & {short(m1)} vs.\\ {short(m2)} & {pct(px)} & {pct(py)} & {100*(px-py):+.1f}{stars(pv)} & {100*(pxt-pyt):+.1f} & {nt} \\\\")
+            md.append(f"| {dsname} | {short(m1)} vs {short(m2)} | {short(neutral[0]) if neutral else '--'} | {cells[0]} | {cells[1]} | {cells[2]} | {cells[3]} | {cells[4]} | {100*(px-py):+.1f} (McNemar p={pv:.2g}; discordant {n10}/{n01}; n={len(rx)},{len(ry)}) | {100*(pxt-pyt):+.1f} | {nt} | {extra} |")
+            tex.append(f"{dsname} & {short(m1)} vs.\\ {short(m2)} & {short(neutral[0]) if neutral else '--'} & " + " & ".join(cells) + f" & {signed(100*(px-py))}{stars(pv)} \\\\")
     tex += [r"\bottomrule", r"\end{tabular}"]
     if rows:
         (out / "self_preference.tex").write_text("\n".join(tex) + "\n")
     return "\n".join(md)
+
+
+def error_types() -> str:
+    """Failure categories over the five core models' original solutions (first error of each failed task)."""
+    counts: Dict[str, int] = defaultdict(int)
+    n_exec = 0
+    for ds, _ in DATASETS:
+        for m in CORE_MODELS:
+            p = DATA / "tests" / ds / "test" / f"tests-{safe(m)}.jsonl"
+            if not p.exists():
+                continue
+            empty = empty_ids(ds, m)
+            for r in read_jsonl(p):
+                n_exec += 1
+                if r["passed"]:
+                    continue
+                err = str(r["errors"][0]) if r["errors"] else ""
+                if str(r["task_id"]) in empty:
+                    kind = "Empty output"
+                else:
+                    kind = next((k for k in ["TimeoutError", "SyntaxError", "IndentationError", "AssertionError", "NameError", "TypeError"] if k in err), "Other")
+                    kind = "SyntaxError" if kind == "IndentationError" else kind
+                counts[kind] += 1
+    total = sum(counts.values())
+    lines = [f"{n_exec} executions, {total} failures"] + [f"  {k}: {v} ({100 * v / total:.1f}%)" for k, v in sorted(counts.items(), key=lambda kv: -kv[1])]
+    return "\n".join(lines)
 
 
 # ── Table: robustness of Task 1a to prompt paraphrase and repeated runs ───
@@ -702,13 +800,17 @@ def table_robustness(out: Path) -> str:
         v, b = analyze_pair_file(p, False), analyze_pair_file(base_p, False)
         if not v or not b:
             continue
-        bv = {r["task_id"]: r["predicted_candidate"] for r in read_jsonl(p) if r["predicted_candidate"] is not None}
-        bb = {r["task_id"]: r["predicted_candidate"] for r in read_jsonl(base_p) if r["predicted_candidate"] is not None}
+        # Compare the chosen solution, not the letter: A/B order was re-drawn for about half the items.
+        chosen = lambda r: r[f"candidate_{r['predicted_candidate']}_model"]
+        bv = {r["task_id"]: r for r in v["recs"]}
+        bb = {r["task_id"]: r for r in b["recs"]}
         common = [t for t in bv if t in bb]
-        agree = sum(1 for t in common if bv[t] == bb[t]) / max(1, len(common))
+        agree = sum(1 for t in common if chosen(bv[t]) == chosen(bb[t])) / max(1, len(common))
+        same = [t for t in common if bv[t]["candidate_1_model"] == bb[t]["candidate_1_model"]]
+        agree_same = sum(1 for t in same if chosen(bv[t]) == chosen(bb[t])) / max(1, len(same))
         label = {"promptv2": "paraphrased prompt", "rerun": "repeat, same prompt"}.get(tag, tag)
         rows += 1
-        md.append(f"| {short(v['ev'])} | {short(v['opp'])} | {label} | {pct(b['acc'])} | {pct(v['acc'])} | {pct(agree)} ({len(common)}) |")
+        md.append(f"| {short(v['ev'])} | {short(v['opp'])} | {label} | {pct(b['acc'])} | {pct(v['acc'])} | {pct(agree)} ({len(common)}); same A/B order: {pct(agree_same)} ({len(same)}) |")
         tex.append(f"{short(v['ev'])} & {short(v['opp'])} & {label} & {pct(b['acc'])} & {pct(v['acc'])} & {pct(agree)} \\\\")
     tex += [r"\bottomrule", r"\end{tabular}"]
     if rows:
@@ -749,6 +851,8 @@ def main() -> None:
     print(table_pair_matrix(out))
     print("\n## Self-preference (blind quality judgment)\n")
     print(table_self_preference(out))
+    print("\n## Failure types (original code)\n")
+    print(error_types())
     print("\n## Robustness of Task 1a (prompt paraphrase, repeat run)\n")
     print(table_robustness(out))
     json.dump(

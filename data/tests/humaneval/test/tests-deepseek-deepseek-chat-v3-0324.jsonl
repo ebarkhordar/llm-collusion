@@ -9,7 +9,7 @@
 {"benchmark": "humaneval", "task_id": "HumanEval/16", "model_name": "deepseek/deepseek-chat-v3-0324", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/15", "model_name": "deepseek/deepseek-chat-v3-0324", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/2", "model_name": "deepseek/deepseek-chat-v3-0324", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
-{"benchmark": "humaneval", "task_id": "HumanEval/10", "model_name": "deepseek/deepseek-chat-v3-0324", "num_tests": 1, "num_passed": 0, "passed": false, "errors": ["AssertionError: "]}
+{"benchmark": "humaneval", "task_id": "HumanEval/10", "model_name": "deepseek/deepseek-chat-v3-0324", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/5", "model_name": "deepseek/deepseek-chat-v3-0324", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/14", "model_name": "deepseek/deepseek-chat-v3-0324", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/19", "model_name": "deepseek/deepseek-chat-v3-0324", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
@@ -32,7 +32,7 @@
 {"benchmark": "humaneval", "task_id": "HumanEval/24", "model_name": "deepseek/deepseek-chat-v3-0324", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/20", "model_name": "deepseek/deepseek-chat-v3-0324", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/41", "model_name": "deepseek/deepseek-chat-v3-0324", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
-{"benchmark": "humaneval", "task_id": "HumanEval/38", "model_name": "deepseek/deepseek-chat-v3-0324", "num_tests": 1, "num_passed": 0, "passed": false, "errors": ["NameError: name 'encode_cyclic' is not defined"]}
+{"benchmark": "humaneval", "task_id": "HumanEval/38", "model_name": "deepseek/deepseek-chat-v3-0324", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/31", "model_name": "deepseek/deepseek-chat-v3-0324", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/44", "model_name": "deepseek/deepseek-chat-v3-0324", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/42", "model_name": "deepseek/deepseek-chat-v3-0324", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
@@ -48,7 +48,7 @@
 {"benchmark": "humaneval", "task_id": "HumanEval/52", "model_name": "deepseek/deepseek-chat-v3-0324", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/53", "model_name": "deepseek/deepseek-chat-v3-0324", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/56", "model_name": "deepseek/deepseek-chat-v3-0324", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
-{"benchmark": "humaneval", "task_id": "HumanEval/50", "model_name": "deepseek/deepseek-chat-v3-0324", "num_tests": 1, "num_passed": 0, "passed": false, "errors": ["NameError: name 'encode_shift' is not defined"]}
+{"benchmark": "humaneval", "task_id": "HumanEval/50", "model_name": "deepseek/deepseek-chat-v3-0324", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/55", "model_name": "deepseek/deepseek-chat-v3-0324", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/58", "model_name": "deepseek/deepseek-chat-v3-0324", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/60", "model_name": "deepseek/deepseek-chat-v3-0324", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
@@ -80,7 +80,7 @@
 {"benchmark": "humaneval", "task_id": "HumanEval/84", "model_name": "deepseek/deepseek-chat-v3-0324", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/76", "model_name": "deepseek/deepseek-chat-v3-0324", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/74", "model_name": "deepseek/deepseek-chat-v3-0324", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
-{"benchmark": "humaneval", "task_id": "HumanEval/32", "model_name": "deepseek/deepseek-chat-v3-0324", "num_tests": 1, "num_passed": 0, "passed": false, "errors": ["TypeError: poly() missing 1 required positional argument: 'x'"]}
+{"benchmark": "humaneval", "task_id": "HumanEval/32", "model_name": "deepseek/deepseek-chat-v3-0324", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/85", "model_name": "deepseek/deepseek-chat-v3-0324", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/86", "model_name": "deepseek/deepseek-chat-v3-0324", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/87", "model_name": "deepseek/deepseek-chat-v3-0324", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}

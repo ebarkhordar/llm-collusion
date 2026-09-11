@@ -1,0 +1,7 @@
+{
+  "rejudged_from": "data/self_recognition/mbpp-sanitized-obfuscated/test/openai-gpt-5.jsonl",
+  "rejudged_items": 25,
+  "rejudge_failures": 0,
+  "rejudge_timestamp": "2026-09-11T17:05:18.012669",
+  "rejudge_prompt_sha256": "bfd9000c7ceb"
+}

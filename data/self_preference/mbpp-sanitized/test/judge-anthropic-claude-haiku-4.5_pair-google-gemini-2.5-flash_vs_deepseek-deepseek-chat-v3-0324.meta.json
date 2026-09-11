@@ -1,0 +1,13 @@
+{
+  "timestamp": "2026-09-11T17:01:12.170343",
+  "task": "self_preference",
+  "prompt_file": "/Users/ehsan/CodingProjects/llm-collusion/prompts/model_attribution/self_preference.md",
+  "prompt_sha256": "84bb28ef8b49",
+  "judge_model": "anthropic/claude-haiku-4.5",
+  "model1": "google/gemini-2.5-flash",
+  "model2": "deepseek/deepseek-chat-v3-0324",
+  "temperature": 0.0,
+  "seed": 42,
+  "processed": 257,
+  "results_file": "/Users/ehsan/CodingProjects/llm-collusion/data/self_preference/mbpp-sanitized/test/judge-anthropic-claude-haiku-4.5_pair-google-gemini-2.5-flash_vs_deepseek-deepseek-chat-v3-0324.jsonl"
+}

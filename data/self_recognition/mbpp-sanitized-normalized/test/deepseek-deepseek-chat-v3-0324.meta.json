@@ -1,0 +1,7 @@
+{
+  "rejudged_from": "data/self_recognition/mbpp-sanitized-obfuscated/test/deepseek-deepseek-chat-v3-0324.jsonl",
+  "rejudged_items": 24,
+  "rejudge_failures": 0,
+  "rejudge_timestamp": "2026-09-11T16:59:21.874764",
+  "rejudge_prompt_sha256": "bfd9000c7ceb"
+}

@@ -1,8 +1,8 @@
-{"benchmark": "humaneval", "task_id": "HumanEval/7", "model_name": "google/gemini-2.5-flash", "num_tests": 1, "num_passed": 0, "passed": false, "errors": ["SetupError SyntaxError: 'return' outside function (<string>, line 1)"]}
-{"benchmark": "humaneval", "task_id": "HumanEval/0", "model_name": "google/gemini-2.5-flash", "num_tests": 1, "num_passed": 0, "passed": false, "errors": ["SetupError IndentationError: unindent does not match any outer indentation level (<string>, line 5)"]}
+{"benchmark": "humaneval", "task_id": "HumanEval/7", "model_name": "google/gemini-2.5-flash", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
+{"benchmark": "humaneval", "task_id": "HumanEval/0", "model_name": "google/gemini-2.5-flash", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/2", "model_name": "google/gemini-2.5-flash", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
-{"benchmark": "humaneval", "task_id": "HumanEval/5", "model_name": "google/gemini-2.5-flash", "num_tests": 1, "num_passed": 0, "passed": false, "errors": ["SetupError IndentationError: unindent does not match any outer indentation level (<string>, line 4)"]}
-{"benchmark": "humaneval", "task_id": "HumanEval/1", "model_name": "google/gemini-2.5-flash", "num_tests": 1, "num_passed": 0, "passed": false, "errors": ["SetupError IndentationError: unexpected indent (<string>, line 2)"]}
+{"benchmark": "humaneval", "task_id": "HumanEval/5", "model_name": "google/gemini-2.5-flash", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
+{"benchmark": "humaneval", "task_id": "HumanEval/1", "model_name": "google/gemini-2.5-flash", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/8", "model_name": "google/gemini-2.5-flash", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/9", "model_name": "google/gemini-2.5-flash", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/3", "model_name": "google/gemini-2.5-flash", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
@@ -12,54 +12,54 @@
 {"benchmark": "humaneval", "task_id": "HumanEval/10", "model_name": "google/gemini-2.5-flash", "num_tests": 1, "num_passed": 0, "passed": false, "errors": ["AssertionError: "]}
 {"benchmark": "humaneval", "task_id": "HumanEval/12", "model_name": "google/gemini-2.5-flash", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/13", "model_name": "google/gemini-2.5-flash", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
-{"benchmark": "humaneval", "task_id": "HumanEval/14", "model_name": "google/gemini-2.5-flash", "num_tests": 1, "num_passed": 0, "passed": false, "errors": ["SetupError IndentationError: unexpected indent (<string>, line 2)"]}
+{"benchmark": "humaneval", "task_id": "HumanEval/14", "model_name": "google/gemini-2.5-flash", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/15", "model_name": "google/gemini-2.5-flash", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/16", "model_name": "google/gemini-2.5-flash", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/18", "model_name": "google/gemini-2.5-flash", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/17", "model_name": "google/gemini-2.5-flash", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
-{"benchmark": "humaneval", "task_id": "HumanEval/20", "model_name": "google/gemini-2.5-flash", "num_tests": 1, "num_passed": 0, "passed": false, "errors": ["SetupError IndentationError: unindent does not match any outer indentation level (<string>, line 4)"]}
-{"benchmark": "humaneval", "task_id": "HumanEval/19", "model_name": "google/gemini-2.5-flash", "num_tests": 1, "num_passed": 0, "passed": false, "errors": ["SetupError IndentationError: unexpected indent (<string>, line 2)"]}
-{"benchmark": "humaneval", "task_id": "HumanEval/21", "model_name": "google/gemini-2.5-flash", "num_tests": 1, "num_passed": 0, "passed": false, "errors": ["SetupError IndentationError: unexpected indent (<string>, line 2)"]}
-{"benchmark": "humaneval", "task_id": "HumanEval/22", "model_name": "google/gemini-2.5-flash", "num_tests": 1, "num_passed": 0, "passed": false, "errors": ["SetupError SyntaxError: 'return' outside function (<string>, line 1)"]}
+{"benchmark": "humaneval", "task_id": "HumanEval/20", "model_name": "google/gemini-2.5-flash", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
+{"benchmark": "humaneval", "task_id": "HumanEval/19", "model_name": "google/gemini-2.5-flash", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
+{"benchmark": "humaneval", "task_id": "HumanEval/21", "model_name": "google/gemini-2.5-flash", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
+{"benchmark": "humaneval", "task_id": "HumanEval/22", "model_name": "google/gemini-2.5-flash", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/23", "model_name": "google/gemini-2.5-flash", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/24", "model_name": "google/gemini-2.5-flash", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
-{"benchmark": "humaneval", "task_id": "HumanEval/26", "model_name": "google/gemini-2.5-flash", "num_tests": 1, "num_passed": 0, "passed": false, "errors": ["SetupError IndentationError: unexpected indent (<string>, line 2)"]}
+{"benchmark": "humaneval", "task_id": "HumanEval/26", "model_name": "google/gemini-2.5-flash", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/25", "model_name": "google/gemini-2.5-flash", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
-{"benchmark": "humaneval", "task_id": "HumanEval/28", "model_name": "google/gemini-2.5-flash", "num_tests": 1, "num_passed": 0, "passed": false, "errors": ["SetupError SyntaxError: 'return' outside function (<string>, line 1)"]}
+{"benchmark": "humaneval", "task_id": "HumanEval/28", "model_name": "google/gemini-2.5-flash", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/27", "model_name": "google/gemini-2.5-flash", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
-{"benchmark": "humaneval", "task_id": "HumanEval/29", "model_name": "google/gemini-2.5-flash", "num_tests": 1, "num_passed": 0, "passed": false, "errors": ["SetupError IndentationError: unexpected indent (<string>, line 2)"]}
+{"benchmark": "humaneval", "task_id": "HumanEval/29", "model_name": "google/gemini-2.5-flash", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/30", "model_name": "google/gemini-2.5-flash", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/31", "model_name": "google/gemini-2.5-flash", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
-{"benchmark": "humaneval", "task_id": "HumanEval/32", "model_name": "google/gemini-2.5-flash", "num_tests": 1, "num_passed": 0, "passed": false, "errors": ["TypeError: poly() missing 1 required positional argument: 'x'"]}
+{"benchmark": "humaneval", "task_id": "HumanEval/32", "model_name": "google/gemini-2.5-flash", "num_tests": 1, "num_passed": 0, "passed": false, "errors": ["SetupError NameError: entry point 'find_zero' not defined by the solution"]}
 {"benchmark": "humaneval", "task_id": "HumanEval/33", "model_name": "google/gemini-2.5-flash", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
-{"benchmark": "humaneval", "task_id": "HumanEval/34", "model_name": "google/gemini-2.5-flash", "num_tests": 1, "num_passed": 0, "passed": false, "errors": ["SetupError SyntaxError: 'return' outside function (<string>, line 1)"]}
+{"benchmark": "humaneval", "task_id": "HumanEval/34", "model_name": "google/gemini-2.5-flash", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/35", "model_name": "google/gemini-2.5-flash", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/36", "model_name": "google/gemini-2.5-flash", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/37", "model_name": "google/gemini-2.5-flash", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
-{"benchmark": "humaneval", "task_id": "HumanEval/38", "model_name": "google/gemini-2.5-flash", "num_tests": 1, "num_passed": 0, "passed": false, "errors": ["NameError: name 'encode_cyclic' is not defined"]}
-{"benchmark": "humaneval", "task_id": "HumanEval/39", "model_name": "google/gemini-2.5-flash", "num_tests": 1, "num_passed": 0, "passed": false, "errors": ["AssertionError: "]}
+{"benchmark": "humaneval", "task_id": "HumanEval/38", "model_name": "google/gemini-2.5-flash", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
+{"benchmark": "humaneval", "task_id": "HumanEval/39", "model_name": "google/gemini-2.5-flash", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/40", "model_name": "google/gemini-2.5-flash", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/41", "model_name": "google/gemini-2.5-flash", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/42", "model_name": "google/gemini-2.5-flash", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/44", "model_name": "google/gemini-2.5-flash", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
-{"benchmark": "humaneval", "task_id": "HumanEval/45", "model_name": "google/gemini-2.5-flash", "num_tests": 1, "num_passed": 0, "passed": false, "errors": ["SetupError SyntaxError: 'return' outside function (<string>, line 1)"]}
+{"benchmark": "humaneval", "task_id": "HumanEval/45", "model_name": "google/gemini-2.5-flash", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/43", "model_name": "google/gemini-2.5-flash", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
-{"benchmark": "humaneval", "task_id": "HumanEval/47", "model_name": "google/gemini-2.5-flash", "num_tests": 1, "num_passed": 0, "passed": false, "errors": ["SetupError IndentationError: unexpected indent (<string>, line 2)"]}
+{"benchmark": "humaneval", "task_id": "HumanEval/47", "model_name": "google/gemini-2.5-flash", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/46", "model_name": "google/gemini-2.5-flash", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
-{"benchmark": "humaneval", "task_id": "HumanEval/48", "model_name": "google/gemini-2.5-flash", "num_tests": 1, "num_passed": 0, "passed": false, "errors": ["SetupError IndentationError: unexpected indent (<string>, line 2)"]}
+{"benchmark": "humaneval", "task_id": "HumanEval/48", "model_name": "google/gemini-2.5-flash", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/49", "model_name": "google/gemini-2.5-flash", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
-{"benchmark": "humaneval", "task_id": "HumanEval/50", "model_name": "google/gemini-2.5-flash", "num_tests": 1, "num_passed": 0, "passed": false, "errors": ["NameError: name 'encode_shift' is not defined"]}
+{"benchmark": "humaneval", "task_id": "HumanEval/50", "model_name": "google/gemini-2.5-flash", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/51", "model_name": "google/gemini-2.5-flash", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
-{"benchmark": "humaneval", "task_id": "HumanEval/52", "model_name": "google/gemini-2.5-flash", "num_tests": 1, "num_passed": 0, "passed": false, "errors": ["SetupError IndentationError: unindent does not match any outer indentation level (<string>, line 4)"]}
-{"benchmark": "humaneval", "task_id": "HumanEval/53", "model_name": "google/gemini-2.5-flash", "num_tests": 1, "num_passed": 0, "passed": false, "errors": ["SetupError SyntaxError: 'return' outside function (<string>, line 1)"]}
+{"benchmark": "humaneval", "task_id": "HumanEval/52", "model_name": "google/gemini-2.5-flash", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
+{"benchmark": "humaneval", "task_id": "HumanEval/53", "model_name": "google/gemini-2.5-flash", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/54", "model_name": "google/gemini-2.5-flash", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/55", "model_name": "google/gemini-2.5-flash", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/57", "model_name": "google/gemini-2.5-flash", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/56", "model_name": "google/gemini-2.5-flash", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/58", "model_name": "google/gemini-2.5-flash", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/59", "model_name": "google/gemini-2.5-flash", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
-{"benchmark": "humaneval", "task_id": "HumanEval/60", "model_name": "google/gemini-2.5-flash", "num_tests": 1, "num_passed": 0, "passed": false, "errors": ["SetupError SyntaxError: 'return' outside function (<string>, line 1)"]}
-{"benchmark": "humaneval", "task_id": "HumanEval/61", "model_name": "google/gemini-2.5-flash", "num_tests": 1, "num_passed": 0, "passed": false, "errors": ["SetupError IndentationError: unexpected indent (<string>, line 2)"]}
+{"benchmark": "humaneval", "task_id": "HumanEval/60", "model_name": "google/gemini-2.5-flash", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
+{"benchmark": "humaneval", "task_id": "HumanEval/61", "model_name": "google/gemini-2.5-flash", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/62", "model_name": "google/gemini-2.5-flash", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/64", "model_name": "google/gemini-2.5-flash", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/63", "model_name": "google/gemini-2.5-flash", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
@@ -138,7 +138,7 @@
 {"benchmark": "humaneval", "task_id": "HumanEval/138", "model_name": "google/gemini-2.5-flash", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/139", "model_name": "google/gemini-2.5-flash", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/140", "model_name": "google/gemini-2.5-flash", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
-{"benchmark": "humaneval", "task_id": "HumanEval/132", "model_name": "google/gemini-2.5-flash", "num_tests": 1, "num_passed": 0, "passed": false, "errors": ["SetupError SyntaxError: invalid syntax (<string>, line 1)"]}
+{"benchmark": "humaneval", "task_id": "HumanEval/132", "model_name": "google/gemini-2.5-flash", "num_tests": 1, "num_passed": 0, "passed": false, "errors": ["SetupError SyntaxError: invalid syntax (<string>, line 15)"]}
 {"benchmark": "humaneval", "task_id": "HumanEval/142", "model_name": "google/gemini-2.5-flash", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/141", "model_name": "google/gemini-2.5-flash", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/143", "model_name": "google/gemini-2.5-flash", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}

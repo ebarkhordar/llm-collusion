@@ -1,5 +1,5 @@
 {"benchmark": "humaneval", "task_id": "HumanEval/8", "model_name": "openai/gpt-5", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
-{"benchmark": "humaneval", "task_id": "HumanEval/10", "model_name": "openai/gpt-5", "num_tests": 1, "num_passed": 0, "passed": false, "errors": ["AssertionError: "]}
+{"benchmark": "humaneval", "task_id": "HumanEval/10", "model_name": "openai/gpt-5", "num_tests": 1, "num_passed": 0, "passed": false, "errors": ["SetupError NameError: entry point 'make_palindrome' not defined by the solution"]}
 {"benchmark": "humaneval", "task_id": "HumanEval/3", "model_name": "openai/gpt-5", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/7", "model_name": "openai/gpt-5", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/14", "model_name": "openai/gpt-5", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
@@ -29,7 +29,7 @@
 {"benchmark": "humaneval", "task_id": "HumanEval/21", "model_name": "openai/gpt-5", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/34", "model_name": "openai/gpt-5", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/35", "model_name": "openai/gpt-5", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
-{"benchmark": "humaneval", "task_id": "HumanEval/32", "model_name": "openai/gpt-5", "num_tests": 1, "num_passed": 0, "passed": false, "errors": ["TypeError: poly() missing 1 required positional argument: 'x'"]}
+{"benchmark": "humaneval", "task_id": "HumanEval/32", "model_name": "openai/gpt-5", "num_tests": 1, "num_passed": 0, "passed": false, "errors": ["SetupError NameError: entry point 'find_zero' not defined by the solution"]}
 {"benchmark": "humaneval", "task_id": "HumanEval/17", "model_name": "openai/gpt-5", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/24", "model_name": "openai/gpt-5", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/25", "model_name": "openai/gpt-5", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
@@ -50,7 +50,7 @@
 {"benchmark": "humaneval", "task_id": "HumanEval/44", "model_name": "openai/gpt-5", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/46", "model_name": "openai/gpt-5", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/56", "model_name": "openai/gpt-5", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
-{"benchmark": "humaneval", "task_id": "HumanEval/38", "model_name": "openai/gpt-5", "num_tests": 1, "num_passed": 0, "passed": false, "errors": ["AssertionError: "]}
+{"benchmark": "humaneval", "task_id": "HumanEval/38", "model_name": "openai/gpt-5", "num_tests": 1, "num_passed": 0, "passed": false, "errors": ["SetupError NameError: entry point 'decode_cyclic' not defined by the solution"]}
 {"benchmark": "humaneval", "task_id": "HumanEval/57", "model_name": "openai/gpt-5", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/59", "model_name": "openai/gpt-5", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/54", "model_name": "openai/gpt-5", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
@@ -58,7 +58,7 @@
 {"benchmark": "humaneval", "task_id": "HumanEval/62", "model_name": "openai/gpt-5", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/67", "model_name": "openai/gpt-5", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/72", "model_name": "openai/gpt-5", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
-{"benchmark": "humaneval", "task_id": "HumanEval/50", "model_name": "openai/gpt-5", "num_tests": 1, "num_passed": 0, "passed": false, "errors": ["AssertionError: "]}
+{"benchmark": "humaneval", "task_id": "HumanEval/50", "model_name": "openai/gpt-5", "num_tests": 1, "num_passed": 0, "passed": false, "errors": ["SetupError NameError: entry point 'decode_shift' not defined by the solution"]}
 {"benchmark": "humaneval", "task_id": "HumanEval/66", "model_name": "openai/gpt-5", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/69", "model_name": "openai/gpt-5", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/74", "model_name": "openai/gpt-5", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
@@ -82,7 +82,7 @@
 {"benchmark": "humaneval", "task_id": "HumanEval/89", "model_name": "openai/gpt-5", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/84", "model_name": "openai/gpt-5", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/88", "model_name": "openai/gpt-5", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
-{"benchmark": "humaneval", "task_id": "HumanEval/47", "model_name": "openai/gpt-5", "num_tests": 1, "num_passed": 0, "passed": false, "errors": ["SetupError SyntaxError: unterminated string literal (detected at line 15) (<string>, line 15)"]}
+{"benchmark": "humaneval", "task_id": "HumanEval/47", "model_name": "openai/gpt-5", "num_tests": 1, "num_passed": 0, "passed": false, "errors": ["SetupError SyntaxError: unterminated string literal (detected at line 24) (<string>, line 24)"]}
 {"benchmark": "humaneval", "task_id": "HumanEval/64", "model_name": "openai/gpt-5", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/97", "model_name": "openai/gpt-5", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/81", "model_name": "openai/gpt-5", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
@@ -93,7 +93,7 @@
 {"benchmark": "humaneval", "task_id": "HumanEval/83", "model_name": "openai/gpt-5", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/96", "model_name": "openai/gpt-5", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/107", "model_name": "openai/gpt-5", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
-{"benchmark": "humaneval", "task_id": "HumanEval/39", "model_name": "openai/gpt-5", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
+{"benchmark": "humaneval", "task_id": "HumanEval/39", "model_name": "openai/gpt-5", "num_tests": 1, "num_passed": 0, "passed": false, "errors": ["SetupError ValueError: empty solution"]}
 {"benchmark": "humaneval", "task_id": "HumanEval/94", "model_name": "openai/gpt-5", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/101", "model_name": "openai/gpt-5", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/112", "model_name": "openai/gpt-5", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
@@ -114,7 +114,7 @@
 {"benchmark": "humaneval", "task_id": "HumanEval/119", "model_name": "openai/gpt-5", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/110", "model_name": "openai/gpt-5", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/121", "model_name": "openai/gpt-5", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
-{"benchmark": "humaneval", "task_id": "HumanEval/120", "model_name": "openai/gpt-5", "num_tests": 1, "num_passed": 0, "passed": false, "errors": ["TypeError: 'int' object is not iterable"]}
+{"benchmark": "humaneval", "task_id": "HumanEval/120", "model_name": "openai/gpt-5", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/128", "model_name": "openai/gpt-5", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/126", "model_name": "openai/gpt-5", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/124", "model_name": "openai/gpt-5", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
@@ -136,7 +136,7 @@
 {"benchmark": "humaneval", "task_id": "HumanEval/152", "model_name": "openai/gpt-5", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/149", "model_name": "openai/gpt-5", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/141", "model_name": "openai/gpt-5", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
-{"benchmark": "humaneval", "task_id": "HumanEval/76", "model_name": "openai/gpt-5", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
+{"benchmark": "humaneval", "task_id": "HumanEval/76", "model_name": "openai/gpt-5", "num_tests": 1, "num_passed": 0, "passed": false, "errors": ["SetupError ValueError: empty solution"]}
 {"benchmark": "humaneval", "task_id": "HumanEval/134", "model_name": "openai/gpt-5", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/150", "model_name": "openai/gpt-5", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/148", "model_name": "openai/gpt-5", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
@@ -146,19 +146,19 @@
 {"benchmark": "humaneval", "task_id": "HumanEval/159", "model_name": "openai/gpt-5", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/157", "model_name": "openai/gpt-5", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/156", "model_name": "openai/gpt-5", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
-{"benchmark": "humaneval", "task_id": "HumanEval/91", "model_name": "openai/gpt-5", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
+{"benchmark": "humaneval", "task_id": "HumanEval/91", "model_name": "openai/gpt-5", "num_tests": 1, "num_passed": 0, "passed": false, "errors": ["SetupError ValueError: empty solution"]}
 {"benchmark": "humaneval", "task_id": "HumanEval/151", "model_name": "openai/gpt-5", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/161", "model_name": "openai/gpt-5", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/162", "model_name": "openai/gpt-5", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/163", "model_name": "openai/gpt-5", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
-{"benchmark": "humaneval", "task_id": "HumanEval/109", "model_name": "openai/gpt-5", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
+{"benchmark": "humaneval", "task_id": "HumanEval/109", "model_name": "openai/gpt-5", "num_tests": 1, "num_passed": 0, "passed": false, "errors": ["SetupError ValueError: empty solution"]}
 {"benchmark": "humaneval", "task_id": "HumanEval/144", "model_name": "openai/gpt-5", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/153", "model_name": "openai/gpt-5", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/154", "model_name": "openai/gpt-5", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/158", "model_name": "openai/gpt-5", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
-{"benchmark": "humaneval", "task_id": "HumanEval/147", "model_name": "openai/gpt-5", "num_tests": 1, "num_passed": 0, "passed": false, "errors": ["SetupError SyntaxError: unterminated triple-quoted string literal (detected at line 5) (<string>, line 3)"]}
-{"benchmark": "humaneval", "task_id": "HumanEval/116", "model_name": "openai/gpt-5", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
+{"benchmark": "humaneval", "task_id": "HumanEval/147", "model_name": "openai/gpt-5", "num_tests": 1, "num_passed": 0, "passed": false, "errors": ["SetupError SyntaxError: unterminated triple-quoted string literal (detected at line 20) (<string>, line 18)"]}
+{"benchmark": "humaneval", "task_id": "HumanEval/116", "model_name": "openai/gpt-5", "num_tests": 1, "num_passed": 0, "passed": false, "errors": ["SetupError ValueError: empty solution"]}
 {"benchmark": "humaneval", "task_id": "HumanEval/160", "model_name": "openai/gpt-5", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
-{"benchmark": "humaneval", "task_id": "HumanEval/129", "model_name": "openai/gpt-5", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
-{"benchmark": "humaneval", "task_id": "HumanEval/145", "model_name": "openai/gpt-5", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
-{"benchmark": "humaneval", "task_id": "HumanEval/132", "model_name": "openai/gpt-5", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
+{"benchmark": "humaneval", "task_id": "HumanEval/129", "model_name": "openai/gpt-5", "num_tests": 1, "num_passed": 0, "passed": false, "errors": ["SetupError ValueError: empty solution"]}
+{"benchmark": "humaneval", "task_id": "HumanEval/145", "model_name": "openai/gpt-5", "num_tests": 1, "num_passed": 0, "passed": false, "errors": ["SetupError ValueError: empty solution"]}
+{"benchmark": "humaneval", "task_id": "HumanEval/132", "model_name": "openai/gpt-5", "num_tests": 1, "num_passed": 0, "passed": false, "errors": ["SetupError ValueError: empty solution"]}

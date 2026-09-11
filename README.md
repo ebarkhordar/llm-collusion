@@ -94,8 +94,15 @@ python experiments/baselines.py --dataset-folder mbpp-sanitized --split test
 python experiments/obfuscate.py run --dataset-folder mbpp-sanitized --split test
 
 # pass@1 via unit tests
-python experiments/run_tests.py --input data/code_generation_obfuscated/mbpp-sanitized/test
+python experiments/run_tests.py --input data/code_generation_normalized/mbpp-sanitized/test
+
+# carry the normalized-code judgments over to the corrected normalizer (re-judges changed items only)
+python experiments/rejudge_normalized.py --dry-run
 ```
+
+The DS-1000 results in `data/tests/ds1000/` were produced with pandas 2.3.3. The lockfile now pins
+pandas 3.0.1, under which about ten Pandas problems per model fail for API reasons, so pin pandas
+2.3.3 to reproduce them.
 
 ## Layout
 
@@ -119,10 +126,13 @@ llm-collusion/
 
 ### About `data/`
 
-`code_generation/` holds the original model output; `code_generation_obfuscated/` is the R&P
-version the LLM reruns actually saw; `code_generation_normalized/` is the output of the corrected
-normalizer (a defect left lambda parameters and nested function names unrenamed — disclosed in the
-paper). A few directories named by timestamp (e.g. `full_attribution/20260319-152100/`) are early
+`code_generation/` holds the original model output. GPT-5 returned no code on 45 tasks (it spent its
+2,000-token budget on reasoning); the analysis counts these as test failures and drops them from
+every attribution task. `code_generation_normalized/` is the output of the corrected normalizer, and
+the judgments on it live in `*/mbpp-sanitized-normalized/`. `code_generation_obfuscated/` and
+`*/mbpp-sanitized-obfuscated/` are the September reruns on an earlier normalizer version that left
+lambda parameters and nested function names unrenamed; `rejudge_normalized.py` re-judged the items
+whose code changed. A few directories named by timestamp (e.g. `full_attribution/20260319-152100/`) are early
 exploratory runs, superseded by the dataset-named directories and not read by `analysis/`.
 
 ## License
