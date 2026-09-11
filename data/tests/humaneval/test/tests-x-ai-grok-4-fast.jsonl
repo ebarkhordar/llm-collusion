@@ -12,7 +12,7 @@
 {"benchmark": "humaneval", "task_id": "HumanEval/12", "model_name": "x-ai/grok-4-fast", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/13", "model_name": "x-ai/grok-4-fast", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/14", "model_name": "x-ai/grok-4-fast", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
-{"benchmark": "humaneval", "task_id": "HumanEval/10", "model_name": "x-ai/grok-4-fast", "num_tests": 1, "num_passed": 0, "passed": false, "errors": ["AssertionError: "]}
+{"benchmark": "humaneval", "task_id": "HumanEval/10", "model_name": "x-ai/grok-4-fast", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/16", "model_name": "x-ai/grok-4-fast", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/19", "model_name": "x-ai/grok-4-fast", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/17", "model_name": "x-ai/grok-4-fast", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
@@ -34,10 +34,10 @@
 {"benchmark": "humaneval", "task_id": "HumanEval/35", "model_name": "x-ai/grok-4-fast", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/33", "model_name": "x-ai/grok-4-fast", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/36", "model_name": "x-ai/grok-4-fast", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
-{"benchmark": "humaneval", "task_id": "HumanEval/38", "model_name": "x-ai/grok-4-fast", "num_tests": 1, "num_passed": 0, "passed": false, "errors": ["AssertionError: "]}
+{"benchmark": "humaneval", "task_id": "HumanEval/38", "model_name": "x-ai/grok-4-fast", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/37", "model_name": "x-ai/grok-4-fast", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/42", "model_name": "x-ai/grok-4-fast", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
-{"benchmark": "humaneval", "task_id": "HumanEval/39", "model_name": "x-ai/grok-4-fast", "num_tests": 1, "num_passed": 0, "passed": false, "errors": ["AssertionError: "]}
+{"benchmark": "humaneval", "task_id": "HumanEval/39", "model_name": "x-ai/grok-4-fast", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/41", "model_name": "x-ai/grok-4-fast", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/45", "model_name": "x-ai/grok-4-fast", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/43", "model_name": "x-ai/grok-4-fast", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
@@ -48,7 +48,7 @@
 {"benchmark": "humaneval", "task_id": "HumanEval/52", "model_name": "x-ai/grok-4-fast", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/53", "model_name": "x-ai/grok-4-fast", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/51", "model_name": "x-ai/grok-4-fast", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
-{"benchmark": "humaneval", "task_id": "HumanEval/50", "model_name": "x-ai/grok-4-fast", "num_tests": 1, "num_passed": 0, "passed": false, "errors": ["AssertionError: "]}
+{"benchmark": "humaneval", "task_id": "HumanEval/50", "model_name": "x-ai/grok-4-fast", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/40", "model_name": "x-ai/grok-4-fast", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/54", "model_name": "x-ai/grok-4-fast", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/55", "model_name": "x-ai/grok-4-fast", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
@@ -91,7 +91,7 @@
 {"benchmark": "humaneval", "task_id": "HumanEval/95", "model_name": "x-ai/grok-4-fast", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/98", "model_name": "x-ai/grok-4-fast", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/91", "model_name": "x-ai/grok-4-fast", "num_tests": 1, "num_passed": 0, "passed": false, "errors": ["AssertionError: Test 2"]}
-{"benchmark": "humaneval", "task_id": "HumanEval/94", "model_name": "x-ai/grok-4-fast", "num_tests": 1, "num_passed": 0, "passed": false, "errors": ["TypeError: '<=' not supported between instances of 'list' and 'int'"]}
+{"benchmark": "humaneval", "task_id": "HumanEval/94", "model_name": "x-ai/grok-4-fast", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/97", "model_name": "x-ai/grok-4-fast", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/101", "model_name": "x-ai/grok-4-fast", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/93", "model_name": "x-ai/grok-4-fast", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
@@ -110,13 +110,13 @@
 {"benchmark": "humaneval", "task_id": "HumanEval/112", "model_name": "x-ai/grok-4-fast", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/111", "model_name": "x-ai/grok-4-fast", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/114", "model_name": "x-ai/grok-4-fast", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
-{"benchmark": "humaneval", "task_id": "HumanEval/32", "model_name": "x-ai/grok-4-fast", "num_tests": 1, "num_passed": 0, "passed": false, "errors": ["TypeError: poly() missing 1 required positional argument: 'x'"]}
+{"benchmark": "humaneval", "task_id": "HumanEval/32", "model_name": "x-ai/grok-4-fast", "num_tests": 1, "num_passed": 0, "passed": false, "errors": ["AssertionError: "]}
 {"benchmark": "humaneval", "task_id": "HumanEval/115", "model_name": "x-ai/grok-4-fast", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/113", "model_name": "x-ai/grok-4-fast", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/121", "model_name": "x-ai/grok-4-fast", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/117", "model_name": "x-ai/grok-4-fast", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/120", "model_name": "x-ai/grok-4-fast", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
-{"benchmark": "humaneval", "task_id": "HumanEval/119", "model_name": "x-ai/grok-4-fast", "num_tests": 1, "num_passed": 0, "passed": false, "errors": ["AssertionError: "]}
+{"benchmark": "humaneval", "task_id": "HumanEval/119", "model_name": "x-ai/grok-4-fast", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/118", "model_name": "x-ai/grok-4-fast", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/122", "model_name": "x-ai/grok-4-fast", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}
 {"benchmark": "humaneval", "task_id": "HumanEval/123", "model_name": "x-ai/grok-4-fast", "num_tests": 1, "num_passed": 1, "passed": true, "errors": []}

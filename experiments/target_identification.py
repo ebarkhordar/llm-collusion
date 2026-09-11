@@ -161,6 +161,8 @@ def execute(
     # Resolve input path
     if dataset_folder and split:
         source_path = code_generation_dir / dataset_folder / split
+        if dataset_folder.endswith("-normalized"):
+            source_path = data_dir / "code_generation_normalized" / dataset_folder[: -len("-normalized")] / split
         if not source_path.exists():
             raise typer.BadParameter(f"Input path not found: {source_path}")
         console.print(f"[blue]Using input path: {source_path}[/]")

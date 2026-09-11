@@ -31,9 +31,10 @@ def _extract_entry_point_from_prompt(prompt: str) -> Optional[str]:
         # HumanEval prompts are partial function definitions
         # Try to parse just enough to get the function name
         tree = ast.parse(prompt + "\n    pass")
-        for node in tree.body:
-            if isinstance(node, ast.FunctionDef):
-                return node.name
+        # The entry point is the last function; earlier ones are helpers (e.g. HumanEval/38).
+        defs = [node.name for node in tree.body if isinstance(node, ast.FunctionDef)]
+        if defs:
+            return defs[-1]
     except Exception:
         pass
     return None

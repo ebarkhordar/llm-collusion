@@ -58,7 +58,7 @@ def main() -> None:
             ax.text(x + w / 2, b + 2, f"{b:.0f}", ha="center", va="bottom", fontsize=6.5, color=INK)
         ax.set_title(dsname, fontsize=8.5, color=INK, pad=4)
         ax.set_xticks(list(xs))
-        ax.set_xticklabels([s for _, s in MODELS], fontsize=6.5)
+        ax.set_xticklabels([s for _, s in MODELS], fontsize=6.5, rotation=30, ha="right", rotation_mode="anchor")
         ax.set_ylim(0, 112)
         ax.set_yticks([0, 25, 50, 75, 100])
         ax.grid(axis="y", color=GRID, linewidth=0.6, zorder=0)
