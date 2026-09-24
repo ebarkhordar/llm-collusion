@@ -1,13 +1,20 @@
 #!/usr/bin/env python3
-"""Redaction & Paraphrasing (R&P) obfuscation pipeline.
+"""Rule-based code normalization (called "normalization" in the paper).
 
 Applies AST-based transformations to Python code to strip stylistic fingerprints:
   1. Remove all comments and docstrings
-  2. Rename local variables and parameters to generic names (v0, v1, ...)
-  3. Normalize whitespace and formatting via ast.unparse()
+  2. Remove type annotations
+  3. Rename local variables, parameters and nested functions/classes to generic names (v0, v1, ...)
+  4. Normalize whitespace and formatting via ast.unparse()
+
+Kept as they are: top-level function and class names (tests call them), imported names (at any
+depth), built-ins, names starting with an underscore, attribute names and string literals.
+Code that does not parse is normalized from its first fenced Markdown code block if it has one;
+otherwise only comments and standalone docstrings are stripped.
 
 Usage:
-  poetry run python obfuscate.py --dataset-folder mbpp-sanitized --split test
+  poetry run python obfuscate.py run --dataset-folder mbpp-sanitized --split test \\
+      --output-dir data/code_generation_normalized/mbpp-sanitized/test
 """
 
 import ast
@@ -120,20 +127,16 @@ class VariableRenamer(ast.NodeTransformer):
         return True
 
     def visit_Module(self, node: ast.Module) -> ast.Module:
-        # First pass: collect top-level function/class names and imports
+        # First pass: collect top-level function/class names
         for item in node.body:
-            if isinstance(item, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            if isinstance(item, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
                 self._top_level_names.add(item.name)
-            elif isinstance(item, ast.ClassDef):
-                self._top_level_names.add(item.name)
-            elif isinstance(item, ast.Import):
+        # ...and imported names at any depth: an import inside a function body binds a name
+        # that must not be renamed at its use sites (e.g. `from math import comb` in a function)
+        for item in ast.walk(node):
+            if isinstance(item, (ast.Import, ast.ImportFrom)):
                 for alias in item.names:
-                    name = alias.asname or alias.name
-                    self._imported_names.add(name)
-            elif isinstance(item, ast.ImportFrom):
-                for alias in item.names:
-                    name = alias.asname or alias.name
-                    self._imported_names.add(name)
+                    self._imported_names.add(alias.asname or alias.name.split(".")[0])
         self.generic_visit(node)
         return node
 
@@ -183,7 +186,7 @@ class VariableRenamer(ast.NodeTransformer):
         if self._should_rename(node.name):
             node.name = self._get_new_name(node.name)
         # Rename parameters
-        for arg in node.args.args:
+        for arg in node.args.posonlyargs + node.args.args:
             if self._should_rename(arg.arg):
                 arg.arg = self._get_new_name(arg.arg)
         if node.args.vararg and self._should_rename(node.args.vararg.arg):
@@ -214,7 +217,7 @@ class TypeAnnotationRemover(ast.NodeTransformer):
 
     def visit_FunctionDef(self, node: ast.FunctionDef) -> ast.FunctionDef:
         node.returns = None
-        for arg in node.args.args + node.args.kwonlyargs:
+        for arg in node.args.posonlyargs + node.args.args + node.args.kwonlyargs:
             arg.annotation = None
         if node.args.vararg:
             node.args.vararg.annotation = None
@@ -234,15 +237,27 @@ class TypeAnnotationRemover(ast.NodeTransformer):
 # ── Pipeline ──────────────────────────────────────────────────────────────
 
 
-def obfuscate_code(code: str) -> str:
-    """Apply the full R&P pipeline to a piece of Python code.
+FENCED_BLOCK = re.compile(r"```[ \t]*(?:python|py)?[ \t]*\n(.*?)```", re.DOTALL | re.IGNORECASE)
 
-    Returns the obfuscated code, or the original if parsing fails.
+
+def obfuscate_code(code: str) -> str:
+    """Apply the full normalization pipeline to a piece of Python code.
+
+    Code that does not parse is normalized from its first fenced Markdown code block if that
+    block parses (a model that answered in Markdown); otherwise comments and standalone
+    docstrings are stripped with regular expressions.
     """
     try:
         tree = ast.parse(code)
     except SyntaxError:
-        # If code can't be parsed, return it with just comment stripping
+        block = FENCED_BLOCK.search(code)
+        if block:
+            try:
+                ast.parse(block.group(1))
+            except SyntaxError:
+                pass
+            else:
+                return obfuscate_code(block.group(1))
         return strip_comments_regex(code)
 
     # Apply transformations in order
@@ -261,8 +276,12 @@ def obfuscate_code(code: str) -> str:
     return result
 
 
+STANDALONE_DOCSTRING = re.compile(r"^[ \t]*[rRuU]?(\"\"\"|''')[\s\S]*?\1[ \t]*$", re.MULTILINE)
+
+
 def strip_comments_regex(code: str) -> str:
-    """Fallback: strip # comments from code using regex (for unparseable code)."""
+    """Fallback: strip # comments and standalone docstrings from code using regex (for unparseable code)."""
+    code = STANDALONE_DOCSTRING.sub("", code)
     lines = []
     for line in code.split("\n"):
         # Remove inline comments (but not inside strings — imperfect but good enough)

@@ -14,5 +14,10 @@
   "processed": 257,
   "correct": 121,
   "accuracy": 0.4708,
-  "results_file": "/Users/ehsan/CodingProjects/llm-collusion/data/target_identification/mbpp-sanitized-normalized/test/judge-google-gemini-2.5-flash_target-anthropic-claude-haiku-4.5_pair-anthropic-claude-haiku-4.5_vs_deepseek-deepseek-chat-v3-0324.jsonl"
+  "results_file": "/Users/ehsan/CodingProjects/llm-collusion/data/target_identification/mbpp-sanitized-normalized/test/judge-google-gemini-2.5-flash_target-anthropic-claude-haiku-4.5_pair-anthropic-claude-haiku-4.5_vs_deepseek-deepseek-chat-v3-0324.jsonl",
+  "rejudged_from": "data/target_identification/mbpp-sanitized-normalized/test/judge-google-gemini-2.5-flash_target-anthropic-claude-haiku-4.5_pair-anthropic-claude-haiku-4.5_vs_deepseek-deepseek-chat-v3-0324.jsonl",
+  "rejudged_items": 3,
+  "rejudge_failures": 0,
+  "rejudge_timestamp": "2026-09-24T03:29:54.869517",
+  "rejudge_prompt_sha256": "6c6f4625bb59"
 }

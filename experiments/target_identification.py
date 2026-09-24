@@ -26,6 +26,7 @@ from _paths import CONFIG, PROMPTS, data_dir as resolve_data_dir
 from src.lib import read_jsonl, render_prompt, OpenRouterClient, write_jsonl_line
 from src.common.types import Pair, CrossModelDetectionResult
 from src.lib import load_config
+from src.lib.parsing import parse_choice
 
 app = typer.Typer(add_completion=False)
 console = Console()
@@ -124,17 +125,6 @@ def build_messages(
     return [
         {"role": "user", "content": str(rendered.get("user", "")).strip()},
     ]
-
-
-def parse_choice(text: str) -> Optional[int]:
-    """Parse 'A'/'B' (or '1'/'2') from response and return 1 or 2."""
-    s = (text or "").strip().upper()
-    for ch in s:
-        if ch in ("A", "1"):
-            return 1
-        if ch in ("B", "2"):
-            return 2
-    return None
 
 
 def execute(

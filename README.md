@@ -23,11 +23,11 @@ a pre-fix prompt that aligned model-name order with solution order. See `result.
 
 ## Datasets
 
-| Dataset | Size | Description |
-|---------|------|-------------|
-| **MBPP** (sanitized) | 974 tasks | Mostly Basic Python Problems — the primary dataset |
-| **HumanEval** | 164 tasks | Hand-written Python evaluation set |
-| **DS-1000** | 1000 tasks | Data-science problems (NumPy, Pandas, Matplotlib) |
+| Dataset | Used in the paper | Description |
+|---------|-------------------|-------------|
+| **MBPP** (sanitized) | test split, 257 problems | Mostly Basic Python Problems — every pairwise task |
+| **HumanEval** | all 164 problems | Hand-written Python evaluation set (Task 1b) |
+| **DS-1000** | first 150 problems (all Pandas) | Data-science problems (Task 1b) |
 
 ## Setup
 
@@ -45,7 +45,7 @@ The raw judge outputs are committed under `data/`, so the tables and figures reb
 no API calls:
 
 ```bash
-# LaTeX tables + summary.json, and the IPP figure -> build/
+# LaTeX tables and the IPP figure -> build/ (summary.json always goes to build/)
 python analysis/make_tables.py
 python analysis/make_figures.py
 
@@ -90,11 +90,13 @@ concurrently against the same output folder.
 # Non-LLM heuristic lower bounds (comment ratio, identifier length, ...)
 python experiments/baselines.py --dataset-folder mbpp-sanitized --split test
 
-# Redaction & Paraphrasing: strip comments/docstrings, rename locals, normalize formatting
-python experiments/obfuscate.py run --dataset-folder mbpp-sanitized --split test
+# Normalization: strip comments/docstrings/type hints, rename locals, normalize formatting
+python experiments/obfuscate.py run --dataset-folder mbpp-sanitized --split test \
+  --output-dir data/code_generation_normalized/mbpp-sanitized/test
 
-# pass@1 via unit tests
-python experiments/run_tests.py --input data/code_generation_normalized/mbpp-sanitized/test
+# pass@1 via unit tests. Results go to data/tests/<folder name>/: point it at a folder named
+# mbpp-sanitized-normalized holding the normalized files, or it overwrites the original-code results
+python experiments/run_tests.py --input /path/to/mbpp-sanitized-normalized
 
 # carry the normalized-code judgments over to the corrected normalizer (re-judges changed items only)
 python experiments/rejudge_normalized.py --dry-run
@@ -128,11 +130,20 @@ llm-collusion/
 
 `code_generation/` holds the original model output. GPT-5 returned no code on 45 tasks (it spent its
 2,000-token budget on reasoning); the analysis counts these as test failures and drops them from
-every attribution task. `code_generation_normalized/` is the output of the corrected normalizer, and
+every attribution task. `code_generation_normalized/` is the output of the final normalizer, and
 the judgments on it live in `*/mbpp-sanitized-normalized/`. `code_generation_obfuscated/` and
-`*/mbpp-sanitized-obfuscated/` are the September reruns on an earlier normalizer version that left
+`*/mbpp-sanitized-obfuscated/` are the September reruns on the first normalizer version, which left
 lambda parameters and nested function names unrenamed; `rejudge_normalized.py` re-judged the items
-whose code changed. A few directories named by timestamp (e.g. `full_attribution/20260319-152100/`) are early
+whose code changed (309, Sept 11, 2026). A second fix (imports inside function bodies were renamed at
+their use sites; answers written in Markdown) changed 20 solutions and was carried over in place
+(58 judgments re-judged, Sept 24, 2026; the previous normalized code is in commit ff8794c).
+
+The analysis re-parses every stored reply strictly (`src/lib/parsing.py`): a reply counts only if its
+first line is the answer alone, so refusals such as "Sorry, I can't help with that." are excluded
+rather than read as "A". Pairwise items whose two solutions are identical are excluded from every
+pairwise analysis; normalization makes 7-33% of pairs identical. Codestral 2508 closed 79 of its 257
+MBPP answers with a second `[CODE]` marker instead of `[/CODE]`, so those solutions contain a stray
+marker line; they are kept as generated. A few directories named by timestamp (e.g. `full_attribution/20260319-152100/`) are early
 exploratory runs, superseded by the dataset-named directories and not read by `analysis/`.
 
 ## License

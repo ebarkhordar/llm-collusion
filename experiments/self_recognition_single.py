@@ -24,6 +24,7 @@ from _paths import CONFIG, PROMPTS, data_dir as resolve_data_dir
 
 from src.lib import read_jsonl, render_prompt, OpenRouterClient, write_jsonl_line
 from src.lib import load_config
+from src.lib.parsing import parse_yes_no
 
 app = typer.Typer(add_completion=False)
 console = Console()
@@ -56,23 +57,6 @@ class SingleRecResult:
 
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)
-
-
-def parse_yes_no(text: str) -> Optional[str]:
-    """Parse a yes/no response."""
-    s = (text or "").strip().lower()
-    for word in s.split():
-        w = word.strip(".,!?\"'")
-        if w == "yes":
-            return "yes"
-        if w == "no":
-            return "no"
-    # Fallback: check first character
-    if s and s[0] == "y":
-        return "yes"
-    if s and s[0] == "n":
-        return "no"
-    return None
 
 
 def build_jobs(

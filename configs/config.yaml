@@ -7,7 +7,7 @@ paths:
 # Each dataset specifies which models to use for code generation and evaluation
 datasets:
   # MBPP - Mostly Basic Python Problems (sanitized version)
-  # 974 tasks across train/test/validation/prompt splits
+  # 427 tasks across train/test/validation/prompt splits; the paper uses the 257-problem test split
   mbpp:
     models:
       - openai/gpt-5
@@ -28,7 +28,7 @@ datasets:
 
   # DS-1000 - Data Science benchmark
   # 1000 problems across NumPy, Pandas, Matplotlib, TensorFlow, PyTorch, SciPy, Scikit-learn
-  # (test split only)
+  # (test split only; the paper uses the first 150 problems, all from the Pandas subset)
   ds1000:
     models:
       - openai/gpt-5

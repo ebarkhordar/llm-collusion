@@ -17,7 +17,7 @@
 {"benchmark": "mbpp", "task_id": "75", "model_name": "anthropic/claude-haiku-4.5", "num_tests": 3, "num_passed": 3, "passed": true, "errors": []}
 {"benchmark": "mbpp", "task_id": "68", "model_name": "anthropic/claude-haiku-4.5", "num_tests": 3, "num_passed": 3, "passed": true, "errors": []}
 {"benchmark": "mbpp", "task_id": "62", "model_name": "anthropic/claude-haiku-4.5", "num_tests": 3, "num_passed": 3, "passed": true, "errors": []}
-{"benchmark": "mbpp", "task_id": "57", "model_name": "anthropic/claude-haiku-4.5", "num_tests": 3, "num_passed": 0, "passed": false, "errors": ["NameError: name 'v6' is not defined", "NameError: name 'v6' is not defined", "NameError: name 'v6' is not defined"]}
+{"benchmark": "mbpp", "task_id": "57", "model_name": "anthropic/claude-haiku-4.5", "num_tests": 3, "num_passed": 3, "passed": true, "errors": []}
 {"benchmark": "mbpp", "task_id": "67", "model_name": "anthropic/claude-haiku-4.5", "num_tests": 3, "num_passed": 3, "passed": true, "errors": []}
 {"benchmark": "mbpp", "task_id": "79", "model_name": "anthropic/claude-haiku-4.5", "num_tests": 3, "num_passed": 3, "passed": true, "errors": []}
 {"benchmark": "mbpp", "task_id": "14", "model_name": "anthropic/claude-haiku-4.5", "num_tests": 3, "num_passed": 3, "passed": true, "errors": []}
@@ -163,7 +163,7 @@
 {"benchmark": "mbpp", "task_id": "305", "model_name": "anthropic/claude-haiku-4.5", "num_tests": 3, "num_passed": 0, "passed": false, "errors": ["AssertionError: ", "AssertionError: ", "AssertionError: "]}
 {"benchmark": "mbpp", "task_id": "304", "model_name": "anthropic/claude-haiku-4.5", "num_tests": 3, "num_passed": 0, "passed": false, "errors": ["TypeError: find_Element() takes 3 positional arguments but 4 were given", "TypeError: find_Element() takes 3 positional arguments but 4 were given", "TypeError: find_Element() takes 3 positional arguments but 4 were given"]}
 {"benchmark": "mbpp", "task_id": "301", "model_name": "anthropic/claude-haiku-4.5", "num_tests": 3, "num_passed": 0, "passed": false, "errors": ["AssertionError: ", "AssertionError: ", "AssertionError: "]}
-{"benchmark": "mbpp", "task_id": "300", "model_name": "anthropic/claude-haiku-4.5", "num_tests": 3, "num_passed": 0, "passed": false, "errors": ["NameError: name 'v1' is not defined", "NameError: name 'v1' is not defined", "NameError: name 'v1' is not defined"]}
+{"benchmark": "mbpp", "task_id": "300", "model_name": "anthropic/claude-haiku-4.5", "num_tests": 3, "num_passed": 3, "passed": true, "errors": []}
 {"benchmark": "mbpp", "task_id": "307", "model_name": "anthropic/claude-haiku-4.5", "num_tests": 3, "num_passed": 0, "passed": false, "errors": ["AssertionError: ", "AssertionError: ", "AssertionError: "]}
 {"benchmark": "mbpp", "task_id": "309", "model_name": "anthropic/claude-haiku-4.5", "num_tests": 3, "num_passed": 3, "passed": true, "errors": []}
 {"benchmark": "mbpp", "task_id": "310", "model_name": "anthropic/claude-haiku-4.5", "num_tests": 3, "num_passed": 2, "passed": false, "errors": ["AssertionError: "]}

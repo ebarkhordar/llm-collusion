@@ -18,6 +18,7 @@ from _paths import CONFIG, PROMPTS, data_dir as resolve_data_dir
 from src.lib import read_jsonl, render_prompt, OpenRouterClient, write_jsonl_line
 from src.common.types import Pair, SelfRecognitionResult
 from src.lib import load_config
+from src.lib.parsing import parse_choice
 
 
 app = typer.Typer(add_completion=False)
@@ -122,15 +123,6 @@ def build_messages(prompt: str, code1: str, code2: str, model1: str, model2: str
         {"role": "user", "content": str(rendered.get("user", "")).strip()},
     ]
 
-
-def parse_choice(text: str) -> Optional[int]:
-    s = (text or "").strip().upper()
-    for ch in s:
-        if ch == "1" or ch == "A":
-            return 1
-        if ch == "2" or ch == "B":
-            return 2
-    return None
 
 
 def extract_dataset_and_split(input_path: Path, data_dir: Path) -> Tuple[Optional[str], Optional[str]]:

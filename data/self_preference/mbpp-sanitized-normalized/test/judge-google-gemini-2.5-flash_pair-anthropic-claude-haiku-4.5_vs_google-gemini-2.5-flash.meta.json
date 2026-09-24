@@ -10,9 +10,18 @@
   "seed": 42,
   "processed": 257,
   "results_file": "data/self_preference/mbpp-sanitized-obfuscated/test/judge-google-gemini-2.5-flash_pair-anthropic-claude-haiku-4.5_vs_google-gemini-2.5-flash.jsonl",
-  "rejudged_from": "data/self_preference/mbpp-sanitized-obfuscated/test/judge-google-gemini-2.5-flash_pair-anthropic-claude-haiku-4.5_vs_google-gemini-2.5-flash.jsonl",
-  "rejudged_items": 17,
+  "rejudged_from": "data/self_preference/mbpp-sanitized-normalized/test/judge-google-gemini-2.5-flash_pair-anthropic-claude-haiku-4.5_vs_google-gemini-2.5-flash.jsonl",
+  "rejudged_items": 3,
   "rejudge_failures": 0,
-  "rejudge_timestamp": "2026-09-11T17:08:59.863503",
-  "rejudge_prompt_sha256": "84bb28ef8b49"
+  "rejudge_timestamp": "2026-09-24T03:33:04.413727",
+  "rejudge_prompt_sha256": "84bb28ef8b49",
+  "earlier_rejudges": [
+    {
+      "rejudged_from": "data/self_preference/mbpp-sanitized-obfuscated/test/judge-google-gemini-2.5-flash_pair-anthropic-claude-haiku-4.5_vs_google-gemini-2.5-flash.jsonl",
+      "rejudged_items": 17,
+      "rejudge_failures": 0,
+      "rejudge_timestamp": "2026-09-11T17:08:59.863503",
+      "rejudge_prompt_sha256": "84bb28ef8b49"
+    }
+  ]
 }

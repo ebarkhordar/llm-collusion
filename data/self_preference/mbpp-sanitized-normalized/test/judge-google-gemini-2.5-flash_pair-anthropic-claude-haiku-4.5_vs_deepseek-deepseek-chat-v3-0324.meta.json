@@ -9,5 +9,10 @@
   "temperature": 0.0,
   "seed": 42,
   "processed": 257,
-  "results_file": "/Users/ehsan/CodingProjects/llm-collusion/data/self_preference/mbpp-sanitized-normalized/test/judge-google-gemini-2.5-flash_pair-anthropic-claude-haiku-4.5_vs_deepseek-deepseek-chat-v3-0324.jsonl"
+  "results_file": "/Users/ehsan/CodingProjects/llm-collusion/data/self_preference/mbpp-sanitized-normalized/test/judge-google-gemini-2.5-flash_pair-anthropic-claude-haiku-4.5_vs_deepseek-deepseek-chat-v3-0324.jsonl",
+  "rejudged_from": "data/self_preference/mbpp-sanitized-normalized/test/judge-google-gemini-2.5-flash_pair-anthropic-claude-haiku-4.5_vs_deepseek-deepseek-chat-v3-0324.jsonl",
+  "rejudged_items": 3,
+  "rejudge_failures": 0,
+  "rejudge_timestamp": "2026-09-24T03:33:03.326921",
+  "rejudge_prompt_sha256": "84bb28ef8b49"
 }

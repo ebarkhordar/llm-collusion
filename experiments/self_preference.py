@@ -30,6 +30,7 @@ from tqdm import tqdm
 from _paths import DATA, PROMPTS
 
 from src.lib import OpenRouterClient, read_jsonl, render_prompt, write_jsonl_line
+from src.lib.parsing import parse_choice
 
 app = typer.Typer(add_completion=False)
 console = Console()
@@ -57,15 +58,6 @@ def load_tests(dataset_folder: str, model: str) -> Dict[str, Optional[bool]]:
     d = dataset_folder if dataset_folder.endswith(("-normalized", "-obfuscated")) else f"{dataset_folder}/test"
     p = DATA / "tests" / d / f"tests-{safe(model)}.jsonl"
     return {str(r["task_id"]): bool(r["passed"]) for r in read_jsonl(p)} if p.exists() else {}
-
-
-def parse_choice(text: str) -> Optional[int]:
-    for ch in (text or "").strip().upper():
-        if ch in "A1":
-            return 1
-        if ch in "B2":
-            return 2
-    return None
 
 
 @app.command()
