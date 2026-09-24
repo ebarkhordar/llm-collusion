@@ -10,9 +10,18 @@
   "seed": 42,
   "processed": 257,
   "results_file": "data/self_preference/mbpp-sanitized-obfuscated/test/judge-deepseek-deepseek-chat-v3-0324_pair-anthropic-claude-haiku-4.5_vs_deepseek-deepseek-chat-v3-0324.jsonl",
-  "rejudged_from": "data/self_preference/mbpp-sanitized-obfuscated/test/judge-deepseek-deepseek-chat-v3-0324_pair-anthropic-claude-haiku-4.5_vs_deepseek-deepseek-chat-v3-0324.jsonl",
-  "rejudged_items": 14,
+  "rejudged_from": "data/self_preference/mbpp-sanitized-normalized/test/judge-deepseek-deepseek-chat-v3-0324_pair-anthropic-claude-haiku-4.5_vs_deepseek-deepseek-chat-v3-0324.jsonl",
+  "rejudged_items": 3,
   "rejudge_failures": 0,
-  "rejudge_timestamp": "2026-09-11T17:08:54.075862",
-  "rejudge_prompt_sha256": "84bb28ef8b49"
+  "rejudge_timestamp": "2026-09-24T03:33:01.387144",
+  "rejudge_prompt_sha256": "84bb28ef8b49",
+  "earlier_rejudges": [
+    {
+      "rejudged_from": "data/self_preference/mbpp-sanitized-obfuscated/test/judge-deepseek-deepseek-chat-v3-0324_pair-anthropic-claude-haiku-4.5_vs_deepseek-deepseek-chat-v3-0324.jsonl",
+      "rejudged_items": 14,
+      "rejudge_failures": 0,
+      "rejudge_timestamp": "2026-09-11T17:08:54.075862",
+      "rejudge_prompt_sha256": "84bb28ef8b49"
+    }
+  ]
 }

@@ -15,9 +15,18 @@
   "correct": 115,
   "accuracy": 0.4475,
   "results_file": "data/target_identification/mbpp-sanitized-obfuscated/test/judge-openai-gpt-5.3-codex_target-google-gemini-3.1-flash-lite-preview_pair-anthropic-claude-opus-4.6_vs_google-gemini-3.1-flash-lite-preview.jsonl",
-  "rejudged_from": "data/target_identification/mbpp-sanitized-obfuscated/test/judge-openai-gpt-5.3-codex_target-google-gemini-3.1-flash-lite-preview_pair-anthropic-claude-opus-4.6_vs_google-gemini-3.1-flash-lite-preview.jsonl",
-  "rejudged_items": 15,
+  "rejudged_from": "data/target_identification/mbpp-sanitized-normalized/test/judge-openai-gpt-5.3-codex_target-google-gemini-3.1-flash-lite-preview_pair-anthropic-claude-opus-4.6_vs_google-gemini-3.1-flash-lite-preview.jsonl",
+  "rejudged_items": 5,
   "rejudge_failures": 0,
-  "rejudge_timestamp": "2026-09-11T17:06:14.155632",
-  "rejudge_prompt_sha256": "6c6f4625bb59"
+  "rejudge_timestamp": "2026-09-24T03:30:14.666315",
+  "rejudge_prompt_sha256": "6c6f4625bb59",
+  "earlier_rejudges": [
+    {
+      "rejudged_from": "data/target_identification/mbpp-sanitized-obfuscated/test/judge-openai-gpt-5.3-codex_target-google-gemini-3.1-flash-lite-preview_pair-anthropic-claude-opus-4.6_vs_google-gemini-3.1-flash-lite-preview.jsonl",
+      "rejudged_items": 15,
+      "rejudge_failures": 0,
+      "rejudge_timestamp": "2026-09-11T17:06:14.155632",
+      "rejudge_prompt_sha256": "6c6f4625bb59"
+    }
+  ]
 }

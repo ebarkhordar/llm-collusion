@@ -1,4 +1,4 @@
-"""Carry the normalized-code judgments over to the corrected normalizer.
+"""Carry the normalized-code judgments over to a corrected normalizer.
 
 The September reruns on normalized code (data/*/mbpp-sanitized-obfuscated/) were made with a
 normalizer version that left lambda parameters and nested function names unrenamed. This script
@@ -8,9 +8,15 @@ data/code_generation_normalized, keeping the original A/B order, judge, and prom
 empty solution are copied unchanged (the analysis excludes them). Self-preference records also get
 their unit-test outcomes refreshed from data/tests/mbpp-sanitized-normalized.
 
+A later fix (function-local imports; Markdown answers) is applied in place: --source takes the
+judgments to start from and --before-code the code they saw. On Sept 24, 2026 the source was
+mbpp-sanitized-normalized itself and --before-code the normalized code of commit ff8794c
+(`git show ff8794c:data/code_generation_normalized/mbpp-sanitized/test/<model>.jsonl`).
+
 Usage:
   python rejudge_normalized.py --dry-run
   python rejudge_normalized.py --only self_preference --only self_recognition
+  python rejudge_normalized.py --source mbpp-sanitized-normalized --before-code /path/to/old/normalized/code
 """
 from __future__ import annotations
 
@@ -28,6 +34,7 @@ from rich.console import Console
 from _paths import DATA, PROMPTS
 
 from src.lib import OpenRouterClient, read_jsonl, render_prompt
+from src.lib.parsing import parse_choice
 
 app = typer.Typer(add_completion=False)
 console = Console()
@@ -47,22 +54,14 @@ def safe(m: str) -> str:
 
 
 def load_codes(folder: str, model: str) -> Dict[str, dict]:
-    p = DATA / folder / "mbpp-sanitized" / "test" / f"{safe(model)}.jsonl"
-    return {str(r["task_id"]): r for r in read_jsonl(p)}
+    """folder is a directory under data/ (e.g. code_generation_normalized) or a path to <model>.jsonl files."""
+    base = Path(folder) if Path(folder).is_absolute() else DATA / folder / "mbpp-sanitized" / "test"
+    return {str(r["task_id"]): r for r in read_jsonl(base / f"{safe(model)}.jsonl")}
 
 
 def load_tests(model: str) -> Dict[str, bool]:
     p = DATA / "tests" / NEW / f"tests-{safe(model)}.jsonl"
     return {str(r["task_id"]): bool(r["passed"]) for r in read_jsonl(p)} if p.exists() else {}
-
-
-def parse_choice(text: str) -> Optional[int]:
-    for ch in (text or "").strip().upper():
-        if ch in "A1":
-            return 1
-        if ch in "B2":
-            return 2
-    return None
 
 
 def render(task: str, rec: dict, code1: str, code2: str, prompt: str) -> str:
@@ -99,6 +98,8 @@ def run(
     only: List[str] = typer.Option([], "--only", help="Restrict to these tasks"),
     concurrency: int = typer.Option(8, "--concurrency"),
     seed: int = typer.Option(42),
+    source: str = typer.Option(OLD, "--source", help="Judgment folder to start from"),
+    before_code: str = typer.Option("code_generation_obfuscated", "--before-code", help="Code the source judgments saw"),
 ) -> None:
     random.seed(seed)
     client = None if dry_run else OpenRouterClient()
@@ -106,11 +107,13 @@ def run(
     for task in PROMPT:
         if only and task not in only:
             continue
-        src_dir, dst_dir = DATA / task / OLD / "test", DATA / task / NEW / "test"
+        src_dir, dst_dir = DATA / task / source / "test", DATA / task / NEW / "test"
         for src in sorted(src_dir.glob("*.jsonl")):
             recs = list(read_jsonl(src))
+            if not recs:
+                continue
             models = {m for r in recs for m in (r["candidate_1_model"], r["candidate_2_model"])}
-            old = {m: load_codes("code_generation_obfuscated", m) for m in models}
+            old = {m: load_codes(before_code, m) for m in models}
             new = {m: load_codes("code_generation_normalized", m) for m in models}
             tests = {m: load_tests(m) for m in models}
             jobs, out = [], list(recs)
@@ -141,8 +144,11 @@ def run(
             dst.write_text("".join(json.dumps(r) + "\n" for r in out))
             meta_src = src.with_suffix(".meta.json")
             meta = json.loads(meta_src.read_text()) if meta_src.exists() else {}
-            meta.update(rejudged_from=str(src.relative_to(DATA.parent)), rejudged_items=len(jobs), rejudge_failures=failed,
+            this = dict(rejudged_from=str(src.relative_to(DATA.parent)), rejudged_items=len(jobs), rejudge_failures=failed,
                         rejudge_timestamp=datetime.now().isoformat(), rejudge_prompt_sha256=hashlib.sha256(PROMPT[task].read_bytes()).hexdigest()[:12])
+            if source == NEW and "rejudge_timestamp" in meta:  # in-place pass: keep the earlier pass on record
+                meta.setdefault("earlier_rejudges", []).append({k: meta[k] for k in this if k in meta})
+            meta.update(this)
             dst.with_suffix(".meta.json").write_text(json.dumps(meta, indent=2))
     console.print(f"[green]Total re-judge calls: {total_calls}[/]")
 

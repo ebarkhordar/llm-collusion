@@ -15,9 +15,18 @@
   "correct": 124,
   "accuracy": 0.4825,
   "results_file": "data/target_identification/mbpp-sanitized-obfuscated/test/judge-openai-gpt-5_target-xiaomi-mimo-v2-pro_pair-qwen-qwen3-coder-next_vs_xiaomi-mimo-v2-pro.jsonl",
-  "rejudged_from": "data/target_identification/mbpp-sanitized-obfuscated/test/judge-openai-gpt-5_target-xiaomi-mimo-v2-pro_pair-qwen-qwen3-coder-next_vs_xiaomi-mimo-v2-pro.jsonl",
-  "rejudged_items": 20,
+  "rejudged_from": "data/target_identification/mbpp-sanitized-normalized/test/judge-openai-gpt-5_target-xiaomi-mimo-v2-pro_pair-qwen-qwen3-coder-next_vs_xiaomi-mimo-v2-pro.jsonl",
+  "rejudged_items": 6,
   "rejudge_failures": 0,
-  "rejudge_timestamp": "2026-09-11T17:08:41.950625",
-  "rejudge_prompt_sha256": "6c6f4625bb59"
+  "rejudge_timestamp": "2026-09-24T03:32:54.171899",
+  "rejudge_prompt_sha256": "6c6f4625bb59",
+  "earlier_rejudges": [
+    {
+      "rejudged_from": "data/target_identification/mbpp-sanitized-obfuscated/test/judge-openai-gpt-5_target-xiaomi-mimo-v2-pro_pair-qwen-qwen3-coder-next_vs_xiaomi-mimo-v2-pro.jsonl",
+      "rejudged_items": 20,
+      "rejudge_failures": 0,
+      "rejudge_timestamp": "2026-09-11T17:08:41.950625",
+      "rejudge_prompt_sha256": "6c6f4625bb59"
+    }
+  ]
 }

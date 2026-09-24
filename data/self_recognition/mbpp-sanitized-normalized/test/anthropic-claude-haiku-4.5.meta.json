@@ -1,7 +1,16 @@
 {
-  "rejudged_from": "data/self_recognition/mbpp-sanitized-obfuscated/test/anthropic-claude-haiku-4.5.jsonl",
-  "rejudged_items": 25,
+  "rejudged_from": "data/self_recognition/mbpp-sanitized-normalized/test/anthropic-claude-haiku-4.5.jsonl",
+  "rejudged_items": 4,
   "rejudge_failures": 0,
-  "rejudge_timestamp": "2026-09-11T16:59:17.050775",
-  "rejudge_prompt_sha256": "bfd9000c7ceb"
+  "rejudge_timestamp": "2026-09-24T03:29:42.577954",
+  "rejudge_prompt_sha256": "bfd9000c7ceb",
+  "earlier_rejudges": [
+    {
+      "rejudged_from": "data/self_recognition/mbpp-sanitized-obfuscated/test/anthropic-claude-haiku-4.5.jsonl",
+      "rejudged_items": 25,
+      "rejudge_failures": 0,
+      "rejudge_timestamp": "2026-09-11T16:59:17.050775",
+      "rejudge_prompt_sha256": "bfd9000c7ceb"
+    }
+  ]
 }

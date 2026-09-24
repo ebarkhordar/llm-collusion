@@ -23,14 +23,15 @@ ROOT = Path(__file__).resolve().parent.parent
 # Set PAPER_DIR to the paper repo to write straight into it; otherwise build/ in this repo.
 PAPER_DIR = os.environ.get("PAPER_DIR")
 DEFAULT_OUT = (Path(PAPER_DIR) / "latex" / "figures") if PAPER_DIR else (ROOT / "build" / "figures")
-TABLES = (Path(PAPER_DIR) / "latex" / "tables") if PAPER_DIR else (ROOT / "build" / "tables")
+SUMMARY = ROOT / "build" / "summary.json"  # written by make_tables.py
 
+# Same order as the paper's tables; short names as defined in the paper's setup section
 MODELS = [
     ("openai/gpt-5", "GPT-5"),
-    ("anthropic/claude-haiku-4.5", "Claude"),
-    ("deepseek/deepseek-chat-v3-0324", "DeepSeek"),
+    ("anthropic/claude-haiku-4.5", "Claude Haiku"),
     ("google/gemini-2.5-flash", "Gemini"),
     ("x-ai/grok-4-fast", "Grok"),
+    ("deepseek/deepseek-chat-v3-0324", "DeepSeek"),
 ]
 DATASETS = [("humaneval", "HumanEval"), ("mbpp-sanitized", "MBPP"), ("ds1000", "DS-1000")]
 C_OWN, C_OTHER = "#2a78d6", "#eb6834"  # categorical slots 1 and 2 (validated palette)
@@ -42,9 +43,10 @@ def main() -> None:
     ap.add_argument("--out", type=Path, default=DEFAULT_OUT)
     args = ap.parse_args()
     args.out.mkdir(parents=True, exist_ok=True)
-    ipp = json.load((TABLES / "summary.json").open())["ipp"]
+    ipp = json.load(SUMMARY.open())["ipp"]
 
-    plt.rcParams.update({"font.size": 8, "font.family": "sans-serif", "axes.edgecolor": GRID, "axes.labelcolor": INK, "xtick.color": INK, "ytick.color": MUTED})
+    # TrueType (Type 42) fonts: some PDF checkers reject matplotlib's default Type 3 fonts
+    plt.rcParams.update({"pdf.fonttype": 42, "ps.fonttype": 42, "font.size": 8, "font.family": "sans-serif", "axes.edgecolor": GRID, "axes.labelcolor": INK, "xtick.color": INK, "ytick.color": MUTED})
     fig, axes = plt.subplots(1, 3, figsize=(6.6, 2.2), sharey=True)
     w = 0.36
     for ax, (ds, dsname) in zip(axes, DATASETS):
@@ -68,8 +70,7 @@ def main() -> None:
     axes[0].set_ylabel('P("yes") in %', color=INK)
     fig.legend(*axes[0].get_legend_handles_labels(), frameon=False, fontsize=7, loc="upper center", ncol=2, bbox_to_anchor=(0.5, 1.06), handlelength=1.0)
     fig.tight_layout(w_pad=0.8)
-    for ext in ("pdf", "png"):
-        fig.savefig(args.out / f"ipp_yes_rates.{ext}", dpi=200, bbox_inches="tight")
+    fig.savefig(args.out / "ipp_yes_rates.pdf", bbox_inches="tight")
     print(f"wrote {args.out / 'ipp_yes_rates.pdf'}")
 
 

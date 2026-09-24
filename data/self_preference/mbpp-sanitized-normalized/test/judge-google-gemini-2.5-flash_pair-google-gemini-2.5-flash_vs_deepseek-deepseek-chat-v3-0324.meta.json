@@ -10,9 +10,18 @@
   "seed": 42,
   "processed": 257,
   "results_file": "data/self_preference/mbpp-sanitized-obfuscated/test/judge-google-gemini-2.5-flash_pair-google-gemini-2.5-flash_vs_deepseek-deepseek-chat-v3-0324.jsonl",
-  "rejudged_from": "data/self_preference/mbpp-sanitized-obfuscated/test/judge-google-gemini-2.5-flash_pair-google-gemini-2.5-flash_vs_deepseek-deepseek-chat-v3-0324.jsonl",
-  "rejudged_items": 16,
+  "rejudged_from": "data/self_preference/mbpp-sanitized-normalized/test/judge-google-gemini-2.5-flash_pair-google-gemini-2.5-flash_vs_deepseek-deepseek-chat-v3-0324.jsonl",
+  "rejudged_items": 0,
   "rejudge_failures": 0,
-  "rejudge_timestamp": "2026-09-11T17:09:01.382805",
-  "rejudge_prompt_sha256": "84bb28ef8b49"
+  "rejudge_timestamp": "2026-09-24T03:33:04.431720",
+  "rejudge_prompt_sha256": "84bb28ef8b49",
+  "earlier_rejudges": [
+    {
+      "rejudged_from": "data/self_preference/mbpp-sanitized-obfuscated/test/judge-google-gemini-2.5-flash_pair-google-gemini-2.5-flash_vs_deepseek-deepseek-chat-v3-0324.jsonl",
+      "rejudged_items": 16,
+      "rejudge_failures": 0,
+      "rejudge_timestamp": "2026-09-11T17:09:01.382805",
+      "rejudge_prompt_sha256": "84bb28ef8b49"
+    }
+  ]
 }
